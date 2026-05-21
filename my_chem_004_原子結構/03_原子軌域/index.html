@@ -1,0 +1,1579 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>原子軌域與量子數 - 互動教學</title>
+    <script>
+        MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']], processEscapes: true },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --text-main: #f8fafc;
+            --accent-blue: #38bdf8;
+            --accent-green: #34d399;
+            --accent-red: #f87171;
+            --accent-yellow: #fbbf24;
+            --accent-purple: #a855f7;
+            --accent-cyan: #22d3ee;
+            --glass: rgba(255, 255, 255, 0.04);
+            --glass-border: rgba(255, 255, 255, 0.12);
+        }
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+        body, html { width: 100%; height: 100%; background-color: var(--bg-dark); color: var(--text-main); font-family: 'Segoe UI', 'Microsoft JhengHei', sans-serif; overflow: hidden; background-image: radial-gradient(rgba(56, 189, 248, 0.08) 1.2px, transparent 1.2px); background-size: 30px 30px; }
+        
+        #app { position: relative; width: 100vw; height: 100vh; overflow: hidden; display: flex; justify-content: center; align-items: center; }
+        
+        #start-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--bg-dark); z-index: 5000; display: flex; flex-direction: column; justify-content: center; align-items: center; background-image: radial-gradient(rgba(56, 189, 248, 0.15) 2px, transparent 2px); background-size: 60px 60px; }
+        .btn-start { background: var(--accent-blue); color: #0f172a; border: none; padding: 1.2rem 3.5rem; border-radius: 60px; font-size: 1.6rem; font-weight: 800; cursor: pointer; transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 0 30px rgba(56, 189, 248, 0.5); }
+        .btn-start:hover { transform: scale(1.1); box-shadow: 0 0 50px rgba(56, 189, 248, 0.7); }
+
+        #presentation-area { position: relative; width: 100vw; height: 100vh; overflow: hidden; }
+        #slides-container { position: absolute; top: 2vh; left: 4vw; right: 4vw; bottom: 3vh; }
+        
+        .slide { position: absolute; top: 0; left: 0; width: 100%; height: 100%; padding: 1rem 4rem 0.5rem 0.5rem; opacity: 0; pointer-events: none; transition: opacity 0.4s ease, transform 0.4s ease; transform: scale(0.99); display: flex; flex-direction: column; overflow: hidden; }
+        .slide.active { opacity: 1; pointer-events: auto; z-index: 10; transform: scale(1); }
+        
+        h1 { color: var(--accent-blue); font-size: clamp(1.8rem, 3vw, 2.5rem); margin-bottom: 0.8rem; display: flex; align-items: center; gap: 0.8rem; border-bottom: 2px solid rgba(56, 189, 248, 0.2); padding-bottom: 0.4rem; flex-shrink: 0; }
+        h1::before { content: ""; width: 8px; height: 32px; background: var(--accent-blue); border-radius: 4px; }
+        h2 { color: var(--accent-yellow); font-size: clamp(1.2rem, 1.8vw, 1.5rem); margin: 0.5rem 0; font-weight: 600; flex-shrink: 0; }
+        
+        p, li { font-size: clamp(1rem, 1.4vw, 1.25rem); line-height: 1.5; margin-bottom: 0.6rem; }
+        strong { color: var(--accent-cyan); font-weight: 700; }
+        
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; flex: 1; min-height: 0; overflow: hidden; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem; flex: 1; min-height: 0; overflow: hidden; }
+        .panel { background: var(--glass); border: 1.5px solid var(--glass-border); border-radius: 20px; padding: 1.4rem; backdrop-filter: blur(12px); display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
+        
+        .formula-box { background: rgba(0, 0, 0, 0.4); border-radius: 12px; border-left: 6px solid var(--accent-green); padding: 1rem; margin: 0.8rem 0; text-align: center; font-size: clamp(1.5rem, 2.2vw, 2rem); box-shadow: inset 0 2px 10px rgba(0,0,0,0.5); flex-shrink: 0; }
+        
+        .info-card { background: rgba(56, 189, 248, 0.08); border-radius: 14px; padding: 1rem; border: 1px solid rgba(56, 189, 248, 0.3); margin: 0.6rem 0; flex-shrink: 0; }
+
+        /* Navigation Toolbar */
+        #toolbar { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); background: rgba(15, 23, 42, 0.9); padding: 12px 6px; border-radius: 30px; display: flex; flex-direction: column; gap: 10px; align-items: center; z-index: 2000; border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 15px 45px rgba(0,0,0,0.7); backdrop-filter: blur(20px); width: 50px; }
+        .btn-tool { background: transparent; color: rgba(255,255,255,0.6); border: 1px solid rgba(255,255,255,0.15); width: 34px; height: 34px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.25s; }
+        .btn-tool:hover { background: rgba(255,255,255,0.15); color: #fff; transform: translateY(-2px); }
+        .btn-tool.active-tool { background: var(--accent-blue); color: #0f172a; border-color: var(--accent-blue); box-shadow: 0 0 15px var(--accent-blue); }
+        
+        #drag-handle { width: 100%; text-align: center; color: rgba(255,255,255,0.4); cursor: grab; padding: 2px 0; font-size: 1.4rem; line-height: 0.5; margin-bottom: 2px; }
+
+        #slide-info { position: absolute; bottom: 20px; left: 20px; z-index: 100; font-size: 1rem; color: rgba(255,255,255,0.6); background: rgba(0,0,0,0.5); padding: 6px 15px; border-radius: 40px; border: 1px solid rgba(255,255,255,0.15); backdrop-filter: blur(8px); font-weight: bold; }
+
+        #drawing-layer { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 50; pointer-events: none; touch-action: none; }
+        #drawing-layer.drawing-active { pointer-events: auto; }
+
+        .ans-overlay { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(10, 15, 30, 0.98); z-index: 100; flex-direction: column; padding: 2rem; border-radius: 20px; border: 3px solid var(--accent-red); animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        .btn-action { background: var(--accent-blue); color: #000; border: none; padding: 0.8rem 1.8rem; border-radius: 10px; cursor: pointer; font-weight: 700; font-size: 1.1rem; transition: 0.2s; align-self: center; margin-top: auto; flex-shrink: 0; }
+        .btn-action:hover { filter: brightness(1.1); transform: scale(1.05); }
+
+        .svg-container { flex: 1; display: flex; justify-content: center; align-items: center; min-height: 0; overflow: hidden; }
+        .svg-container svg { max-height: 100%; max-width: 100%; }
+
+        .table-custom { width: 100%; border-collapse: collapse; margin-top: 1rem; background: rgba(255,255,255,0.05); border-radius: 10px; overflow: hidden; }
+        .table-custom th, .table-custom td { padding: 12px 15px; border: 1px solid rgba(255,255,255,0.1); text-align: center; }
+        .table-custom th { background: rgba(56, 189, 248, 0.15); color: var(--accent-blue); font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div id="start-overlay">
+            <h1 style="border:none; font-size: 4.5rem; text-align:center; margin-bottom: 0.5rem; text-shadow: 0 0 40px rgba(56,189,248,0.4);">原子軌域</h1>
+            <p style="font-size: 2rem; color: var(--accent-cyan); margin-bottom: 4rem;">與量子數互動教學</p>
+            <button class="btn-start" id="btn-start">開始探索教學</button>
+        </div>
+
+        <div id="presentation-area">
+            <div id="slides-container">
+                <!-- Slide 1: 原子軌域基本概念 -->
+                <div class="slide active">
+                    <h1>電子軌域的基本概念</h1>
+                    <div class="grid-2" style="grid-template-columns: 1fr 1.5fr;">
+                        <div class="panel">
+                            <h2>古典模型 vs 量子力學</h2>
+                            <p style="color: var(--accent-red);"><del>拉塞福與波耳模型：</del> 電子繞著一定的圓形軌道運行（如同行星繞太陽）。這種觀念無法解釋多電子原子的行為。</p>
+                            <hr style="border: 0; height: 1px; background: rgba(255,255,255,0.1); margin: 15px 0;">
+                            <p style="color: var(--accent-green);"><strong>量子力學模型：</strong></p>
+                            <ul style="margin-left: 1.5rem;">
+                                <li><strong>波動性與粒子性：</strong>高速運動的電子同時具有波動和粒子的特性（繞射現象）。</li>
+                                <li><strong>測不準原理：</strong>電子在原子核附近的空間以三度空間快速運動，其確切軌跡<strong>無法測定</strong>。</li>
+                                <li><strong>機率分佈：</strong>我們只能預測電子出現的<strong>機率</strong>空間。</li>
+                            </ul>
+                        </div>
+                        <div class="panel">
+                            <h2>「軌域」的定義 (Orbital)</h2>
+                            <p>軌域是指在原子核外空間中，電子出現機率最高（通常大於 <strong>90% ~ 100%</strong>）的區域形狀。</p>
+                            
+                            <div class="info-card" style="border-color: var(--accent-blue); flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 0.8rem; background: rgba(255, 255, 255, 0.01);">
+                                <p style="font-size: 1.15rem; text-align: center; color: var(--accent-cyan); font-weight: bold; margin-bottom: 5px;">電子雲機率分佈與徑向機率圖譜 (1s 軌域)</p>
+                                
+                                <div style="display: flex; flex-direction: row; gap: 1rem; width: 100%; justify-content: space-around; align-items: center; margin-top: 10px; flex: 1;">
+                                    <!-- Left: Probability Density (Electron Cloud) -->
+                                    <div style="position: relative; display: flex; flex-direction: column; align-items: center;">
+                                        <span style="font-size: 0.85rem; color: rgba(255,255,255,0.7); margin-bottom: 5px;">機率密度 (電子雲與邊界)</span>
+                                        <svg id="svg-density" viewBox="0 0 160 160" width="220" height="220" style="background: rgba(255,255,255,0.02); border: 1.5px solid rgba(255,255,255,0.08); border-radius: 16px; cursor: crosshair;">
+                                            <!-- Axis lines -->
+                                            <line x1="10" y1="80" x2="150" y2="80" stroke="rgba(255,255,255,0.25)" stroke-width="1.5" />
+                                            <line x1="80" y1="10" x2="80" y2="150" stroke="rgba(255,255,255,0.25)" stroke-width="1.5" />
+                                            
+                                            <!-- Ticks on X-axis (50, 100, 150, 200, 250, 300 pm) -->
+                                            <line x1="91" y1="77" x2="91" y2="83" stroke="#fff" stroke-width="1" />
+                                            <line x1="102" y1="77" x2="102" y2="83" stroke="#fff" stroke-width="1" />
+                                            <line x1="113" y1="77" x2="113" y2="83" stroke="#fff" stroke-width="1" />
+                                            <line x1="124" y1="77" x2="124" y2="83" stroke="#fff" stroke-width="1" />
+                                            <line x1="135" y1="77" x2="135" y2="83" stroke="#fff" stroke-width="1" />
+                                            <line x1="146" y1="77" x2="146" y2="83" stroke="#fff" stroke-width="1" />
+                                            
+                                            <line x1="69" y1="77" x2="69" y2="83" stroke="#fff" stroke-width="1" />
+                                            <line x1="58" y1="77" x2="58" y2="83" stroke="#fff" stroke-width="1" />
+                                            <line x1="47" y1="77" x2="47" y2="83" stroke="#fff" stroke-width="1" />
+                                            <line x1="36" y1="77" x2="36" y2="83" stroke="#fff" stroke-width="1" />
+                                            <line x1="25" y1="77" x2="25" y2="83" stroke="#fff" stroke-width="1" />
+                                            <line x1="14" y1="77" x2="14" y2="83" stroke="#fff" stroke-width="1" />
+                                            
+                                            <!-- Nucleus in the center -->
+                                            <circle cx="80" cy="80" r="3.5" fill="var(--accent-red)" style="filter: drop-shadow(0 0 3px var(--accent-red));" />
+                                            
+                                            <!-- Electron cloud dots generated via JS -->
+                                            <g id="cloud-dots" fill="var(--accent-cyan)" opacity="0.65"></g>
+                                            
+                                            <!-- Draggable pink circle boundary -->
+                                            <circle id="interactive-boundary" cx="80" cy="80" r="30.8" stroke="var(--accent-red)" stroke-width="2" fill="rgba(244, 63, 94, 0.12)" style="transition: none; pointer-events: none;" />
+                                            <!-- Draggable handle on x-axis -->
+                                            <circle id="boundary-handle" cx="110.8" cy="80" r="7" fill="var(--accent-red)" style="filter: drop-shadow(0 0 5px var(--accent-red)); cursor: ew-resize;" />
+                                        </svg>
+                                    </div>
+
+                                    <!-- Right: Radial Probability Curve and Area -->
+                                    <div style="position: relative; display: flex; flex-direction: column; align-items: center;">
+                                        <span style="font-size: 0.85rem; color: rgba(255,255,255,0.7); margin-bottom: 5px;">徑向機率分佈與積分面積 ($4\pi r^2\psi^2$)</span>
+                                        <svg id="svg-curve" viewBox="0 0 200 160" width="275" height="220" style="background: rgba(255,255,255,0.02); border: 1.5px solid rgba(255,255,255,0.08); border-radius: 16px;">
+                                            <!-- Axis lines -->
+                                            <line x1="20" y1="140" x2="190" y2="140" stroke="rgba(255,255,255,0.4)" stroke-width="1.5" /> <!-- X-axis -->
+                                            <line x1="20" y1="20" x2="20" y2="140" stroke="rgba(255,255,255,0.4)" stroke-width="1.5" />  <!-- Y-axis -->
+                                            
+                                            <!-- Y-axis Label -->
+                                            <text x="10" y="80" fill="rgba(255,255,255,0.6)" font-size="8.5" transform="rotate(-90 10 80)" text-anchor="middle">出現機率 P(r)</text>
+                                            
+                                            <!-- X-axis Labels (pm) -->
+                                            <text x="20" y="150" fill="rgba(255,255,255,0.5)" font-size="7.5" text-anchor="middle">0</text>
+                                            <text x="47.5" y="150" fill="rgba(255,255,255,0.5)" font-size="7.5" text-anchor="middle">50</text>
+                                            <text x="75" y="150" fill="rgba(255,255,255,0.5)" font-size="7.5" text-anchor="middle">100</text>
+                                            <text x="102.5" y="150" fill="rgba(255,255,255,0.5)" font-size="7.5" text-anchor="middle">150</text>
+                                            <text x="130" y="150" fill="rgba(255,255,255,0.5)" font-size="7.5" text-anchor="middle">200</text>
+                                            <text x="157.5" y="150" fill="rgba(255,255,255,0.5)" font-size="7.5" text-anchor="middle">250</text>
+                                            <text x="185" y="150" fill="rgba(255,255,255,0.5)" font-size="7.5" text-anchor="middle">300(pm)</text>
+                                            
+                                            <!-- Rest Area (unfilled remainder curve background) -->
+                                            <path id="curve-rest" fill="rgba(255, 255, 255, 0.05)" />
+                                            
+                                            <!-- Integrated Area (filled probability path) -->
+                                            <path id="curve-area" fill="rgba(34, 211, 238, 0.35)" />
+                                            
+                                            <!-- Main Curve Path -->
+                                            <path id="probability-curve" fill="none" stroke="var(--accent-yellow)" stroke-width="2.5" />
+                                            
+                                            <!-- Peak Indicator at 52.9pm -->
+                                            <circle cx="49.1" cy="30" r="3.5" fill="var(--accent-yellow)" style="filter: drop-shadow(0 0 3px var(--accent-yellow));" />
+                                            <line x1="49.1" y1="30" x2="49.1" y2="140" stroke="rgba(251, 191, 36, 0.3)" stroke-width="1" stroke-dasharray="2 2" />
+                                            
+                                            <!-- Current Radius Vertical Indicator line -->
+                                            <line id="current-r-line" x1="113" y1="20" x2="113" y2="140" stroke="var(--accent-red)" stroke-width="1.5" stroke-dasharray="2 2" />
+                                            <circle id="current-r-dot" cx="113" cy="80" r="4" fill="var(--accent-red)" />
+                                        </svg>
+                                    </div>
+                                </div>
+
+                                <!-- Dynamic Feedback Stats -->
+                                <div style="margin-top: 10px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 8px 12px; width: 100%; display: flex; justify-content: space-around; align-items: center; box-sizing: border-box; flex-shrink: 0;">
+                                    <div>
+                                        <span style="color: rgba(255,255,255,0.6); font-size: 0.85rem;">當前半徑 (r)：</span>
+                                        <strong id="stat-radius" style="color: var(--accent-red); font-size: 1.05rem;">140 pm</strong>
+                                    </div>
+                                    <div style="border-left: 1px solid rgba(255,255,255,0.15); height: 20px;"></div>
+                                    <div>
+                                        <span style="color: rgba(255,255,255,0.6); font-size: 0.85rem;">半徑內發現電子機率：</span>
+                                        <strong id="stat-probability" style="color: var(--accent-cyan); font-size: 1.1rem;">90.0%</strong>
+                                    </div>
+                                </div>
+                                <p style="font-size: 0.82rem; margin-top: 6px; color: rgba(255,255,255,0.45); margin-bottom: 0;">請滑動或觸控左側「電子雲」的紅色邊界，觀察右側機率圖譜的積分面積變化</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 2: 主量子數 -->
+                <div class="slide">
+                    <h1>量子數：主量子數 ($n$)</h1>
+                    <div class="grid-2">
+                        <div class="panel" style="border-color: var(--accent-blue);">
+                            <p><strong>數值：</strong>$n = 1, 2, 3, 4, ...$（正整數）</p>
+                            <p><strong>符號：</strong>K, L, M, N ...殼層</p>
+                            <div class="info-card">
+                                <p><strong>意義：</strong>決定電子的<strong>主要能量</strong>及電子與原子核間的<strong>平均距離</strong>。</p>
+                                <ul style="margin-left: 1.5rem; margin-top: 0.5rem; font-size: 1.1rem; line-height: 1.8;">
+                                    <li>$n$ 越大，軌域體積越大。</li>
+                                    <li>$n$ 越大，電子能量越高（離核越遠）。</li>
+                                    <li>決定了電子所在的「主殼層」(Principal shell)。</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="panel" style="justify-content: center; align-items: center;">
+                            <svg viewBox="0 0 320 200" style="width: 100%; max-width: 420px; filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.15));">
+                                <!-- Concentric dashed circles representing Bohr shells -->
+                                <circle cx="100" cy="105" r="30" fill="none" stroke="rgba(56, 189, 248, 0.4)" stroke-width="1.5" stroke-dasharray="3 3" />
+                                <circle cx="100" cy="105" r="60" fill="none" stroke="rgba(52, 211, 153, 0.3)" stroke-width="1.5" stroke-dasharray="4 4" />
+                                <circle cx="100" cy="105" r="90" fill="none" stroke="rgba(251, 191, 36, 0.2)" stroke-width="1.5" stroke-dasharray="5 5" />
+                                
+                                <!-- Nucleus in the center -->
+                                <circle cx="100" cy="105" r="12" fill="#f87171" />
+                                <text x="100" y="109" fill="#0f172a" font-size="11" text-anchor="middle" font-weight="900">核</text>
+                                
+                                <!-- Shell Labels -->
+                                <text x="100" y="70" fill="#38bdf8" font-size="10" text-anchor="middle" font-weight="bold">n=1 (K)</text>
+                                <text x="100" y="40" fill="#34d399" font-size="10" text-anchor="middle" font-weight="bold">n=2 (L)</text>
+                                <text x="100" y="10" fill="#fbbf24" font-size="10" text-anchor="middle" font-weight="bold">n=3 (M)</text>
+                                
+                                <!-- Electrons as glowing dots -->
+                                <!-- n=1 electron -->
+                                <circle cx="121" cy="84" r="4.5" fill="#38bdf8" filter="drop-shadow(0 0 4px #38bdf8)" />
+                                <!-- n=2 electron -->
+                                <circle cx="142" cy="63" r="4.5" fill="#34d399" filter="drop-shadow(0 0 4px #34d399)" />
+                                <!-- n=3 electron -->
+                                <circle cx="163" cy="41" r="4.5" fill="#fbbf24" filter="drop-shadow(0 0 4px #fbbf24)" />
+                                
+                                <!-- Horizontal arrow for Energy and Distance -->
+                                <line x1="120" y1="105" x2="295" y2="105" stroke="var(--accent-cyan)" stroke-width="3" marker-end="url(#arrow-cyan)" />
+                                
+                                <!-- Labels on the arrow -->
+                                <text x="210" y="93" fill="var(--accent-cyan)" font-size="11" font-weight="bold" text-anchor="middle">平均距離增加 (r ➔)</text>
+                                <text x="210" y="123" fill="var(--accent-yellow)" font-size="11" font-weight="bold" text-anchor="middle">主能階升高 (E ➔)</text>
+                                
+                                <defs>
+                                    <marker id="arrow-cyan" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+                                        <path d="M 0 0 L 8 4 L 0 8 Z" fill="var(--accent-cyan)" />
+                                    </marker>
+                                </defs>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 3: 角量子數 -->
+                <div class="slide">
+                    <h1>量子數：角量子數 ($l$)</h1>
+                    <div class="grid-2">
+                        <div class="panel" style="border-color: var(--accent-green); justify-content: space-between;">
+                            <div>
+                                <p>也稱<strong>軌域量子數</strong>，用以描述主殼層下的「副殼層」(Subshell)。</p>
+                                <p><strong>數值範圍：</strong>$l = 0, 1, 2, ..., (n-1)$</p>
+                                <p style="color: rgba(255,255,255,0.7); font-size: 1.1rem;">（對於主量子數 $n$，共有 $n$ 個可能的 $l$ 值）</p>
+                                <div class="info-card" style="margin: 0.4rem 0; padding: 0.8rem;">
+                                    <p><strong>意義：</strong>決定了軌域的<strong>空間形狀</strong>。</p>
+                                    <p style="font-size: 0.95rem; margin-top: 4px; color: rgba(255,255,255,0.8);">同一個主殼層中，$l$ 值越大，其副殼層的能階越高（即 $s < p < d < f$）。</p>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <h2 style="text-align: center; margin: 0.3rem 0; font-size: 1.1rem; color: var(--accent-yellow);">軌域形狀代號對照</h2>
+                                <table class="table-custom" style="font-size: 0.95rem; margin-top: 0;">
+                                    <tr>
+                                        <th>$l$ 值</th>
+                                        <th>代號</th>
+                                        <th>軌域形狀</th>
+                                    </tr>
+                                    <tr>
+                                        <td>0</td>
+                                        <td style="color: var(--accent-blue); font-weight: bold;">s 軌域</td>
+                                        <td>球型 (Spherical)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>1</td>
+                                        <td style="color: var(--accent-red); font-weight: bold;">p 軌域</td>
+                                        <td>啞鈴型 (Dumbbell)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>2</td>
+                                        <td style="color: var(--accent-yellow); font-weight: bold;">d 軌域</td>
+                                        <td>花瓣型</td>
+                                    </tr>
+                                    <tr>
+                                        <td>3</td>
+                                        <td style="color: var(--accent-purple); font-weight: bold;">f 軌域</td>
+                                        <td>複雜型</td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="panel" style="justify-content: space-between; align-items: center; position: relative; padding: 0.6rem 0.6rem;">
+                            <h2 style="text-align: center; font-size: 1.3rem; margin-bottom: 0.4rem; color: var(--accent-cyan); flex-shrink: 0; width: 100%;">原子軌域形狀示意圖</h2>
+                            
+                            <div style="display: grid; grid-template-columns: 1fr 1.15fr; gap: 0.5rem; width: 100%; flex: 1; min-height: 0; align-items: stretch;">
+                                <!-- Left column: s & p vertically stacked -->
+                                <div style="display: flex; flex-direction: column; gap: 0.5rem; justify-content: space-between;">
+                                    <!-- s orbital -->
+                                    <div style="position: relative; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 4px; flex: 1; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                                        <img src="s.png" style="height: 100%; width: 100%; object-fit: contain; border-radius: 6px;" alt="s orbital">
+                                        <div style="position: absolute; bottom: 6px; left: 50%; transform: translateX(-50%); background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 20px; padding: 2px 10px; backdrop-filter: blur(8px); text-align: center; white-space: nowrap; pointer-events: none;">
+                                            <span style="color: var(--accent-blue); font-weight: bold; font-size: 0.85rem;">s 軌域 (l=0) 球形</span>
+                                        </div>
+                                    </div>
+                                    <!-- p orbital -->
+                                    <div style="position: relative; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 4px; flex: 1; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                                        <img src="p.png" style="height: 100%; width: 100%; object-fit: contain; border-radius: 6px;" alt="p orbital">
+                                        <div style="position: absolute; bottom: 6px; left: 50%; transform: translateX(-50%); background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 20px; padding: 2px 10px; backdrop-filter: blur(8px); text-align: center; white-space: nowrap; pointer-events: none;">
+                                            <span style="color: var(--accent-red); font-weight: bold; font-size: 0.85rem;">p 軌域 (l=1) 啞鈴形</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Right column: d orbital full height -->
+                                <div style="position: relative; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 6px; display: flex; align-items: center; justify-content: center; flex: 1; overflow: hidden;">
+                                    <img src="d.png" style="height: 100%; width: 100%; object-fit: contain; border-radius: 6px;" alt="d orbital">
+                                    <div style="position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 20px; padding: 4px 15px; backdrop-filter: blur(8px); text-align: center; white-space: nowrap; pointer-events: none;">
+                                        <span style="color: var(--accent-yellow); font-weight: bold; font-size: 0.95rem;">d 軌域 (l=2) 花瓣與環形</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 4: 磁量子數 -->
+                <div class="slide">
+                    <h1>量子數：磁量子數 ($m$)</h1>
+                    <div class="grid-2">
+                        <div class="panel" style="border-color: var(--accent-purple);">
+                            <p><strong>數值範圍：</strong>$m = -l, ..., 0, ..., +l$</p>
+                            <p style="color: rgba(255,255,255,0.7); font-size: 1.1rem;">（對於給定的 $l$，共有 $2l + 1$ 個可能值）</p>
+                            <div class="info-card">
+                                <p><strong>意義：</strong>決定軌域在三維空間中的<strong>方向</strong>與<strong>個數</strong>。</p>
+                                <p style="font-size: 1rem; margin-top: 8px; color: rgba(255,255,255,0.7);">註：在無外加磁場下，$m$ 值對軌域的大小、形狀、能量不影響。</p>
+                            </div>
+                            
+                            <ul style="margin-left: 1.5rem; line-height: 1.8; font-size: 1.15rem;">
+                                <li>當 $l = 0$ (s軌域)：$m = 0$<br>
+                                    <span style="color: var(--accent-cyan);">➔ 只有 <strong>1</strong> 個方向（球狀對稱）</span>
+                                </li>
+                                <li>當 $l = 1$ (p軌域)：$m = -1, 0, +1$<br>
+                                    <span style="color: var(--accent-cyan);">➔ 有 <strong>3</strong> 個方向 ($p_x, p_y, p_z$)</span>
+                                </li>
+                                <li>當 $l = 2$ (d軌域)：$m = -2, -1, 0, +1, +2$<br>
+                                    <span style="color: var(--accent-cyan);">➔ 有 <strong>5</strong> 個方向</span>
+                                </li>
+                            </ul>
+                            
+                            <!-- External Link Button -->
+                            <div style="margin-top: auto; display: flex; justify-content: center; width: 100%; padding-top: 0.5rem;">
+                                <a href="javascript:void(0)" onclick="openOrbitronModal()" id="btn-orbitron-link" class="btn-action" style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px; background: linear-gradient(135deg, var(--accent-purple), #7c3aed); color: #fff; box-shadow: 0 4px 15px rgba(168, 85, 247, 0.4); font-size: 1.05rem; padding: 0.6rem 1.8rem; border-radius: 30px; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
+                                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                                        <polyline points="15 3 21 3 21 9"></polyline>
+                                        <line x1="10" y1="14" x2="21" y2="3"></line>
+                                    </svg>
+                                    量子數與波函數 (The Orbitron)
+                                </a>
+                            </div>
+                        </div>
+                        <div class="panel" style="justify-content: space-between; align-items: center; position: relative; padding: 0.6rem 0.6rem;">
+                            <h2 style="text-align: center; font-size: 1.3rem; margin-bottom: 0.4rem; color: var(--accent-cyan); flex-shrink: 0; width: 100%;">軌域空間伸展方向 ($2l+1$) 示意圖</h2>
+                            
+                            <div style="display: flex; flex-direction: column; gap: 0.5rem; width: 100%; flex: 1; min-height: 0; align-items: stretch;">
+                                <!-- l=0 -->
+                                <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 6px 6px 4px 6px; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden;">
+                                    <img src="l0.png" style="flex: 1; min-height: 0; max-height: 110px; width: 100%; object-fit: contain; border-radius: 6px;" alt="l=0">
+                                    <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; padding: 1px 12px; margin-top: 3px; text-align: center; white-space: nowrap; flex-shrink: 0;">
+                                        <span style="color: var(--accent-blue); font-weight: bold; font-size: 0.82rem;">l=0 (s 軌域) ➔ 1 個方向 (m=0)</span>
+                                    </div>
+                                </div>
+                                <!-- l=1 -->
+                                <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 6px 6px 4px 6px; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden;">
+                                    <img src="l1.png" style="flex: 1; min-height: 0; max-height: 110px; width: 100%; object-fit: contain; border-radius: 6px;" alt="l=1">
+                                    <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; padding: 1px 12px; margin-top: 3px; text-align: center; white-space: nowrap; flex-shrink: 0;">
+                                        <span style="color: var(--accent-red); font-weight: bold; font-size: 0.82rem;">l=1 (p 軌域) ➔ 3 個方向 (m=-1, 0, +1)</span>
+                                    </div>
+                                </div>
+                                <!-- l=2 -->
+                                <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 6px 6px 4px 6px; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden;">
+                                    <img src="l2.png" style="flex: 1; min-height: 0; max-height: 110px; width: 100%; object-fit: contain; border-radius: 6px;" alt="l=2">
+                                    <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; padding: 1px 12px; margin-top: 3px; text-align: center; white-space: nowrap; flex-shrink: 0;">
+                                        <span style="color: var(--accent-yellow); font-weight: bold; font-size: 0.82rem;">l=2 (d 軌域) ➔ 5 個方向 (m=-2, -1, 0, +1, +2)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 5: 旋量子數 -->
+                <div class="slide">
+                    <h1>量子數：旋量子數 ($s$ 或 $m_s$)</h1>
+                    <div class="grid-2">
+                        <div class="panel" style="border-color: var(--accent-yellow);">
+                            <p><strong>數值：</strong>僅有 $+\frac{1}{2}$ 與 $-\frac{1}{2}$ 兩個可能值</p>
+                            <div class="info-card">
+                                <p><strong>意義：</strong>表示電子在空間中<strong>自轉的方向</strong>。</p>
+                            </div>
+                            
+                            <p style="margin-top: 1.5rem; font-size: 1.15rem; line-height: 1.8;">
+                                在量子力學中，電子除了在軌域中運動外，本身也帶有「自旋」的內在性質。<br><br>
+                                自旋會產生微小的磁場。根據<strong>包立不相容原理</strong>，同一個軌域內最多只能容納<strong>兩個</strong>電子，且它們的自旋方向必須相反，使得磁性互相抵消。
+                            </p>
+                        </div>
+
+                        <div class="panel" style="justify-content: center; align-items: center; padding: 1rem 0.6rem;">
+                            <div class="svg-container" style="flex-direction: row; gap: 2rem; width: 100%; justify-content: center; align-items: center; flex: 1;">
+                                <!-- Spin Up -->
+                                <div style="display: flex; flex-direction: column; align-items: center;">
+                                    <svg viewBox="0 0 190 140" width="180" height="150" style="filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.25));">
+                                        <defs>
+                                            <!-- 3D Sphere Radial Gradient -->
+                                            <radialGradient id="blue-sphere" cx="35%" cy="35%" r="65%">
+                                                <stop offset="0%" stop-color="#e0f2fe" />
+                                                <stop offset="25%" stop-color="#38bdf8" />
+                                                <stop offset="70%" stop-color="#0284c7" />
+                                                <stop offset="100%" stop-color="#0369a1" />
+                                            </radialGradient>
+                                        </defs>
+                                        
+                                        <!-- Axis Line -->
+                                        <line x1="95" y1="120" x2="95" y2="22" stroke="#ffffff" stroke-width="2.5" stroke-dasharray="3 3" />
+                                        <!-- Vertical Axis White Arrowhead pointing straight UP -->
+                                        <polygon points="95,12 90,22 100,22" fill="#ffffff" />
+                                        
+                                        <!-- 3D Electron Sphere -->
+                                        <circle cx="95" cy="70" r="28" fill="url(#blue-sphere)" />
+                                        
+                                        <!-- Front Rotation Arc (left to right, ends slightly early) -->
+                                        <path d="M 67,70 A 28,9 0 0,0 116,75.5" fill="none" stroke="var(--accent-yellow)" stroke-width="3" stroke-linecap="round" />
+                                        <!-- Tilted Yellow Arrowhead (perfectly tangent to rotation curve) -->
+                                        <polygon points="121,70 112,74 117,79" fill="var(--accent-yellow)" />
+                                        
+                                        <!-- Labels inside SVG -->
+                                        <text x="95" y="12" fill="#ffffff" font-size="9.5" text-anchor="middle" font-weight="bold">自旋軸 / N極 (磁場向上)</text>
+                                        <text x="95" y="132" fill="rgba(255,255,255,0.6)" font-size="9.5" text-anchor="middle">S極</text>
+                                        <text x="129" y="73" fill="var(--accent-yellow)" font-size="9.5" font-weight="bold">逆時針自轉</text>
+                                    </svg>
+                                    <p style="font-size: 1.4rem; font-weight: bold; margin-top: 5px; color: var(--accent-blue);">$s = +\frac{1}{2}$</p>
+                                    <p style="font-size: 1.1rem; color: rgba(255,255,255,0.7);">自旋向上 ( $\uparrow$ )</p>
+                                </div>
+                                
+                                <!-- Spin Down -->
+                                <div style="display: flex; flex-direction: column; align-items: center;">
+                                    <svg viewBox="0 0 190 140" width="180" height="150" style="filter: drop-shadow(0 0 8px rgba(244, 63, 94, 0.25));">
+                                        <defs>
+                                            <!-- 3D Sphere Radial Gradient -->
+                                            <radialGradient id="red-sphere" cx="35%" cy="35%" r="65%">
+                                                <stop offset="0%" stop-color="#ffe4e6" />
+                                                <stop offset="25%" stop-color="#fb7185" />
+                                                <stop offset="70%" stop-color="#e11d48" />
+                                                <stop offset="100%" stop-color="#be123c" />
+                                            </radialGradient>
+                                        </defs>
+                                        
+                                        <!-- Axis Line -->
+                                        <line x1="95" y1="15" x2="95" y2="110" stroke="#ffffff" stroke-width="2.5" stroke-dasharray="3 3" />
+                                        <!-- Vertical Axis White Arrowhead pointing straight DOWN -->
+                                        <polygon points="95,120 90,110 100,110" fill="#ffffff" />
+                                        
+                                        <!-- 3D Electron Sphere -->
+                                        <circle cx="95" cy="70" r="28" fill="url(#red-sphere)" />
+                                        
+                                        <!-- Front Rotation Arc (right to left, ends slightly early) -->
+                                        <path d="M 123,70 A 28,9 0 0,0 74,75.5" fill="none" stroke="var(--accent-yellow)" stroke-width="3" stroke-linecap="round" />
+                                        <!-- Tilted Yellow Arrowhead (perfectly tangent to rotation curve) -->
+                                        <polygon points="69,70 78,74 73,79" fill="var(--accent-yellow)" />
+                                        
+                                        <!-- Labels inside SVG -->
+                                        <text x="95" y="12" fill="rgba(255,255,255,0.6)" font-size="9.5" text-anchor="middle">S極</text>
+                                        <text x="95" y="132" fill="#ffffff" font-size="9.5" text-anchor="middle" font-weight="bold">自旋軸 / N極 (磁場向下)</text>
+                                        <text x="61" y="73" fill="var(--accent-yellow)" font-size="9.5" font-weight="bold" text-anchor="end">順時針自轉</text>
+                                    </svg>
+                                    <p style="font-size: 1.4rem; font-weight: bold; margin-top: 5px; color: var(--accent-red);">$s = -\frac{1}{2}$</p>
+                                    <p style="font-size: 1.1rem; color: rgba(255,255,255,0.7);">自旋向下 ( $\downarrow$ )</p>
+                                </div>
+                            </div>
+                            
+                            <!-- Explanatory Legend Card -->
+                            <div style="margin-top: 15px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 10px 15px; width: 92%; font-size: 0.95rem; line-height: 1.6; flex-shrink: 0;">
+                                <div style="display: flex; align-items: flex-start; gap: 8px; margin-bottom: 6px;">
+                                    <span style="display: inline-block; width: 12px; height: 3px; background: #ffffff; border-radius: 2px; margin-top: 8px; flex-shrink: 0;"></span>
+                                    <p style="margin: 0; color: rgba(255,255,255,0.85);">
+                                        <strong style="color: #ffffff;">白色虛線與箭頭 (↑/↓)：</strong>
+                                        代表電子的<strong>自旋軸心</strong>與產生的<strong>磁極方向</strong>（自旋會使電子像一顆微小的電磁鐵，產生有方向性的微小磁場）。
+                                    </p>
+                                </div>
+                                <div style="display: flex; align-items: flex-start; gap: 8px;">
+                                    <span style="display: inline-block; width: 8px; height: 8px; border: 2px solid var(--accent-yellow); border-top-color: transparent; border-radius: 50%; margin-top: 5px; flex-shrink: 0;"></span>
+                                    <p style="margin: 0; color: rgba(255,255,255,0.85);">
+                                        <strong style="color: var(--accent-yellow);">黃色圓環與箭頭 (➔)：</strong>
+                                        代表電子的<strong>空間自轉方向</strong>（由自旋軸上方往下看：自旋向上為逆時針自轉，自旋向下為順時針自轉）。
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 6: 量子數與電子容量總結表 (14.png) -->
+                <div class="slide" id="slide-summary">
+                    <style>
+                        #slide-summary .panel {
+                            padding: 0.8rem 1.2rem !important;
+                        }
+                        #slide-summary h1 {
+                            margin-bottom: 0.4rem !important;
+                        }
+                        #table-wrapper {
+                            flex: 1;
+                            display: flex;
+                            flex-direction: column;
+                            min-height: 0;
+                            overflow: hidden;
+                            width: 100%;
+                        }
+                        #table-summary {
+                            width: 100%;
+                            height: 100%;
+                            border-collapse: collapse;
+                            text-align: center;
+                        }
+                        #table-summary th {
+                            font-size: 1.35rem !important;
+                            padding: 0.6vh 4px !important;
+                        }
+                        #table-summary td {
+                            font-size: 1.2rem !important;
+                            padding: 0.5vh 4px !important;
+                        }
+                        #table-summary td[rowspan] {
+                            font-weight: bold;
+                            font-size: 1.35rem !important;
+                        }
+                    </style>
+                    <h1>量子數與電子容量總匯</h1>
+                    <div class="panel" style="flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 1.2rem;">
+                        <div id="table-wrapper">
+                            <table id="table-summary" class="table-custom" style="width: 100%; height: 100%; border-collapse: collapse; text-align: center; font-size: 1.2rem;">
+                                <thead>
+                                    <tr style="background: rgba(255,255,255,0.06); border-bottom: 2px solid var(--accent-blue);">
+                                        <th style="padding: 12px; font-size: 1.15rem; color: var(--accent-cyan);">$n$ (主層)</th>
+                                        <th style="padding: 12px; font-size: 1.15rem; color: var(--accent-blue);">$l$ (副殼層)</th>
+                                        <th style="padding: 12px; font-size: 1.15rem; color: var(--accent-purple);">$m_l$ (磁量子數)</th>
+                                        <th style="padding: 12px; font-size: 1.15rem; color: var(--accent-yellow);">$m_s$ (旋量子數)</th>
+                                        <th style="padding: 12px; font-size: 1.15rem; color: var(--accent-green);">副殼層電子容量<br><span style="font-size: 0.9rem; opacity: 0.8;">($4l + 2$)</span></th>
+                                        <th style="padding: 12px; font-size: 1.15rem; color: var(--accent-red);">主殼層電子容量<br><span style="font-size: 0.9rem; opacity: 0.8;">($2n^2$)</span></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- n=1 -->
+                                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.08);">
+                                        <td rowspan="1" style="font-weight: bold; background: rgba(56, 189, 248, 0.05); font-size: 1.2rem; border-right: 1px solid rgba(255,255,255,0.05);">1</td>
+                                        <td style="color: var(--accent-blue);">0 (1s)</td>
+                                        <td>0</td>
+                                        <td>$+\frac{1}{2}, -\frac{1}{2}$</td>
+                                        <td style="color: var(--accent-green); font-weight: bold;">2</td>
+                                        <td rowspan="1" style="color: var(--accent-red); font-weight: bold; font-size: 1.2rem; background: rgba(244, 63, 94, 0.03); border-left: 1px solid rgba(255,255,255,0.05);">2</td>
+                                    </tr>
+                                    <!-- n=2 -->
+                                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.08);">
+                                        <td rowspan="2" style="font-weight: bold; background: rgba(56, 189, 248, 0.05); font-size: 1.2rem; border-right: 1px solid rgba(255,255,255,0.05);">2</td>
+                                        <td style="color: var(--accent-blue);">0 (2s)</td>
+                                        <td>0</td>
+                                        <td>$+\frac{1}{2}, -\frac{1}{2}$</td>
+                                        <td style="color: var(--accent-green); font-weight: bold;">2</td>
+                                        <td rowspan="2" style="color: var(--accent-red); font-weight: bold; font-size: 1.2rem; background: rgba(244, 63, 94, 0.03); border-left: 1px solid rgba(255,255,255,0.05);">8</td>
+                                    </tr>
+                                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.08);">
+                                        <td style="color: var(--accent-blue);">1 (2p)</td>
+                                        <td>$-1, 0, +1$</td>
+                                        <td>每個 $m_l$ 各有 $\pm\frac{1}{2}$</td>
+                                        <td style="color: var(--accent-green); font-weight: bold;">6</td>
+                                    </tr>
+                                    <!-- n=3 -->
+                                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.08);">
+                                        <td rowspan="3" style="font-weight: bold; background: rgba(56, 189, 248, 0.05); font-size: 1.2rem; border-right: 1px solid rgba(255,255,255,0.05);">3</td>
+                                        <td style="color: var(--accent-blue);">0 (3s)</td>
+                                        <td>0</td>
+                                        <td>$+\frac{1}{2}, -\frac{1}{2}$</td>
+                                        <td style="color: var(--accent-green); font-weight: bold;">2</td>
+                                        <td rowspan="3" style="color: var(--accent-red); font-weight: bold; font-size: 1.2rem; background: rgba(244, 63, 94, 0.03); border-left: 1px solid rgba(255,255,255,0.05);">18</td>
+                                    </tr>
+                                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.08);">
+                                        <td style="color: var(--accent-blue);">1 (3p)</td>
+                                        <td>$-1, 0, +1$</td>
+                                        <td>每個 $m_l$ 各有 $\pm\frac{1}{2}$</td>
+                                        <td style="color: var(--accent-green); font-weight: bold;">6</td>
+                                    </tr>
+                                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.08);">
+                                        <td style="color: var(--accent-blue);">2 (3d)</td>
+                                        <td>$-2, -1, 0, +1, +2$</td>
+                                        <td>每個 $m_l$ 各有 $\pm\frac{1}{2}$</td>
+                                        <td style="color: var(--accent-green); font-weight: bold;">10</td>
+                                    </tr>
+                                    <!-- n=4 -->
+                                    <tr style="border-bottom: 2px solid var(--accent-blue);">
+                                        <td rowspan="4" style="font-weight: bold; background: rgba(56, 189, 248, 0.05); font-size: 1.2rem; border-right: 1px solid rgba(255,255,255,0.05);">4</td>
+                                        <td style="color: var(--accent-blue);">0 (4s)</td>
+                                        <td>0</td>
+                                        <td>$+\frac{1}{2}, -\frac{1}{2}$</td>
+                                        <td style="color: var(--accent-green); font-weight: bold;">2</td>
+                                        <td rowspan="4" style="color: var(--accent-red); font-weight: bold; font-size: 1.2rem; background: rgba(244, 63, 94, 0.03); border-left: 1px solid rgba(255,255,255,0.05);">32</td>
+                                    </tr>
+                                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.08);">
+                                        <td style="color: var(--accent-blue);">1 (4p)</td>
+                                        <td>$-1, 0, +1$</td>
+                                        <td>每個 $m_l$ 各有 $\pm\frac{1}{2}$</td>
+                                        <td style="color: var(--accent-green); font-weight: bold;">6</td>
+                                    </tr>
+                                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.08);">
+                                        <td style="color: var(--accent-blue);">2 (4d)</td>
+                                        <td>$-2, -1, 0, +1, +2$</td>
+                                        <td>每個 $m_l$ 各有 $\pm\frac{1}{2}$</td>
+                                        <td style="color: var(--accent-green); font-weight: bold;">10</td>
+                                    </tr>
+                                    <tr style="border-bottom: 2px solid var(--accent-blue);">
+                                        <td style="color: var(--accent-blue);">3 (4f)</td>
+                                        <td>$-3, -2, -1, 0, +1, +2, +3$</td>
+                                        <td>每個 $m_l$ 各有 $\pm\frac{1}{2}$</td>
+                                        <td style="color: var(--accent-green); font-weight: bold;">14</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Bottom Note Card -->
+                        <div style="margin-top: 10px; background: rgba(56, 189, 248, 0.05); border: 1.5px solid rgba(56, 189, 248, 0.2); border-radius: 12px; padding: 10px 18px; width: 100%; box-sizing: border-box; flex-shrink: 0; display: flex; align-items: center; gap: 12px; filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.1));">
+                            <span style="font-size: 1.8rem; line-height: 1; flex-shrink: 0;">💡</span>
+                            <p style="margin: 0; font-size: 1.12rem; color: #e2e8f0; font-weight: 500; line-height: 1.5;">
+                                <strong style="color: var(--accent-cyan);">極重要規律總結：</strong>
+                                主量子數為 <strong style="color: var(--accent-yellow); font-size: 1.25rem;">$n$</strong>，則有 <strong style="color: var(--accent-yellow); font-size: 1.25rem;">$n$</strong> 種副殼層；
+                                同一主殼層中共有 <strong style="color: var(--accent-yellow); font-size: 1.25rem;">$n^2$</strong> 個軌域；
+                                最多可容納 <strong style="color: var(--accent-red); font-size: 1.25rem;">$2n^2$</strong> 個電子！
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 7: 各電子軌域的能階對照圖 (15.png & 16.png) -->
+                <div class="slide">
+                    <h1>電子軌域能階：單電子 vs 多電子對照</h1>
+                    <div class="grid-2" style="gap: 1.2rem;">
+                        <!-- Left Panel: Single-electron -->
+                        <div class="panel" style="border-color: var(--accent-cyan); display: flex; flex-direction: column; justify-content: space-between;">
+                            <div>
+                                <h2 style="color: var(--accent-cyan); text-align: center; margin-bottom: 4px;">(一) 單電子原子 (類氫原子如 H)</h2>
+                                <p style="font-size: 0.95rem; margin-bottom: 10px; color: rgba(255,255,255,0.7); text-align: center;">
+                                    軌域能量<strong>僅由主量子數 $n$ 決定</strong>，同主殼層的軌域為簡併態 (Degenerate)
+                                </p>
+                            </div>
+                            
+                            <!-- Single electron SVG -->
+                            <div style="flex: 1; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.15); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); padding: 8px;">
+                                <svg viewBox="0 0 320 270" style="width: 100%; height: 100%; max-height: 450px;">
+                                    <!-- Axes -->
+                                    <line x1="30" y1="240" x2="30" y2="20" stroke="#ffffff" stroke-width="1.8" />
+                                    <polygon points="30,10 26,22 34,22" fill="#ffffff" />
+                                    <text x="15" y="25" fill="#ffffff" font-size="10.5" font-weight="bold" text-anchor="middle">高</text>
+                                    <text x="15" y="125" fill="rgba(255,255,255,0.6)" font-size="10" text-anchor="middle">能</text>
+                                    <text x="15" y="142" fill="rgba(255,255,255,0.6)" font-size="10" text-anchor="middle">量</text>
+                                    <text x="15" y="242" fill="#ffffff" font-size="10.5" font-weight="bold" text-anchor="middle">低</text>
+                                    
+                                    <!-- Grid levels lines -->
+                                    <line x1="30" y1="50" x2="310" y2="50" stroke="rgba(255,255,255,0.06)" stroke-width="1" stroke-dasharray="2 2" />
+                                    <line x1="30" y1="110" x2="310" y2="110" stroke="rgba(255,255,255,0.06)" stroke-width="1" stroke-dasharray="2 2" />
+                                    <line x1="30" y1="170" x2="310" y2="170" stroke="rgba(255,255,255,0.06)" stroke-width="1" stroke-dasharray="2 2" />
+                                    <line x1="30" y1="230" x2="310" y2="230" stroke="rgba(255,255,255,0.06)" stroke-width="1" stroke-dasharray="2 2" />
+                                    
+                                    <!-- n=4 level -->
+                                    <text x="38" y="44" fill="#cbd5e1" font-size="10" font-weight="bold">n=4</text>
+                                    <!-- 4s (red) -->
+                                    <line x1="45" y1="50" x2="60" y2="50" stroke="var(--accent-red)" stroke-width="3.5" stroke-linecap="round" />
+                                    <text x="52.5" y="62" fill="var(--accent-red)" font-size="8.5" text-anchor="middle" font-weight="bold">4s</text>
+                                    <!-- 4p (orange, 3 dashes) -->
+                                    <line x1="75" y1="50" x2="87" y2="50" stroke="var(--accent-yellow)" stroke-width="3" stroke-linecap="round" />
+                                    <line x1="92" y1="50" x2="104" y2="50" stroke="var(--accent-yellow)" stroke-width="3" stroke-linecap="round" />
+                                    <line x1="109" y1="50" x2="121" y2="50" stroke="var(--accent-yellow)" stroke-width="3" stroke-linecap="round" />
+                                    <text x="98" y="62" fill="var(--accent-yellow)" font-size="8.5" text-anchor="middle" font-weight="bold">4p</text>
+                                    <!-- 4d (green, 5 dashes) -->
+                                    <line x1="136" y1="50" x2="146" y2="50" stroke="var(--accent-green)" stroke-width="2.5" />
+                                    <line x1="150" y1="50" x2="160" y2="50" stroke="var(--accent-green)" stroke-width="2.5" />
+                                    <line x1="164" y1="50" x2="174" y2="50" stroke="var(--accent-green)" stroke-width="2.5" />
+                                    <line x1="178" y1="50" x2="188" y2="50" stroke="var(--accent-green)" stroke-width="2.5" />
+                                    <line x1="192" y1="50" x2="202" y2="50" stroke="var(--accent-green)" stroke-width="2.5" />
+                                    <text x="169" y="62" fill="var(--accent-green)" font-size="8.5" text-anchor="middle" font-weight="bold">4d</text>
+                                    <!-- 4f (blue, 7 dashes) -->
+                                    <line x1="216" y1="50" x2="224" y2="50" stroke="var(--accent-blue)" stroke-width="2" />
+                                    <line x1="228" y1="50" x2="236" y2="50" stroke="var(--accent-blue)" stroke-width="2" />
+                                    <line x1="240" y1="50" x2="248" y2="50" stroke="var(--accent-blue)" stroke-width="2" />
+                                    <line x1="252" y1="50" x2="260" y2="50" stroke="var(--accent-blue)" stroke-width="2" />
+                                    <line x1="264" y1="50" x2="272" y2="50" stroke="var(--accent-blue)" stroke-width="2" />
+                                    <line x1="276" y1="50" x2="284" y2="50" stroke="var(--accent-blue)" stroke-width="2" />
+                                    <line x1="288" y1="50" x2="296" y2="50" stroke="var(--accent-blue)" stroke-width="2" />
+                                    <text x="256" y="62" fill="var(--accent-blue)" font-size="8.5" text-anchor="middle" font-weight="bold">4f</text>
+                                    
+                                    <!-- n=3 level -->
+                                    <text x="38" y="104" fill="#cbd5e1" font-size="10" font-weight="bold">n=3</text>
+                                    <!-- 3s (red) -->
+                                    <line x1="45" y1="110" x2="60" y2="110" stroke="var(--accent-red)" stroke-width="3.5" stroke-linecap="round" />
+                                    <text x="52.5" y="122" fill="var(--accent-red)" font-size="8.5" text-anchor="middle" font-weight="bold">3s</text>
+                                    <!-- 3p (orange) -->
+                                    <line x1="75" y1="110" x2="87" y2="110" stroke="var(--accent-yellow)" stroke-width="3" stroke-linecap="round" />
+                                    <line x1="92" y1="110" x2="104" y2="110" stroke="var(--accent-yellow)" stroke-width="3" stroke-linecap="round" />
+                                    <line x1="109" y1="110" x2="121" y2="110" stroke="var(--accent-yellow)" stroke-width="3" stroke-linecap="round" />
+                                    <text x="98" y="122" fill="var(--accent-yellow)" font-size="8.5" text-anchor="middle" font-weight="bold">3p</text>
+                                    <!-- 3d (green) -->
+                                    <line x1="136" y1="110" x2="146" y2="110" stroke="var(--accent-green)" stroke-width="2.5" />
+                                    <line x1="150" y1="110" x2="160" y2="110" stroke="var(--accent-green)" stroke-width="2.5" />
+                                    <line x1="164" y1="110" x2="174" y2="110" stroke="var(--accent-green)" stroke-width="2.5" />
+                                    <line x1="178" y1="110" x2="188" y2="110" stroke="var(--accent-green)" stroke-width="2.5" />
+                                    <line x1="192" y1="110" x2="202" y2="110" stroke="var(--accent-green)" stroke-width="2.5" />
+                                    <text x="169" y="122" fill="var(--accent-green)" font-size="8.5" text-anchor="middle" font-weight="bold">3d</text>
+                                    
+                                    <!-- n=2 level -->
+                                    <text x="38" y="164" fill="#cbd5e1" font-size="10" font-weight="bold">n=2</text>
+                                    <!-- 2s (red) -->
+                                    <line x1="45" y1="170" x2="60" y2="170" stroke="var(--accent-red)" stroke-width="3.5" stroke-linecap="round" />
+                                    <text x="52.5" y="182" fill="var(--accent-red)" font-size="8.5" text-anchor="middle" font-weight="bold">2s</text>
+                                    <!-- 2p (orange) -->
+                                    <line x1="75" y1="170" x2="87" y2="170" stroke="var(--accent-yellow)" stroke-width="3" stroke-linecap="round" />
+                                    <line x1="92" y1="170" x2="104" y2="170" stroke="var(--accent-yellow)" stroke-width="3" stroke-linecap="round" />
+                                    <line x1="109" y1="170" x2="121" y2="170" stroke="var(--accent-yellow)" stroke-width="3" stroke-linecap="round" />
+                                    <text x="98" y="182" fill="var(--accent-yellow)" font-size="8.5" text-anchor="middle" font-weight="bold">2p</text>
+                                    
+                                    <!-- n=1 level -->
+                                    <text x="38" y="224" fill="#cbd5e1" font-size="10" font-weight="bold">n=1</text>
+                                    <!-- 1s (red) -->
+                                    <line x1="45" y1="230" x2="60" y2="230" stroke="var(--accent-red)" stroke-width="3.5" stroke-linecap="round" />
+                                    <text x="52.5" y="242" fill="var(--accent-red)" font-size="8.5" text-anchor="middle" font-weight="bold">1s</text>
+                                </svg>
+                            </div>
+                            
+                            <div class="info-card" style="font-size: 1rem; text-align: center; border-color: var(--accent-cyan); padding: 8px; margin-top: 10px; margin-bottom: 0;">
+                                能階高低：$1s < 2s = 2p < 3s = 3p = 3d < 4s = ...$
+                            </div>
+                        </div>
+                        
+                        <!-- Right Panel: Multi-electron -->
+                        <div class="panel" style="border-color: var(--accent-red); display: flex; flex-direction: column; justify-content: space-between;">
+                            <div>
+                                <h2 style="color: var(--accent-red); text-align: center; margin-bottom: 4px;">(二) 多電子原子系統</h2>
+                                <p style="font-size: 0.95rem; margin-bottom: 10px; color: rgba(255,255,255,0.7); text-align: center;">
+                                    受同電性遮蔽 (Shielding) 影響，能量隨 <strong style="color: var(--accent-yellow); font-size: 1rem;">$(n+l)$</strong> 規則分裂與交錯
+                                </p>
+                            </div>
+                            
+                            <!-- Multi electron SVG with glowing 3D spheres -->
+                            <div style="flex: 1; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.15); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); padding: 8px;">
+                                <svg viewBox="0 0 320 270" style="width: 100%; height: 100%; max-height: 450px;">
+                                    <defs>
+                                        <!-- Radial gradients for 3D spheres (colored by shell n) -->
+                                        <!-- n=1: Cyan -->
+                                        <radialGradient id="n1-sphere" cx="35%" cy="35%" r="65%">
+                                            <stop offset="0%" stop-color="#e0f2fe" />
+                                            <stop offset="35%" stop-color="#38bdf8" />
+                                            <stop offset="100%" stop-color="#0369a1" />
+                                        </radialGradient>
+                                        <!-- n=2: Red/Orange -->
+                                        <radialGradient id="n2-sphere" cx="35%" cy="35%" r="65%">
+                                            <stop offset="0%" stop-color="#ffe4e6" />
+                                            <stop offset="35%" stop-color="#fb7185" />
+                                            <stop offset="100%" stop-color="#be123c" />
+                                        </radialGradient>
+                                        <!-- n=3: Blue -->
+                                        <radialGradient id="n3-sphere" cx="35%" cy="35%" r="65%">
+                                            <stop offset="0%" stop-color="#dbeafe" />
+                                            <stop offset="35%" stop-color="#60a5fa" />
+                                            <stop offset="100%" stop-color="#1d4ed8" />
+                                        </radialGradient>
+                                        <!-- n=4: Yellow -->
+                                        <radialGradient id="n4-sphere" cx="35%" cy="35%" r="65%">
+                                            <stop offset="0%" stop-color="#fef9c3" />
+                                            <stop offset="35%" stop-color="#facc15" />
+                                            <stop offset="100%" stop-color="#ca8a04" />
+                                        </radialGradient>
+                                        <!-- n=5: Green -->
+                                        <radialGradient id="n5-sphere" cx="35%" cy="35%" r="65%">
+                                            <stop offset="0%" stop-color="#dcfce7" />
+                                            <stop offset="35%" stop-color="#4ade80" />
+                                            <stop offset="100%" stop-color="#16a34a" />
+                                        </radialGradient>
+                                        <!-- n=6: Pink -->
+                                        <radialGradient id="n6-sphere" cx="35%" cy="35%" r="65%">
+                                            <stop offset="0%" stop-color="#fce7f3" />
+                                            <stop offset="35%" stop-color="#f472b6" />
+                                            <stop offset="100%" stop-color="#db2777" />
+                                        </radialGradient>
+                                    </defs>
+                                    
+                                    <!-- Axes -->
+                                    <line x1="30" y1="240" x2="30" y2="20" stroke="#ffffff" stroke-width="1.8" />
+                                    <polygon points="30,10 26,22 34,22" fill="#ffffff" />
+                                    <text x="15" y="25" fill="#ffffff" font-size="10.5" font-weight="bold" text-anchor="middle">高</text>
+                                    <text x="15" y="125" fill="rgba(255,255,255,0.6)" font-size="10" text-anchor="middle">能</text>
+                                    <text x="15" y="142" fill="rgba(255,255,255,0.6)" font-size="10" text-anchor="middle">量</text>
+                                    <text x="15" y="242" fill="#ffffff" font-size="10.5" font-weight="bold" text-anchor="middle">低</text>
+                                    
+                                    <!-- Subshell Shelves with spheres as in 16.png -->
+                                    
+                                    <!-- 6s (pink) y=30 -->
+                                    <text x="43" y="33" fill="#cbd5e1" font-size="9" text-anchor="end" font-weight="bold">6s</text>
+                                    <line x1="47" y1="30" x2="57" y2="30" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" />
+                                    <circle cx="52" cy="30" r="4.5" fill="url(#n6-sphere)" />
+                                    
+                                    <!-- 5p (green) y=45 -->
+                                    <text x="73" y="48" fill="#cbd5e1" font-size="9" text-anchor="end" font-weight="bold">5p</text>
+                                    <line x1="77" y1="45" x2="107" y2="45" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" />
+                                    <circle cx="82" cy="45" r="4.5" fill="url(#n5-sphere)" />
+                                    <circle cx="92" cy="45" r="4.5" fill="url(#n5-sphere)" />
+                                    <circle cx="102" cy="45" r="4.5" fill="url(#n5-sphere)" />
+                                    
+                                    <!-- 4d (yellow) y=60 -->
+                                    <text x="123" y="63" fill="#cbd5e1" font-size="9" text-anchor="end" font-weight="bold">4d</text>
+                                    <line x1="127" y1="60" x2="183" y2="60" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" />
+                                    <circle cx="132" cy="60" r="4.5" fill="url(#n4-sphere)" />
+                                    <circle cx="142" cy="60" r="4.5" fill="url(#n4-sphere)" />
+                                    <circle cx="152" cy="60" r="4.5" fill="url(#n4-sphere)" />
+                                    <circle cx="162" cy="60" r="4.5" fill="url(#n4-sphere)" />
+                                    <circle cx="172" cy="60" r="4.5" fill="url(#n4-sphere)" />
+                                    
+                                    <!-- 5s (green) y=80 -->
+                                    <text x="43" y="83" fill="#cbd5e1" font-size="9" text-anchor="end" font-weight="bold">5s</text>
+                                    <line x1="47" y1="80" x2="57" y2="80" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" />
+                                    <circle cx="52" cy="80" r="4.5" fill="url(#n5-sphere)" />
+                                    
+                                    <!-- 4p (yellow) y=95 -->
+                                    <text x="73" y="98" fill="#cbd5e1" font-size="9" text-anchor="end" font-weight="bold">4p</text>
+                                    <line x1="77" y1="95" x2="107" y2="95" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" />
+                                    <circle cx="82" cy="95" r="4.5" fill="url(#n4-sphere)" />
+                                    <circle cx="92" cy="95" r="4.5" fill="url(#n4-sphere)" />
+                                    <circle cx="102" cy="95" r="4.5" fill="url(#n4-sphere)" />
+                                    
+                                    <!-- 3d (blue - Shielding crossover!) y=115 -->
+                                    <text x="123" y="118" fill="#cbd5e1" font-size="9" text-anchor="end" font-weight="bold">3d</text>
+                                    <line x1="127" y1="115" x2="183" y2="115" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" />
+                                    <circle cx="132" cy="115" r="4.5" fill="url(#n3-sphere)" />
+                                    <circle cx="142" cy="115" r="4.5" fill="url(#n3-sphere)" />
+                                    <circle cx="152" cy="115" r="4.5" fill="url(#n3-sphere)" />
+                                    <circle cx="162" cy="115" r="4.5" fill="url(#n3-sphere)" />
+                                    <circle cx="172" cy="115" r="4.5" fill="url(#n3-sphere)" />
+                                    
+                                    <!-- 4s (yellow) y=130 -->
+                                    <text x="43" y="133" fill="#cbd5e1" font-size="9" text-anchor="end" font-weight="bold">4s</text>
+                                    <line x1="47" y1="130" x2="57" y2="130" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" />
+                                    <circle cx="52" cy="130" r="4.5" fill="url(#n4-sphere)" />
+                                    
+                                    <!-- 3p (blue) y=150 -->
+                                    <text x="73" y="153" fill="#cbd5e1" font-size="9" text-anchor="end" font-weight="bold">3p</text>
+                                    <line x1="77" y1="150" x2="107" y2="150" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" />
+                                    <circle cx="82" cy="150" r="4.5" fill="url(#n3-sphere)" />
+                                    <circle cx="92" cy="150" r="4.5" fill="url(#n3-sphere)" />
+                                    <circle cx="102" cy="150" r="4.5" fill="url(#n3-sphere)" />
+                                    
+                                    <!-- 3s (blue) y=168 -->
+                                    <text x="43" y="171" fill="#cbd5e1" font-size="9" text-anchor="end" font-weight="bold">3s</text>
+                                    <line x1="47" y1="168" x2="57" y2="168" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" />
+                                    <circle cx="52" cy="168" r="4.5" fill="url(#n3-sphere)" />
+                                    
+                                    <!-- 2p (red) y=190 -->
+                                    <text x="73" y="193" fill="#cbd5e1" font-size="9" text-anchor="end" font-weight="bold">2p</text>
+                                    <line x1="77" y1="190" x2="107" y2="190" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" />
+                                    <circle cx="82" cy="190" r="4.5" fill="url(#n2-sphere)" />
+                                    <circle cx="92" cy="190" r="4.5" fill="url(#n2-sphere)" />
+                                    <circle cx="102" cy="190" r="4.5" fill="url(#n2-sphere)" />
+                                    
+                                    <!-- 2s (red) y=208 -->
+                                    <text x="43" y="211" fill="#cbd5e1" font-size="9" text-anchor="end" font-weight="bold">2s</text>
+                                    <line x1="47" y1="208" x2="57" y2="208" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" />
+                                    <circle cx="52" cy="208" r="4.5" fill="url(#n2-sphere)" />
+                                    
+                                    <!-- 1s (cyan) y=235 -->
+                                    <text x="43" y="238" fill="#cbd5e1" font-size="9" text-anchor="end" font-weight="bold">1s</text>
+                                    <line x1="47" y1="235" x2="57" y2="235" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" />
+                                    <circle cx="52" cy="235" r="4.5" fill="url(#n1-sphere)" />
+                                </svg>
+                            </div>
+                            
+                            <div class="info-card" style="font-size: 1rem; text-align: center; border-color: var(--accent-red); padding: 8px; margin-top: 10px; margin-bottom: 0;">
+                                能階分裂：$1s < 2s < 2p < 3s < 3p < \mathbf{4s < 3d} < 4p ...$
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 6: Example 1 -->
+                <div class="slide">
+                    <h1>範例練習 1</h1>
+                    <div class="panel" style="position: relative; flex: 1;">
+                        <div class="ans-overlay" id="ans-1">
+                            <h2>解析步驟</h2>
+                            <div style="font-size: 1.25rem; line-height: 1.8; margin-top: 1rem;">
+                                1. 軌域量子數 $l$ 的可能範圍為 $0, 1, 2, ..., (n-1)$。<br>
+                                2. 各選項分析：<br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;(A) 2s：$n=2$, $l=0$。($0 < 2$)，合理。<br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;(B) 4f：$n=4$, $l=3$。($3 < 4$)，合理。<br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;(C) 2d：$n=2$, $l=2$。($l$ 必須小於 $n$，故 $l=2$ <strong>不可能存在</strong>)。<br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;(D) 7p：$n=7$, $l=1$。($1 < 7$)，合理。<br>
+                                <br><br>
+                                <strong style="color: var(--accent-green); font-size: 1.6rem;">答案：(C) 2d</strong>
+                            </div>
+                            <button class="btn-action" onclick="toggleAns('ans-1')">返回題目</button>
+                        </div>
+                        <h2>不存在的軌域判斷</h2>
+                        <p style="font-size: 1.5rem; margin-top: 1rem;">
+                            依量子力學，下列何種軌域<strong>不存在</strong>？<br>
+                        </p>
+                        <div style="display: flex; gap: 2.5rem; margin-top: 1.5rem; font-size: 1.5rem; justify-content: flex-start; margin-left: 2rem;">
+                            <span>(A) 2s</span> <span>(B) 4f</span> <span>(C) 2d</span> <span>(D) 7p</span>
+                        </div>
+                        <button class="btn-action" style="margin-top: auto;" onclick="toggleAns('ans-1')">顯示解題過程</button>
+                    </div>
+                </div>
+
+                <!-- Slide 7: Example 2 -->
+                <div class="slide">
+                    <h1>範例練習 2</h1>
+                    <div class="panel" style="position: relative; flex: 1;">
+                        <div class="ans-overlay" id="ans-2">
+                            <h2>解析步驟</h2>
+                            <div style="font-size: 1.25rem; line-height: 1.8; margin-top: 1rem;">
+                                1. 判斷軌域符號對應的量子數：<br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;「3p」軌域代表主量子數 $n = 3$。<br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;「p」副殼層代表角量子數 $l = 1$。<br>
+                                2. 判斷磁量子數 $m$ 與旋量子數 $s$ 的合理範圍：<br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;$m$ 必須在 $-l$ 到 $+l$ 之間，因此 $m = -1, 0, +1$。<br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;$s$ 只能是 $+\frac{1}{2}$ 或 $-\frac{1}{2}$。<br>
+                                3. 檢查選項：<br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;(A) $l=2$ (錯，應為1)<br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;(B) $l=3$ (錯，應為1)<br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;(C) $l=2$ (錯，應為1)<br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;(D) $n=3$, $l=1$, $m=-1$, $s=+\frac{1}{2}$ (完全符合)<br>
+                                <br><br>
+                                <strong style="color: var(--accent-green); font-size: 1.6rem;">答案：(D)</strong>
+                            </div>
+                            <button class="btn-action" onclick="toggleAns('ans-2')">返回題目</button>
+                        </div>
+                        <h2>量子數的合理性組合</h2>
+                        <p style="font-size: 1.5rem; margin-top: 1rem;">
+                            對於一個 <strong>3p 軌域</strong>上的電子，其四個量子數 $(n, l, m, s)$，哪一組可能存在？<br>
+                        </p>
+                        <ul style="list-style: none; margin-top: 1rem; font-size: 1.3rem; line-height: 2;">
+                            <li>(A) $n=3$，$l=2$，$m=-1$，$s=+\frac{1}{2}$</li>
+                            <li>(B) $n=3$，$l=3$，$m=0$，$s=-\frac{1}{2}$</li>
+                            <li>(C) $n=3$，$l=2$，$m=+2$，$s=-\frac{1}{2}$</li>
+                            <li>(D) $n=3$，$l=1$，$m=-1$，$s=+\frac{1}{2}$</li>
+                        </ul>
+                        <button class="btn-action" style="margin-top: auto;" onclick="toggleAns('ans-2')">顯示解題過程</button>
+                    </div>
+                </div>
+
+                <!-- Slide 8: Unit Challenge -->
+                <div class="slide" id="slide-game">
+                    <h1 style="color: var(--accent-purple);">單元挑戰：觀念連連看</h1>
+                    <div style="flex:1; position: relative; background: rgba(0,0,0,0.2); border-radius: 20px; overflow: hidden; margin-top: 0.5rem;">
+                        <svg id="game-svg" style="position: absolute; width: 100%; height: 100%; pointer-events: none; z-index: 5;"></svg>
+                        <div style="display: flex; justify-content: space-between; height: 100%; padding: 20px 40px; z-index: 10; position: relative;">
+                            <div id="left-column" style="width: 38%; display: flex; flex-direction: column; justify-content: space-around; gap: 8px;"></div>
+                            <div id="right-column" style="width: 38%; display: flex; flex-direction: column; justify-content: space-around; gap: 8px;"></div>
+                        </div>
+                        <div id="game-feedback" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--accent-green); color: #000; padding: 2rem 4rem; border-radius: 20px; font-size: 2.5rem; font-weight: 900; z-index: 100;">🎉 恭喜完成！</div>
+                    </div>
+                    <div style="text-align: center; margin-top: 1rem;">
+                        <button class="btn-action" style="background: var(--glass); border: 1px solid var(--accent-blue); color: white;" onclick="resetGame()">重新挑戰</button>
+                    </div>
+                </div>
+
+            </div>
+
+            <canvas id="drawing-layer"></canvas>
+        </div>
+
+        <div id="slide-info">1 / 10</div>
+
+        <!-- Floating Toolbar -->
+        <div id="toolbar">
+            <div id="drag-handle">≡</div>
+            <button class="btn-tool" id="btn-prev" title="上一頁">▲</button>
+            <button class="btn-tool" id="btn-next" title="下一頁">▼</button>
+            <div style="height: 1px; width: 30px; background: rgba(255,255,255,0.2); margin: 5px 0;"></div>
+            
+            <button class="btn-tool" id="btn-draw" title="手寫功能">✎</button>
+            
+            <div id="color-picker" style="display: none; flex-direction: column; gap: 8px; margin-top: 5px;">
+                <div class="color-dot" style="width: 24px; height: 24px; background: #f8fafc; border-radius: 50%; cursor: pointer; border: 2px solid transparent;" data-color="#f8fafc"></div>
+                <div class="color-dot" style="width: 24px; height: 24px; background: #f87171; border-radius: 50%; cursor: pointer; border: 2px solid transparent;" data-color="#f87171"></div>
+                <div class="color-dot" style="width: 24px; height: 24px; background: #38bdf8; border-radius: 50%; cursor: pointer; border: 2px solid transparent;" data-color="#38bdf8"></div>
+                <div class="color-dot" style="width: 24px; height: 24px; background: #34d399; border-radius: 50%; cursor: pointer; border: 2px solid transparent;" data-color="#34d399"></div>
+                <div class="color-dot" style="width: 24px; height: 24px; background: #fbbf24; border-radius: 50%; cursor: pointer; border: 2px solid transparent;" data-color="#fbbf24"></div>
+            </div>
+
+            <div id="eraser-tools" style="display: none; width: 100%; flex-direction: column; gap: 8px; align-items: center; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;">
+                <button class="btn-tool" id="btn-eraser" title="橡皮擦">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M16.24,3.56L21.19,8.51C21.97,9.29 21.97,10.55 21.19,11.33L12.01,20.5H22V22.5H10.12L2.81,15.19C2.03,14.41 2.03,13.15 2.81,12.37L12,3.19C12.78,2.41 14.05,2.41 14.83,3.19L16.24,3.56M4.22,13.78L10.83,20.39L14.83,16.39L8.22,9.78L4.22,13.78Z"/></svg>
+                </button>
+                <button class="btn-tool" id="btn-clear" title="清除手寫">🗑</button>
+            </div>
+            
+            <div style="height: 1px; width: 30px; background: rgba(255,255,255,0.2); margin: 5px 0;"></div>
+            <button class="btn-tool" id="btn-home" title="回到首頁">🏠</button>
+        </div>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        let isDrawingMode = false;
+        let drawMode = 'pen';
+        let penColor = '#f8fafc';
+        let slideDrawings = {};
+        let lastX = 0, lastY = 0;
+
+        const slides = document.querySelectorAll('.slide');
+        const slideInfo = document.getElementById('slide-info');
+        const canvas = document.getElementById('drawing-layer');
+        const ctx = canvas.getContext('2d');
+        let isDrawing = false;
+
+        function toggleAns(id) {
+            const overlay = document.getElementById(id);
+            overlay.style.display = (overlay.style.display === 'flex') ? 'none' : 'flex';
+        }
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            restoreDrawing();
+            if (slides[currentSlide].id === 'slide-game') drawConnections();
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        function getCoords(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            return [clientX - rect.left, clientY - rect.top];
+        }
+
+        function startDrawing(e) {
+            if (!isDrawingMode) return;
+            isDrawing = true;
+            [lastX, lastY] = getCoords(e);
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            const [x, y] = getCoords(e);
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(x, y);
+            ctx.strokeStyle = drawMode === 'eraser' ? '#0f172a' : penColor;
+            ctx.lineWidth = drawMode === 'eraser' ? 40 : 3;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+            [lastX, lastY] = [x, y];
+        }
+
+        function stopDrawing() {
+            if (isDrawing) {
+                isDrawing = false;
+                slideDrawings[currentSlide] = canvas.toDataURL();
+            }
+        }
+
+        function restoreDrawing() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if (slideDrawings[currentSlide]) {
+                const img = new Image();
+                img.onload = () => ctx.drawImage(img, 0, 0);
+                img.src = slideDrawings[currentSlide];
+            }
+        }
+
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('touchstart', (e) => { if(isDrawingMode) e.preventDefault(); startDrawing(e); }, {passive: false});
+        canvas.addEventListener('touchmove', (e) => { if(isDrawingMode) e.preventDefault(); draw(e); }, {passive: false});
+        canvas.addEventListener('touchend', stopDrawing);
+
+        function updateSlides() {
+            slides.forEach((s, i) => s.classList.toggle('active', i === currentSlide));
+            slideInfo.textContent = `${currentSlide + 1} / ${slides.length}`;
+            restoreDrawing();
+            if (slides[currentSlide].id === 'slide-game') initGame();
+        }
+
+        document.getElementById('btn-next').addEventListener('click', () => { if (currentSlide < slides.length - 1) { currentSlide++; updateSlides(); } });
+        document.getElementById('btn-prev').addEventListener('click', () => { if (currentSlide > 0) { currentSlide--; updateSlides(); } });
+
+        document.getElementById('btn-draw').addEventListener('click', (e) => {
+            isDrawingMode = !isDrawingMode;
+            if (isDrawingMode) drawMode = 'pen';
+            e.currentTarget.classList.toggle('active-tool', isDrawingMode);
+            canvas.classList.toggle('drawing-active', isDrawingMode);
+            document.getElementById('color-picker').style.display = isDrawingMode ? 'flex' : 'none';
+            document.getElementById('eraser-tools').style.display = isDrawingMode ? 'flex' : 'none';
+        });
+
+        document.getElementById('btn-eraser').addEventListener('click', (e) => {
+            drawMode = (drawMode === 'eraser' ? 'pen' : 'eraser');
+            e.currentTarget.classList.toggle('active-tool', drawMode === 'eraser');
+        });
+
+        document.querySelectorAll('.color-dot').forEach(dot => {
+            dot.addEventListener('click', () => {
+                document.querySelectorAll('.color-dot').forEach(d => d.style.borderColor = 'transparent');
+                dot.style.borderColor = 'white';
+                penColor = dot.dataset.color;
+                drawMode = 'pen';
+                document.getElementById('btn-eraser').classList.remove('active-tool');
+            });
+        });
+
+        document.getElementById('btn-clear').addEventListener('click', () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            slideDrawings[currentSlide] = null;
+        });
+
+        document.getElementById('btn-start').addEventListener('click', () => {
+            document.getElementById('start-overlay').style.display = 'none';
+            if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen();
+            updateSlides();
+        });
+
+        document.getElementById('btn-home').addEventListener('click', () => { window.location.href = '../../index.html'; });
+
+        // --- Game Logic ---
+        const gameData = [
+            { left: '主量子數 (n)', right: '決定軌域大小與主要能量' },
+            { left: '角量子數 (l)', right: '決定軌域的形狀 (s, p, d)' },
+            { left: '磁量子數 (m)', right: '決定軌域的空間方向與個數' },
+            { left: '旋量子數 (s)', right: '決定電子自旋方向 (+½, -½)' },
+            { left: '類氫原子能階', right: '能量高低僅由主量子數決定' },
+            { left: '多電子原子能階', right: '能量由 (n + l) 大小決定' },
+            { left: 's 軌域 (l=0)', right: '球形對稱，只有 1 個方向' },
+            { left: 'p 軌域 (l=1)', right: '啞鈴型，有 3 個方向' },
+            { left: 'd 軌域 (l=2)', right: '多為雙啞鈴型，有 5 個方向' },
+            { left: 'f 軌域 (l=3)', right: '形狀複雜，有 7 個方向' },
+            { left: '包立不相容原理', right: '同一軌域最多容納兩個自旋相反電子' },
+            { left: '構築原理', right: '電子由低能階軌域開始填入' },
+            { left: '主殼層電子總數', right: '最多可容納 2n² 個電子' },
+            { left: '副殼層軌域數', right: '每個副殼層有 (2l + 1) 個軌域' },
+            { left: '節面 (Node)', right: '電子出現機率為零的區域' },
+            { left: '洪德定則', right: '電子優先單獨填入同能階不同軌域' }
+        ];
+
+        let connections = [];
+        let isDraggingGame = false, gStartDot = null, gLine = null;
+        let gameEventsAttached = false;
+
+        function initGame() {
+            const lCol = document.getElementById('left-column'), rCol = document.getElementById('right-column');
+            if(lCol.children.length > 0) return; // already initialized
+            lCol.innerHTML = ''; rCol.innerHTML = ''; connections = [];
+            
+            const selected = [...gameData].sort(() => Math.random() - 0.5).slice(0, 5).map((d, i) => ({...d, id: i}));
+            const sRight = [...selected].sort(() => Math.random() - 0.5);
+            
+            selected.forEach(d => {
+                const item = document.createElement('div');
+                item.className = 'game-item';
+                item.style.cssText = 'background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); padding:10px 15px; border-radius:12px; display:flex; align-items:center; min-height:55px; font-size:1.2rem; position:relative; z-index:10;';
+                item.innerHTML = `<span>${d.left}</span><div class="dot left-dot" data-id="${d.id}" style="width:20px; height:20px; background:#fff; border-radius:50%; position:absolute; right:-10px; top:50%; transform:translateY(-50%); cursor:pointer; box-shadow:0 0 8px rgba(255,255,255,0.6); z-index:20; pointer-events:auto; transition: transform 0.2s, background 0.2s;"></div>`;
+                lCol.appendChild(item);
+            });
+            
+            sRight.forEach(d => {
+                const item = document.createElement('div');
+                item.className = 'game-item';
+                item.style.cssText = 'background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); padding:10px 15px; border-radius:12px; display:flex; align-items:center; min-height:55px; font-size:1.2rem; position:relative; justify-content:flex-end; text-align:right; z-index:10;';
+                item.innerHTML = `<div class="dot right-dot" data-id="${d.id}" style="width:20px; height:20px; background:#fff; border-radius:50%; position:absolute; left:-10px; top:50%; transform:translateY(-50%); cursor:pointer; box-shadow:0 0 8px rgba(255,255,255,0.6); z-index:20; pointer-events:auto; transition: transform 0.2s, background 0.2s;"></div><span>${d.right}</span>`;
+                rCol.appendChild(item);
+            });
+            
+            document.querySelectorAll('.dot').forEach(dot => {
+                dot.addEventListener('mousedown', gDragStart);
+                dot.addEventListener('touchstart', gDragStart, {passive: false});
+            });
+            
+            if (!gameEventsAttached) {
+                document.addEventListener('mousemove', gDragMove);
+                document.addEventListener('mouseup', gDragEnd);
+                document.addEventListener('touchmove', gDragMove, {passive: false});
+                document.addEventListener('touchend', gDragEnd);
+                gameEventsAttached = true;
+            }
+        }
+
+        function gDragStart(e) {
+            const dot = e.currentTarget;
+            if (dot.classList.contains('active')) return;
+            if(e.type === 'touchstart') e.preventDefault();
+            
+            dot.style.transform = 'translateY(-50%) scale(1.3)';
+            dot.style.background = 'var(--accent-blue)';
+            
+            isDraggingGame = true; gStartDot = dot;
+            const svg = document.getElementById('game-svg');
+            const rect = svg.getBoundingClientRect();
+            const dRect = dot.getBoundingClientRect();
+            gLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            const x = dRect.left + dRect.width/2 - rect.left;
+            const y = dRect.top + dRect.height/2 - rect.top;
+            gLine.setAttribute('x1', x); gLine.setAttribute('y1', y);
+            gLine.setAttribute('x2', x); gLine.setAttribute('y2', y);
+            gLine.setAttribute('stroke', 'var(--accent-blue)'); 
+            gLine.setAttribute('stroke-width', '5');
+            gLine.setAttribute('stroke-linecap', 'round');
+            svg.appendChild(gLine);
+        }
+
+        function gDragMove(e) {
+            if (!isDraggingGame || !gLine) return;
+            if(e.type === 'touchmove') e.preventDefault();
+            const cx = e.touches ? e.touches[0].clientX : e.clientX;
+            const cy = e.touches ? e.touches[0].clientY : e.clientY;
+            const rect = document.getElementById('game-svg').getBoundingClientRect();
+            gLine.setAttribute('x2', cx - rect.left); 
+            gLine.setAttribute('y2', cy - rect.top);
+            
+            let hoveredDot = null;
+            document.querySelectorAll('.dot:not(.active)').forEach(dot => {
+                if (dot === gStartDot || dot.classList.contains('left-dot') === gStartDot.classList.contains('left-dot')) return;
+                const r = dot.getBoundingClientRect();
+                if (cx >= r.left-25 && cx <= r.right+25 && cy >= r.top-25 && cy <= r.bottom+25) {
+                    hoveredDot = dot;
+                }
+            });
+            
+            document.querySelectorAll('.dot:not(.active)').forEach(dot => {
+                if (dot !== gStartDot) {
+                    dot.style.transform = 'translateY(-50%) scale(1)';
+                    dot.style.background = '#fff';
+                }
+            });
+            
+            if (hoveredDot) {
+                hoveredDot.style.transform = 'translateY(-50%) scale(1.3)';
+                if (hoveredDot.dataset.id === gStartDot.dataset.id) {
+                    hoveredDot.style.background = 'var(--accent-green)';
+                    gLine.setAttribute('stroke', 'var(--accent-green)');
+                } else {
+                    hoveredDot.style.background = 'var(--accent-red)';
+                    gLine.setAttribute('stroke', 'var(--accent-red)');
+                }
+            } else {
+                gLine.setAttribute('stroke', 'var(--accent-blue)');
+            }
+        }
+
+        function gDragEnd(e) {
+            if (!isDraggingGame) return;
+            isDraggingGame = false;
+            
+            const cx = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
+            const cy = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
+            let tDot = null;
+            document.querySelectorAll('.dot').forEach(dot => {
+                const r = dot.getBoundingClientRect();
+                if (cx >= r.left-30 && cx <= r.right+30 && cy >= r.top-30 && cy <= r.bottom+30) tDot = dot;
+            });
+            
+            if(gStartDot) gStartDot.style.transform = 'translateY(-50%) scale(1)';
+
+            if (tDot && tDot !== gStartDot && gStartDot.classList.contains('left-dot') !== tDot.classList.contains('left-dot') && !tDot.classList.contains('active')) {
+                if (gStartDot.dataset.id === tDot.dataset.id) {
+                    gStartDot.classList.add('active'); tDot.classList.add('active');
+                    gStartDot.style.background = 'var(--accent-green)';
+                    tDot.style.background = 'var(--accent-green)';
+                    
+                    connections.push({from: gStartDot, to: tDot});
+                    const rect = document.getElementById('game-svg').getBoundingClientRect();
+                    const tr = tDot.getBoundingClientRect();
+                    gLine.setAttribute('x2', tr.left + tr.width/2 - rect.left);
+                    gLine.setAttribute('y2', tr.top + tr.height/2 - rect.top);
+                    gLine.setAttribute('stroke', 'var(--accent-green)');
+                    gLine = null;
+                    
+                    if (connections.length === 5) {
+                        const fb = document.getElementById('game-feedback');
+                        fb.style.display = 'block'; setTimeout(() => fb.style.display = 'none', 3000);
+                    }
+                } else {
+                    tDot.style.background = '#fff';
+                    if(gStartDot) gStartDot.style.background = '#fff';
+                    if (gLine) { gLine.remove(); gLine = null; }
+                }
+            } else {
+                if (gLine) { gLine.remove(); gLine = null; }
+                if(gStartDot) gStartDot.style.background = '#fff';
+            }
+            gStartDot = null;
+        }
+
+        function drawConnections() {
+            const svg = document.getElementById('game-svg'); svg.innerHTML = '';
+            const rect = svg.getBoundingClientRect();
+            connections.forEach(c => {
+                const r1 = c.from.getBoundingClientRect(), r2 = c.to.getBoundingClientRect();
+                const l = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                l.setAttribute('x1', r1.left+r1.width/2-rect.left); l.setAttribute('y1', r1.top+r1.height/2-rect.top);
+                l.setAttribute('x2', r2.left+r2.width/2-rect.left); l.setAttribute('y2', r2.top+r2.height/2-rect.top);
+                l.setAttribute('stroke', 'var(--accent-green)'); 
+                l.setAttribute('stroke-width', '5');
+                l.setAttribute('stroke-linecap', 'round');
+                svg.appendChild(l);
+            });
+        }
+        
+        function resetGame() { 
+            document.getElementById('game-svg').innerHTML = ''; 
+            document.getElementById('left-column').innerHTML = '';
+            document.getElementById('right-column').innerHTML = '';
+            initGame(); 
+        }
+
+        // --- Toolbar Drag ---
+        const tb = document.getElementById('toolbar'), dh = document.getElementById('drag-handle');
+        let isDT = false, tOY = 0;
+        const sDT = (y) => { isDT = true; tOY = y - tb.offsetTop; };
+        const mDT = (y) => { if (isDT) { tb.style.top = (y - tOY) + 'px'; tb.style.bottom = 'auto'; tb.style.transform = 'none'; } };
+        dh.addEventListener('mousedown', (e) => sDT(e.clientY)); window.addEventListener('mousemove', (e) => mDT(e.clientY)); window.addEventListener('mouseup', () => isDT = false);
+        dh.addEventListener('touchstart', (e) => sDT(e.touches[0].clientY)); window.addEventListener('touchmove', (e) => mDT(e.touches[0].clientY)); window.addEventListener('touchend', () => isDT = false);
+        
+        // --- Orbitron Modal Functions ---
+        function openOrbitronModal() {
+            const modal = document.getElementById('orbitron-modal');
+            const iframe = document.getElementById('orbitron-iframe');
+            const loader = document.getElementById('orbitron-loading');
+            
+            iframe.src = "https://winter.group.shef.ac.uk/orbitron/";
+            modal.style.display = 'flex';
+            loader.style.opacity = '1';
+            loader.style.pointerEvents = 'auto';
+            
+            setTimeout(() => {
+                modal.style.opacity = '1';
+                modal.children[0].style.transform = 'scale(1)';
+            }, 10);
+            
+            iframe.onload = function() {
+                loader.style.opacity = '0';
+                loader.style.pointerEvents = 'none';
+            };
+        }
+        
+        function closeOrbitronModal() {
+            const modal = document.getElementById('orbitron-modal');
+            const iframe = document.getElementById('orbitron-iframe');
+            
+            modal.style.opacity = '0';
+            modal.children[0].style.transform = 'scale(0.95)';
+            
+            setTimeout(() => {
+                modal.style.display = 'none';
+                iframe.src = "";
+            }, 300);
+        }
+        
+        // --- Slide 1 Interactive Radial Probability Widget ---
+        function getRadialProbY(r) {
+            if (r <= 0) return 140;
+            const term = r / 52.9;
+            const val = 110 * Math.pow(term, 2) * Math.exp(2 - 2 * term);
+            return 140 - val;
+        }
+
+        function getIntegratedProb(r) {
+            const k = 2 * r / 52.9;
+            const term = 1 + k + 0.5 * k * k;
+            const prob = 1 - Math.exp(-k) * term;
+            return Math.max(0, Math.min(1, prob));
+        }
+
+        let isDraggingDensity = false;
+
+        function updateInteractiveDensityDirect(rPm) {
+            rPm = Math.max(0, Math.min(300, rPm));
+            const R = rPm * 0.22; // 300pm maps to 66 SVG units
+            
+            const boundary = document.getElementById('interactive-boundary');
+            const handle = document.getElementById('boundary-handle');
+            const currentRLine = document.getElementById('current-r-line');
+            const currentRDot = document.getElementById('current-r-dot');
+            const statRadius = document.getElementById('stat-radius');
+            const statProbability = document.getElementById('stat-probability');
+            
+            if (boundary) boundary.setAttribute('r', R);
+            if (handle) handle.setAttribute('cx', 80 + R);
+            
+            const curveX = 20 + rPm * 0.55;
+            const curveY = getRadialProbY(rPm);
+            if (currentRLine) {
+                currentRLine.setAttribute('x1', curveX);
+                currentRLine.setAttribute('x2', curveX);
+            }
+            if (currentRDot) {
+                currentRDot.setAttribute('cx', curveX);
+                currentRDot.setAttribute('cy', curveY);
+            }
+            
+            updateFilledAreas(rPm);
+            
+            if (statRadius) statRadius.textContent = `${Math.round(rPm)} pm`;
+            if (statProbability) statProbability.textContent = `${(getIntegratedProb(rPm) * 100).toFixed(1)}%`;
+        }
+
+        function updateFilledAreas(rCurrent) {
+            const areaPath = document.getElementById('curve-area');
+            const restPath = document.getElementById('curve-rest');
+            if (!areaPath || !restPath) return;
+
+            // curve-area
+            let dArea = `M 20,140`;
+            for (let r = 0; r <= rCurrent; r += 2) {
+                const x = 20 + r * 0.55;
+                const y = getRadialProbY(r);
+                dArea += ` L ${x.toFixed(1)},${y.toFixed(1)}`;
+            }
+            const xEnd = 20 + rCurrent * 0.55;
+            dArea += ` L ${xEnd.toFixed(1)},140 Z`;
+            areaPath.setAttribute('d', dArea);
+            
+            // curve-rest
+            let dRest = `M ${xEnd.toFixed(1)},140`;
+            for (let r = Math.floor(rCurrent); r <= 300; r += 2) {
+                const x = 20 + r * 0.55;
+                const y = getRadialProbY(r);
+                dRest += ` L ${x.toFixed(1)},${y.toFixed(1)}`;
+            }
+            dRest += ` L 185,140 Z`;
+            restPath.setAttribute('d', dRest);
+        }
+
+        function updateInteractiveDensity(clientX) {
+            const svgDensity = document.getElementById('svg-density');
+            if (!svgDensity) return;
+            const rect = svgDensity.getBoundingClientRect();
+            const cx = rect.left + rect.width / 2;
+            let R = Math.abs(clientX - cx);
+            
+            R = R * (160 / rect.width);
+            R = Math.max(2, Math.min(66, R));
+            
+            const rPm = R / 0.22;
+            updateInteractiveDensityDirect(rPm);
+        }
+
+        function initSlide1Widget() {
+            // 1. Generate electron cloud dots
+            const cloudGroup = document.getElementById('cloud-dots');
+            if (cloudGroup) {
+                let dotsHTML = '';
+                for (let i = 0; i < 550; i++) {
+                    const r1 = -Math.log(Math.random());
+                    const r2 = -Math.log(Math.random());
+                    const r_pm = (r1 + r2) * 26.45; // peak density at 52.9pm
+                    if (r_pm > 300) continue;
+                    const R_svg = r_pm * 0.22;
+                    const theta = Math.random() * 2 * Math.PI;
+                    const cx = 80 + R_svg * Math.cos(theta);
+                    const cy = 80 + R_svg * Math.sin(theta);
+                    dotsHTML += `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="0.8" />`;
+                }
+                cloudGroup.innerHTML = dotsHTML;
+            }
+            
+            // 2. Generate curve path
+            const curvePath = document.getElementById('probability-curve');
+            if (curvePath) {
+                let d = '';
+                for (let r = 0; r <= 300; r += 2) {
+                    const x = 20 + r * 0.55;
+                    const y = getRadialProbY(r);
+                    d += (r === 0 ? 'M' : 'L') + ` ${x.toFixed(1)},${y.toFixed(1)}`;
+                }
+                curvePath.setAttribute('d', d);
+            }
+            
+            // 3. Set initial state to 140pm (corresponds to 90% probability!)
+            updateInteractiveDensityDirect(140);
+
+            // 4. Bind events
+            const svgDensity = document.getElementById('svg-density');
+            if (svgDensity) {
+                svgDensity.addEventListener('mousedown', (e) => {
+                    isDraggingDensity = true;
+                    updateInteractiveDensity(e.clientX);
+                });
+                window.addEventListener('mousemove', (e) => {
+                    if (isDraggingDensity) {
+                        updateInteractiveDensity(e.clientX);
+                    }
+                });
+                window.addEventListener('mouseup', () => {
+                    isDraggingDensity = false;
+                });
+                
+                // Touch support
+                svgDensity.addEventListener('touchstart', (e) => {
+                    isDraggingDensity = true;
+                    updateInteractiveDensity(e.touches[0].clientX);
+                    e.preventDefault();
+                }, {passive: false});
+                svgDensity.addEventListener('touchmove', (e) => {
+                    if (isDraggingDensity) {
+                        updateInteractiveDensity(e.touches[0].clientX);
+                        e.preventDefault();
+                    }
+                }, {passive: false});
+                window.addEventListener('touchend', () => {
+                    isDraggingDensity = false;
+                });
+            }
+        }
+
+        // Initialize Slide 1 widget on load
+        document.addEventListener('DOMContentLoaded', initSlide1Widget);
+    </script>
+    
+    <!-- Orbitron Iframe Modal Overlay -->
+    <div id="orbitron-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(10, 15, 30, 0.85); backdrop-filter: blur(15px); z-index: 9999; justify-content: center; align-items: center; opacity: 0; transition: opacity 0.3s ease;">
+        <div style="width: 94vw; height: 92vh; background: var(--bg-dark); border: 2.5px solid var(--glass-border); border-radius: 20px; box-shadow: 0 25px 60px rgba(0,0,0,0.8); display: flex; flex-direction: column; overflow: hidden; transform: scale(0.95); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); position: relative;">
+            
+            <!-- Modal Header -->
+            <div style="height: 55px; background: rgba(15,23,42,0.9); border-bottom: 1.5px solid var(--glass-border); display: flex; justify-content: space-between; align-items: center; padding: 0 1.5rem; flex-shrink: 0;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="display: inline-block; width: 10px; height: 10px; background: var(--accent-purple); border-radius: 50%; box-shadow: 0 0 8px var(--accent-purple);"></span>
+                    <h3 style="color: var(--text-main); font-size: 1.15rem; font-weight: bold; margin: 0;">The Orbitron ➔ 量子軌域三維波函數探索 (外部教學網站)</h3>
+                </div>
+                
+                <button onclick="closeOrbitronModal()" class="btn-action" style="margin: 0; background: var(--accent-red); color: #fff; box-shadow: 0 4px 12px rgba(248,113,113,0.3); padding: 0.4rem 1.2rem; font-size: 0.95rem; border-radius: 20px;">
+                    ✕ 關閉並返回教學
+                </button>
+            </div>
+            
+            <!-- Modal Body (Iframe) -->
+            <div style="flex: 1; min-height: 0; position: relative; background: #fff;">
+                <iframe id="orbitron-iframe" src="" style="width: 100%; height: 100%; border: none;"></iframe>
+                <!-- Loader inside the modal -->
+                <div id="orbitron-loading" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: #0f172a; display: flex; flex-direction: column; justify-content: center; align-items: center; color: var(--accent-purple); gap: 15px; transition: opacity 0.3s ease;">
+                    <svg viewBox="0 0 50 50" style="width: 50px; height: 50px; animation: spin 1s linear infinite;">
+                        <circle cx="25" cy="25" r="20" fill="none" stroke="var(--accent-purple)" stroke-width="4" stroke-linecap="round" style="stroke-dasharray: 1, 150; stroke-dashoffset: 0; stroke: var(--accent-purple);"></circle>
+                    </svg>
+                    <span style="font-size: 1.1rem; font-weight: bold;">正在安全載入 Orbitron 外部網站...</span>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+</body>
+</html>

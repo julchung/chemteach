@@ -1,0 +1,1669 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>元素週期性 - 原子半徑 | 互動教學</title>
+    <meta name="description" content="高中選修化學 原子半徑互動教學：定義、測量方法、週期性規律、影響因素與範例練習">
+    <script>
+        MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']], processEscapes: true },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        :root {
+            --bg-dark: #0a0f1e;
+            --text-main: #f0f4ff;
+            --accent-blue: #60a5fa;
+            --accent-green: #34d399;
+            --accent-red: #f87171;
+            --accent-yellow: #fbbf24;
+            --accent-purple: #c084fc;
+            --accent-cyan: #22d3ee;
+            --accent-orange: #fb923c;
+            --glass: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.15);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+        body, html {
+            width: 100%; height: 100%;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: 'Segoe UI', 'Microsoft JhengHei', 'PingFang TC', sans-serif;
+            overflow: hidden;
+            background-image:
+                radial-gradient(circle at 20% 50%, rgba(96,165,250,0.06) 0%, transparent 60%),
+                radial-gradient(circle at 80% 20%, rgba(192,132,252,0.06) 0%, transparent 60%),
+                radial-gradient(rgba(96,165,250,0.05) 1px, transparent 1px);
+            background-size: 100% 100%, 100% 100%, 32px 32px;
+        }
+
+        #app { position: relative; width: 100vw; height: 100vh; overflow: hidden; }
+
+        /* ── Start Overlay ── */
+        #start-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: var(--bg-dark); z-index: 5000;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            background-image:
+                radial-gradient(circle at 30% 40%, rgba(96,165,250,0.12) 0%, transparent 50%),
+                radial-gradient(circle at 70% 60%, rgba(192,132,252,0.10) 0%, transparent 50%),
+                radial-gradient(rgba(96,165,250,0.06) 1.5px, transparent 1.5px);
+            background-size: 100% 100%, 100% 100%, 50px 50px;
+        }
+        .start-badge {
+            font-size: 1rem; color: var(--accent-cyan);
+            background: rgba(34,211,238,0.1); border: 1px solid rgba(34,211,238,0.3);
+            padding: 0.3rem 1.2rem; border-radius: 40px; margin-bottom: 1.5rem;
+            letter-spacing: 0.15em; text-transform: uppercase;
+        }
+        .start-title {
+            font-size: clamp(2.5rem, 6vw, 5rem); font-weight: 900;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-cyan) 50%, var(--accent-purple) 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            text-align: center; margin-bottom: 0.5rem; line-height: 1.1;
+        }
+        .start-sub { font-size: 1.4rem; color: rgba(240,244,255,0.55); margin-bottom: 3rem; }
+        .start-atoms {
+            position: absolute; width: 100%; height: 100%; pointer-events: none; overflow: hidden;
+        }
+        .atom-float {
+            position: absolute; border-radius: 50%;
+            border: 1.5px solid rgba(96,165,250,0.25);
+            animation: floatAtom linear infinite;
+        }
+        @keyframes floatAtom {
+            0%   { transform: translate(0, 0) rotate(0deg); opacity: 0.4; }
+            50%  { opacity: 0.8; }
+            100% { transform: translate(var(--tx), var(--ty)) rotate(360deg); opacity: 0.4; }
+        }
+        .btn-start {
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            color: #fff; border: none; padding: 1.1rem 3.5rem;
+            border-radius: 60px; font-size: 1.4rem; font-weight: 800;
+            cursor: pointer; transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 0 40px rgba(96,165,250,0.4), 0 0 80px rgba(192,132,252,0.2);
+        }
+        .btn-start:hover { transform: scale(1.08); box-shadow: 0 0 60px rgba(96,165,250,0.6), 0 0 120px rgba(192,132,252,0.3); }
+        .start-info {
+            margin-top: 2rem; display: flex; gap: 2.5rem; flex-wrap: wrap; justify-content: center;
+        }
+        .info-chip {
+            display: flex; align-items: center; gap: 0.5rem;
+            font-size: 0.9rem; color: rgba(240,244,255,0.5);
+        }
+        .info-chip span:first-child { font-size: 1.1rem; }
+
+        /* ── Presentation ── */
+        #presentation-area { position: relative; width: 100vw; height: 100vh; overflow: hidden; }
+        #slides-container { position: absolute; top: 1.5vh; left: 3vw; right: 68px; bottom: 2vh; }
+
+        .slide {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            padding: 0.8rem 0.5rem 0.5rem 0.5rem;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.4s ease, transform 0.4s ease;
+            transform: scale(0.99);
+            display: flex; flex-direction: column; overflow: hidden;
+        }
+        .slide.active { opacity: 1; pointer-events: auto; z-index: 10; transform: scale(1); }
+
+        h1 {
+            color: var(--accent-blue); font-size: clamp(1.5rem, 2.6vw, 2.2rem);
+            margin-bottom: 0.7rem; display: flex; align-items: center; gap: 0.7rem;
+            border-bottom: 2px solid rgba(96,165,250,0.2); padding-bottom: 0.4rem; flex-shrink: 0;
+        }
+        h1::before { content: ""; width: 7px; height: 28px; background: linear-gradient(var(--accent-blue), var(--accent-purple)); border-radius: 4px; }
+        h2 { color: var(--accent-yellow); font-size: clamp(1rem, 1.6vw, 1.35rem); margin: 0.4rem 0 0.3rem; font-weight: 700; flex-shrink: 0; }
+        h3 { color: var(--accent-cyan); font-size: clamp(0.95rem, 1.3vw, 1.15rem); margin: 0.3rem 0; font-weight: 600; }
+
+        p, li { font-size: clamp(0.9rem, 1.3vw, 1.15rem); line-height: 1.55; margin-bottom: 0.4rem; }
+        strong { color: var(--accent-cyan); font-weight: 700; }
+        em { color: var(--accent-orange); font-style: normal; font-weight: 600; }
+        ul { margin-left: 1.4rem; }
+        li { margin-bottom: 0.3rem; }
+
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; flex: 1; min-height: 0; overflow: hidden; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; flex: 1; min-height: 0; overflow: hidden; }
+        .panel {
+            background: var(--glass); border: 1.5px solid var(--glass-border);
+            border-radius: 18px; padding: 1.1rem 1.2rem;
+            backdrop-filter: blur(14px); display: flex; flex-direction: column;
+            overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+        }
+        .formula-box {
+            background: rgba(0,0,0,0.4); border-radius: 12px;
+            border-left: 6px solid var(--accent-green);
+            padding: 0.9rem; margin: 0.6rem 0;
+            text-align: center; font-size: clamp(1.3rem, 1.9vw, 1.7rem);
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.5); flex-shrink: 0;
+        }
+        .info-card {
+            background: rgba(96,165,250,0.07); border-radius: 12px;
+            padding: 0.8rem; border: 1px solid rgba(96,165,250,0.25); margin: 0.5rem 0; flex-shrink: 0;
+        }
+        .highlight-box {
+            background: rgba(251,191,36,0.08); border-radius: 12px;
+            padding: 0.8rem; border: 1px solid rgba(251,191,36,0.3); margin: 0.5rem 0; flex-shrink: 0;
+        }
+        .svg-container { flex: 1; display: flex; justify-content: center; align-items: center; min-height: 0; overflow: hidden; }
+        .svg-container svg { max-height: 100%; max-width: 100%; }
+
+        /* ── Toolbar ── */
+        #toolbar {
+            position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+            background: rgba(10, 15, 30, 0.92); padding: 12px 6px;
+            border-radius: 30px; display: flex; flex-direction: column; gap: 9px;
+            align-items: center; z-index: 2000;
+            border: 1px solid rgba(255,255,255,0.18);
+            box-shadow: 0 15px 50px rgba(0,0,0,0.7); backdrop-filter: blur(20px); width: 50px;
+        }
+        .btn-tool {
+            background: transparent; color: rgba(255,255,255,0.65);
+            border: 1px solid rgba(255,255,255,0.15);
+            width: 34px; height: 34px; border-radius: 10px;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: 0.25s; font-size: 1rem;
+        }
+        .btn-tool:hover { background: rgba(255,255,255,0.15); color: #fff; transform: translateY(-2px); }
+        .btn-tool.active-tool { background: var(--accent-blue); color: #fff; border-color: var(--accent-blue); box-shadow: 0 0 15px rgba(96,165,250,0.6); }
+        #drag-handle { width: 100%; text-align: center; color: rgba(255,255,255,0.4); cursor: grab; padding: 2px 0; font-size: 1.3rem; line-height: 0.5; margin-bottom: 2px; }
+        #slide-info {
+            position: absolute; bottom: 18px; left: 18px; z-index: 100;
+            font-size: 0.95rem; color: rgba(255,255,255,0.6);
+            background: rgba(0,0,0,0.55); padding: 5px 14px; border-radius: 40px;
+            border: 1px solid rgba(255,255,255,0.15); backdrop-filter: blur(8px); font-weight: 700;
+        }
+        #drawing-layer {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: 50; pointer-events: none; touch-action: none;
+        }
+        #drawing-layer.drawing-active { pointer-events: auto; }
+
+        /* ── Answer Overlay ── */
+        .ans-overlay {
+            display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(8, 12, 26, 0.97); z-index: 100;
+            flex-direction: column; padding: 1.5rem; border-radius: 18px;
+            border: 2px solid var(--accent-green); animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        .btn-action {
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            color: #fff; border: none; padding: 0.75rem 1.7rem;
+            border-radius: 10px; cursor: pointer; font-weight: 700; font-size: 1.05rem;
+            transition: 0.2s; align-self: center; margin-top: auto; flex-shrink: 0;
+        }
+        .btn-action:hover { filter: brightness(1.15); transform: scale(1.05); }
+        .btn-action-outline {
+            background: transparent; color: var(--accent-blue);
+            border: 1.5px solid var(--accent-blue);
+            padding: 0.7rem 1.5rem; border-radius: 10px;
+            cursor: pointer; font-weight: 700; font-size: 1rem; transition: 0.2s;
+        }
+        .btn-action-outline:hover { background: rgba(96,165,250,0.15); }
+
+        /* ── Atom Size Visual ── */
+        .atom-circle {
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-weight: 800; color: #fff; flex-shrink: 0;
+        }
+
+        /* ── Trend Arrow ── */
+        .trend-arrow { font-size: 2rem; opacity: 0.7; }
+
+        /* ── Game ── */
+        .dot {
+            width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--accent-blue);
+            background: rgba(96,165,250,0.15); cursor: pointer; flex-shrink: 0; transition: 0.2s;
+        }
+        .dot:hover { background: rgba(96,165,250,0.4); transform: scale(1.2); }
+        .dot.active { background: var(--accent-green); border-color: var(--accent-green); }
+        .game-item {
+            display: flex; align-items: center; gap: 10px;
+            background: var(--glass); border: 1px solid var(--glass-border);
+            border-radius: 12px; padding: 0.7rem 1rem; font-size: clamp(0.85rem, 1.1vw, 1rem);
+        }
+        .left-dot { order: 1; } .game-label-l { order: 2; }
+        .game-label-r { order: 1; } .right-dot { order: 2; margin-left: auto; }
+
+        /* ── Periodic Table Highlight ── */
+        .pt-cell {
+            border-radius: 6px; display: flex; align-items: center; justify-content: center;
+            font-size: 0.75rem; font-weight: 700; transition: 0.2s; cursor: default;
+        }
+        .pt-cell:hover { transform: scale(1.15); z-index: 10; }
+
+        /* ── Interactive Slider ── */
+        input[type=range] {
+            -webkit-appearance: none; width: 100%; height: 6px;
+            border-radius: 3px; background: rgba(255,255,255,0.15); outline: none; cursor: pointer;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none; width: 20px; height: 20px;
+            border-radius: 50%; background: var(--accent-blue);
+            box-shadow: 0 0 10px rgba(96,165,250,0.6); cursor: pointer;
+        }
+
+        /* ── Tag ── */
+        .tag {
+            display: inline-block; padding: 0.15rem 0.65rem; border-radius: 20px;
+            font-size: 0.8rem; font-weight: 700; margin: 0.15rem;
+        }
+        .tag-blue { background: rgba(96,165,250,0.18); border: 1px solid rgba(96,165,250,0.5); color: var(--accent-blue); }
+        .tag-green { background: rgba(52,211,153,0.15); border: 1px solid rgba(52,211,153,0.4); color: var(--accent-green); }
+        .tag-red { background: rgba(248,113,113,0.15); border: 1px solid rgba(248,113,113,0.4); color: var(--accent-red); }
+        .tag-yellow { background: rgba(251,191,36,0.15); border: 1px solid rgba(251,191,36,0.4); color: var(--accent-yellow); }
+
+        /* ── Scrollable panel ── */
+        .scroll-panel { overflow-y: auto; flex: 1; min-height: 0; }
+        .scroll-panel::-webkit-scrollbar { width: 4px; }
+        .scroll-panel::-webkit-scrollbar-track { background: transparent; }
+        .scroll-panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 2px; }
+    </style>
+</head>
+<body>
+<div id="app">
+
+    <!-- ═══════════════════ START OVERLAY ═══════════════════ -->
+    <div id="start-overlay">
+        <div class="start-atoms" id="float-atoms"></div>
+        <div class="start-badge">選修化學二 · 第一章 · 原子結構</div>
+        <h1 class="start-title" style="border:none; padding:0; -webkit-text-fill-color: transparent;">原子半徑</h1>
+        <p class="start-sub">元素週期性的奧秘 — 互動教學</p>
+        <button class="btn-start" id="btn-start">開始探索教學 ✦</button>
+        <div class="start-info">
+            <div class="info-chip"><span>📐</span><span>原子半徑定義與測量</span></div>
+            <div class="info-chip"><span>📊</span><span>週期律與趨勢</span></div>
+            <div class="info-chip"><span>🔬</span><span>影響因素分析</span></div>
+            <div class="info-chip"><span>✏️</span><span>互動手寫 · 範例練習</span></div>
+            <div class="info-chip"><span>🏆</span><span>單元挑戰</span></div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════ PRESENTATION ═══════════════════ -->
+    <div id="presentation-area">
+        <div id="slides-container">
+
+            <!-- ══ Slide 1: 定義與基本概念 ══ -->
+            <div class="slide active">
+                <h1>原子半徑的定義</h1>
+                <div class="grid-2">
+                    <div class="panel">
+                        <h2>什麼是原子半徑？</h2>
+                        <p>原子無法單獨測量，需由<strong>鍵結時兩原子核間距離</strong>來推算。</p>
+                        <div class="formula-box" style="font-size: 1.3rem;">
+                            $r = \dfrac{d_{A-A}}{2}$
+                        </div>
+                        <p style="text-align:center; font-size:0.9rem; color:rgba(255,255,255,0.5); margin-top:0.2rem;">
+                            d = 兩同種原子核間距（核間距）
+                        </p>
+                        <div class="info-card" style="margin-top:0.6rem;">
+                            <p><strong>常見單位：</strong></p>
+                            <ul style="margin-top:0.3rem;">
+                                <li>埃 (Å)：$1\text{ Å} = 10^{-10}\text{ m}$</li>
+                                <li>皮米 (pm)：$1\text{ pm} = 10^{-12}\text{ m}$</li>
+                                <li>$1\text{ Å} = 100\text{ pm}$</li>
+                            </ul>
+                        </div>
+                        <div class="highlight-box" style="margin-top:0.5rem;">
+                            <p><em>注意：</em>原子半徑不是固定值，會因鍵結環境而略有不同！</p>
+                        </div>
+                    </div>
+                    <div class="panel">
+                        <h2>共價半徑 vs. 凡得瓦半徑</h2>
+                        <div style="flex:1; display:flex; flex-direction:column; gap:0.7rem; overflow:hidden;">
+                            <div class="info-card" style="border-color: rgba(52,211,153,0.4); background:rgba(52,211,153,0.06);">
+                                <h3 style="margin-bottom:0.3rem;">共價半徑（Covalent Radius）</h3>
+                                <p>兩個<strong>相同原子</strong>以共價鍵相連時，核間距的一半。</p>
+                                <p style="font-size:0.9rem; color:rgba(255,255,255,0.6); margin-top:0.3rem;">適用：非金屬元素</p>
+                            </div>
+                            <div class="info-card" style="border-color: rgba(251,191,36,0.4); background:rgba(251,191,36,0.06);">
+                                <h3 style="margin-bottom:0.3rem;">金屬半徑（Metallic Radius）</h3>
+                                <p>金屬晶體中，兩相鄰原子核間距的一半。</p>
+                                <p style="font-size:0.9rem; color:rgba(255,255,255,0.6); margin-top:0.3rem;">適用：金屬元素</p>
+                            </div>
+                            <div class="info-card" style="border-color: rgba(192,132,252,0.4); background:rgba(192,132,252,0.06);">
+                                <h3 style="margin-bottom:0.3rem;">凡得瓦半徑（van der Waals Radius）</h3>
+                                <p>兩個<strong>不鍵結</strong>相鄰原子核間距的一半（稀有氣體）。</p>
+                                <p style="font-size:0.9rem; color:rgba(255,255,255,0.6); margin-top:0.3rem;">凡得瓦半徑 > 共價半徑</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══ Slide 2: 視覺化原子大小 ══ -->
+            <div class="slide">
+                <h1>原子大小的直覺感受</h1>
+                <div style="display:flex; flex-direction:column; flex:1; gap:0.7rem; overflow:hidden;">
+                    <div class="panel" style="flex:0 0 auto; padding:0.6rem 1.2rem;">
+                        <p>第二、三週期元素<strong>共價原子半徑</strong>示意（圓圈大小相對比例）。同族元素<strong>上下對齊</strong>，可同時看出同週期遞減（→）與同族遞增（↓）兩個趨勢。</p>
+                    </div>
+                    <div class="panel" style="flex:1; overflow:hidden; display:flex; flex-direction:column; justify-content:space-evenly; padding:0.7rem 1rem;">
+
+                        <!-- 族標題列 -->
+                        <div style="display:grid; grid-template-columns: 54px repeat(7,1fr) 70px; gap:0.3rem; align-items:center;">
+                            <div style="font-size:0.72rem; color:rgba(255,255,255,0.3); text-align:center;">族</div>
+                            <div style="font-size:0.72rem; color:rgba(255,255,255,0.35); text-align:center; border-bottom:1px solid rgba(251,191,36,0.25); padding-bottom:3px;">IA</div>
+                            <div style="font-size:0.72rem; color:rgba(255,255,255,0.35); text-align:center; border-bottom:1px solid rgba(52,211,153,0.25); padding-bottom:3px;">IIA</div>
+                            <div style="font-size:0.72rem; color:rgba(255,255,255,0.35); text-align:center; border-bottom:1px solid rgba(251,146,60,0.25); padding-bottom:3px;">IIIA</div>
+                            <div style="font-size:0.72rem; color:rgba(255,255,255,0.35); text-align:center; border-bottom:1px solid rgba(148,163,184,0.25); padding-bottom:3px;">IVA</div>
+                            <div style="font-size:0.72rem; color:rgba(255,255,255,0.35); text-align:center; border-bottom:1px solid rgba(96,165,250,0.25); padding-bottom:3px;">VA</div>
+                            <div style="font-size:0.72rem; color:rgba(255,255,255,0.35); text-align:center; border-bottom:1px solid rgba(248,113,113,0.25); padding-bottom:3px;">VIA</div>
+                            <div style="font-size:0.72rem; color:rgba(255,255,255,0.35); text-align:center; border-bottom:1px solid rgba(192,132,252,0.25); padding-bottom:3px;">VIIA</div>
+                            <div></div>
+                        </div>
+
+                        <!-- 第二週期 -->
+                        <div style="display:grid; grid-template-columns: 54px repeat(7,1fr) 70px; gap:0.3rem; align-items:center;">
+                            <div style="font-size:0.78rem; color:var(--accent-cyan); font-weight:700; text-align:center; line-height:1.3;">第二<br>週期</div>
+                            <!-- Li 152pm -->
+                            <div style="display:flex; flex-direction:column; align-items:center; gap:3px;">
+                                <div class="atom-circle" style="width:76px;height:76px; background:radial-gradient(circle at 35% 35%, rgba(251,191,36,0.85), rgba(180,130,0,0.95)); font-size:1rem; box-shadow:0 0 16px rgba(251,191,36,0.45);">Li</div>
+                                <div style="font-size:0.7rem; color:rgba(255,255,255,0.5);">152 pm</div>
+                            </div>
+                            <!-- Be 112pm -->
+                            <div style="display:flex; flex-direction:column; align-items:center; gap:3px;">
+                                <div class="atom-circle" style="width:56px;height:56px; background:radial-gradient(circle at 35% 35%, rgba(52,211,153,0.85), rgba(20,150,100,0.95)); font-size:0.9rem; box-shadow:0 0 14px rgba(52,211,153,0.45);">Be</div>
+                                <div style="font-size:0.7rem; color:rgba(255,255,255,0.5);">112 pm</div>
+                            </div>
+                            <!-- B 87pm -->
+                            <div style="display:flex; flex-direction:column; align-items:center; gap:3px;">
+                                <div class="atom-circle" style="width:44px;height:44px; background:radial-gradient(circle at 35% 35%, rgba(251,146,60,0.85), rgba(180,80,0,0.95)); font-size:0.85rem; box-shadow:0 0 12px rgba(251,146,60,0.4);">B</div>
+                                <div style="font-size:0.7rem; color:rgba(255,255,255,0.5);">87 pm</div>
+                            </div>
+                            <!-- C 77pm -->
+                            <div style="display:flex; flex-direction:column; align-items:center; gap:3px;">
+                                <div class="atom-circle" style="width:39px;height:39px; background:radial-gradient(circle at 35% 35%, rgba(148,163,184,0.85), rgba(80,90,110,0.95)); font-size:0.8rem; box-shadow:0 0 10px rgba(148,163,184,0.4);">C</div>
+                                <div style="font-size:0.7rem; color:rgba(255,255,255,0.5);">77 pm</div>
+                            </div>
+                            <!-- N 75pm -->
+                            <div style="display:flex; flex-direction:column; align-items:center; gap:3px;">
+                                <div class="atom-circle" style="width:38px;height:38px; background:radial-gradient(circle at 35% 35%, rgba(96,165,250,0.85), rgba(30,80,180,0.95)); font-size:0.8rem; box-shadow:0 0 10px rgba(96,165,250,0.4);">N</div>
+                                <div style="font-size:0.7rem; color:rgba(255,255,255,0.5);">75 pm</div>
+                            </div>
+                            <!-- O 73pm -->
+                            <div style="display:flex; flex-direction:column; align-items:center; gap:3px;">
+                                <div class="atom-circle" style="width:37px;height:37px; background:radial-gradient(circle at 35% 35%, rgba(248,113,113,0.85), rgba(180,30,30,0.95)); font-size:0.8rem; box-shadow:0 0 10px rgba(248,113,113,0.4);">O</div>
+                                <div style="font-size:0.7rem; color:rgba(255,255,255,0.5);">73 pm</div>
+                            </div>
+                            <!-- F 72pm -->
+                            <div style="display:flex; flex-direction:column; align-items:center; gap:3px;">
+                                <div class="atom-circle" style="width:36px;height:36px; background:radial-gradient(circle at 35% 35%, rgba(192,132,252,0.85), rgba(120,30,200,0.95)); font-size:0.8rem; box-shadow:0 0 10px rgba(192,132,252,0.4);">F</div>
+                                <div style="font-size:0.7rem; color:rgba(255,255,255,0.5);">72 pm</div>
+                            </div>
+                            <!-- 右側 → 遞減說明 -->
+                            <div style="text-align:center; line-height:1.4;">
+                                <div style="font-size:1.1rem; color:var(--accent-red); font-weight:700;">→ 遞減</div>
+                                <div style="font-size:0.65rem; color:rgba(255,255,255,0.4); margin-top:2px;">Z* 增大<br>層數不變</div>
+                            </div>
+                        </div>
+
+                        <!-- 同族箭頭列 -->
+                        <div style="display:grid; grid-template-columns: 54px repeat(7,1fr) 70px; gap:0.3rem; align-items:center;">
+                            <div style="font-size:0.7rem; color:var(--accent-green); text-align:center; font-weight:700; line-height:1.3;">同族<br>↓ 遞增</div>
+                            <div style="text-align:center; color:var(--accent-green); line-height:1.1;">
+                                <div style="font-size:1.4rem;">↓</div>
+                                <div style="font-size:0.62rem; color:rgba(255,255,255,0.4);">+34 pm</div>
+                            </div>
+                            <div style="text-align:center; color:var(--accent-green); line-height:1.1;">
+                                <div style="font-size:1.4rem;">↓</div>
+                                <div style="font-size:0.62rem; color:rgba(255,255,255,0.4);">+48 pm</div>
+                            </div>
+                            <div style="text-align:center; color:var(--accent-green); line-height:1.1;">
+                                <div style="font-size:1.4rem;">↓</div>
+                                <div style="font-size:0.62rem; color:rgba(255,255,255,0.4);">+56 pm</div>
+                            </div>
+                            <div style="text-align:center; color:var(--accent-green); line-height:1.1;">
+                                <div style="font-size:1.4rem;">↓</div>
+                                <div style="font-size:0.62rem; color:rgba(255,255,255,0.4);">+40 pm</div>
+                            </div>
+                            <div style="text-align:center; color:var(--accent-green); line-height:1.1;">
+                                <div style="font-size:1.4rem;">↓</div>
+                                <div style="font-size:0.62rem; color:rgba(255,255,255,0.4);">+35 pm</div>
+                            </div>
+                            <div style="text-align:center; color:var(--accent-green); line-height:1.1;">
+                                <div style="font-size:1.4rem;">↓</div>
+                                <div style="font-size:0.62rem; color:rgba(255,255,255,0.4);">+31 pm</div>
+                            </div>
+                            <div style="text-align:center; color:var(--accent-green); line-height:1.1;">
+                                <div style="font-size:1.4rem;">↓</div>
+                                <div style="font-size:0.62rem; color:rgba(255,255,255,0.4);">+27 pm</div>
+                            </div>
+                            <div style="font-size:0.65rem; color:rgba(255,255,255,0.35); text-align:center; line-height:1.3;">電子層<br>+1</div>
+                        </div>
+
+                        <!-- 第三週期 -->
+                        <div style="display:grid; grid-template-columns: 54px repeat(7,1fr) 70px; gap:0.3rem; align-items:center;">
+                            <div style="font-size:0.78rem; color:var(--accent-yellow); font-weight:700; text-align:center; line-height:1.3;">第三<br>週期</div>
+                            <!-- Na 186pm -->
+                            <div style="display:flex; flex-direction:column; align-items:center; gap:3px;">
+                                <div class="atom-circle" style="width:93px;height:93px; background:radial-gradient(circle at 35% 35%, rgba(251,191,36,0.85), rgba(180,130,0,0.95)); font-size:1rem; box-shadow:0 0 18px rgba(251,191,36,0.5);">Na</div>
+                                <div style="font-size:0.7rem; color:rgba(255,255,255,0.5);">186 pm</div>
+                            </div>
+                            <!-- Mg 160pm -->
+                            <div style="display:flex; flex-direction:column; align-items:center; gap:3px;">
+                                <div class="atom-circle" style="width:80px;height:80px; background:radial-gradient(circle at 35% 35%, rgba(52,211,153,0.85), rgba(20,150,100,0.95)); font-size:0.9rem; box-shadow:0 0 16px rgba(52,211,153,0.5);">Mg</div>
+                                <div style="font-size:0.7rem; color:rgba(255,255,255,0.5);">160 pm</div>
+                            </div>
+                            <!-- Al 143pm -->
+                            <div style="display:flex; flex-direction:column; align-items:center; gap:3px;">
+                                <div class="atom-circle" style="width:72px;height:72px; background:radial-gradient(circle at 35% 35%, rgba(251,146,60,0.85), rgba(180,80,0,0.95)); font-size:0.85rem; box-shadow:0 0 14px rgba(251,146,60,0.45);">Al</div>
+                                <div style="font-size:0.7rem; color:rgba(255,255,255,0.5);">143 pm</div>
+                            </div>
+                            <!-- Si 117pm -->
+                            <div style="display:flex; flex-direction:column; align-items:center; gap:3px;">
+                                <div class="atom-circle" style="width:59px;height:59px; background:radial-gradient(circle at 35% 35%, rgba(148,163,184,0.85), rgba(80,90,110,0.95)); font-size:0.85rem; box-shadow:0 0 12px rgba(148,163,184,0.45);">Si</div>
+                                <div style="font-size:0.7rem; color:rgba(255,255,255,0.5);">117 pm</div>
+                            </div>
+                            <!-- P 110pm -->
+                            <div style="display:flex; flex-direction:column; align-items:center; gap:3px;">
+                                <div class="atom-circle" style="width:55px;height:55px; background:radial-gradient(circle at 35% 35%, rgba(96,165,250,0.85), rgba(30,80,180,0.95)); font-size:0.85rem; box-shadow:0 0 12px rgba(96,165,250,0.45);">P</div>
+                                <div style="font-size:0.7rem; color:rgba(255,255,255,0.5);">110 pm</div>
+                            </div>
+                            <!-- S 104pm -->
+                            <div style="display:flex; flex-direction:column; align-items:center; gap:3px;">
+                                <div class="atom-circle" style="width:52px;height:52px; background:radial-gradient(circle at 35% 35%, rgba(248,113,113,0.85), rgba(180,30,30,0.95)); font-size:0.85rem; box-shadow:0 0 10px rgba(248,113,113,0.45);">S</div>
+                                <div style="font-size:0.7rem; color:rgba(255,255,255,0.5);">104 pm</div>
+                            </div>
+                            <!-- Cl 99pm -->
+                            <div style="display:flex; flex-direction:column; align-items:center; gap:3px;">
+                                <div class="atom-circle" style="width:50px;height:50px; background:radial-gradient(circle at 35% 35%, rgba(192,132,252,0.85), rgba(120,30,200,0.95)); font-size:0.85rem; box-shadow:0 0 10px rgba(192,132,252,0.45);">Cl</div>
+                                <div style="font-size:0.7rem; color:rgba(255,255,255,0.5);">99 pm</div>
+                            </div>
+                            <!-- 右側 → 遞減說明 -->
+                            <div style="text-align:center; line-height:1.4;">
+                                <div style="font-size:1.1rem; color:var(--accent-red); font-weight:700;">→ 遞減</div>
+                                <div style="font-size:0.65rem; color:rgba(255,255,255,0.4); margin-top:2px;">Z* 增大<br>層數不變</div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- ══ Slide 3: 週期性規律 ══ -->
+            <div class="slide">
+                <h1>原子半徑的週期性規律</h1>
+                <div class="grid-2">
+                    <div class="panel">
+                        <h2>同週期 → 由左至右</h2>
+                        <div class="formula-box" style="border-left-color: var(--accent-red); font-size:1.4rem;">
+                            原子半徑 <strong style="color:var(--accent-red);">遞減</strong> ↘
+                        </div>
+                        <div class="info-card" style="margin-top:0.5rem;">
+                            <p><strong>原因：</strong></p>
+                            <ul style="margin-top:0.3rem;">
+                                <li>同週期電子層數<strong>相同</strong></li>
+                                <li>核電荷數（Z）<strong>增大</strong></li>
+                                <li><strong>有效核電荷（Z*）增大</strong>，對電子的吸引力增強</li>
+                                <li>電子雲被拉近原子核 → 半徑縮小</li>
+                            </ul>
+                        </div>
+                        <div class="highlight-box" style="margin-top:0.5rem;">
+                            <p>例：$\text{Na} > \text{Mg} > \text{Al} > \text{Si} > \text{P} > \text{S} > \text{Cl}$</p>
+                            <p style="font-size:0.85rem; margin-top:0.3rem; color:rgba(255,255,255,0.6);">186 &gt; 160 &gt; 143 &gt; 117 &gt; 110 &gt; 104 &gt; 99 pm</p>
+                        </div>
+                    </div>
+                    <div class="panel">
+                        <h2>同族 → 由上至下</h2>
+                        <div class="formula-box" style="border-left-color: var(--accent-green); font-size:1.4rem;">
+                            原子半徑 <strong style="color:var(--accent-green);">遞增</strong> ↗
+                        </div>
+                        <div class="info-card" style="margin-top:0.5rem;">
+                            <p><strong>原因：</strong></p>
+                            <ul style="margin-top:0.3rem;">
+                                <li>電子層數<strong>增加</strong>（n 值增大）</li>
+                                <li>內層電子對外層電子的<strong>屏蔽效應增大</strong></li>
+                                <li>有效核電荷增加量 &lt; 屏蔽效應增加量</li>
+                                <li>外層電子離核更遠 → 半徑增大</li>
+                            </ul>
+                        </div>
+                        <div class="highlight-box" style="margin-top:0.5rem;">
+                            <p>例（第 IA 族鹼金屬）：$\text{Li} < \text{Na} < \text{K} < \text{Rb} < \text{Cs}$</p>
+                            <p style="font-size:0.85rem; margin-top:0.3rem; color:rgba(255,255,255,0.6);">152 &lt; 186 &lt; 227 &lt; 248 &lt; 265 pm</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel" style="flex:0 0 auto; padding:0.7rem 1.2rem; margin-top:0.8rem;">
+                    <div style="display:flex; align-items:center; justify-content:center; gap:3rem; flex-wrap:wrap;">
+                        <div style="text-align:center;">
+                            <div style="font-size:0.9rem; color:rgba(255,255,255,0.5); margin-bottom:0.3rem;">同週期（左→右）</div>
+                            <div style="font-size:1.2rem; color:var(--accent-red);">Z* ↑ → 半徑 ↓</div>
+                        </div>
+                        <div style="width:1px; height:40px; background:rgba(255,255,255,0.15);"></div>
+                        <div style="text-align:center;">
+                            <div style="font-size:0.9rem; color:rgba(255,255,255,0.5); margin-bottom:0.3rem;">同族（上→下）</div>
+                            <div style="font-size:1.2rem; color:var(--accent-green);">電子層 ↑ → 半徑 ↑</div>
+                        </div>
+                        <div style="width:1px; height:40px; background:rgba(255,255,255,0.15);"></div>
+                        <div style="text-align:center;">
+                            <div style="font-size:0.9rem; color:rgba(255,255,255,0.5); margin-bottom:0.3rem;">最大半徑方向</div>
+                            <div style="font-size:1.2rem; color:var(--accent-yellow);">左下角元素最大 ↙</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══ Slide 4: 互動週期表 ══ -->
+            <div class="slide" id="slide-ptable">
+                <h1>互動：週期表中的原子半徑分佈</h1>
+                <div style="display:flex; flex-direction:column; flex:1; gap:0.8rem; overflow:hidden;">
+                    <div class="panel" style="flex:0 0 auto; padding:0.7rem 1.2rem;">
+                        <p>顏色越<strong style="color:var(--accent-red);">深紅</strong>表示半徑越大，越<strong style="color:var(--accent-blue);">深藍</strong>表示半徑越小。點選元素查看數據。</p>
+                    </div>
+                    <div class="panel" style="flex:1; overflow:hidden;">
+                        <div id="ptable-grid" style="display:grid; grid-template-columns: repeat(18,1fr); gap:3px; height:100%; align-content:start; padding:0.3rem;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══ Slide 5: 影響因素分析 ══ -->
+            <div class="slide">
+                <h1>影響原子半徑的因素</h1>
+                <div class="grid-3">
+                    <div class="panel">
+                        <h2>① 電子層數（n）</h2>
+                        <div class="svg-container" style="flex:0 0 100px;">
+                            <svg viewBox="0 0 200 100">
+                                <!-- Li: 2 shells -->
+                                <circle cx="50" cy="50" r="8" fill="rgba(251,191,36,0.9)"/>
+                                <circle cx="50" cy="50" r="18" fill="none" stroke="rgba(96,165,250,0.5)" stroke-width="1.5" stroke-dasharray="4,2"/>
+                                <circle cx="50" cy="50" r="30" fill="none" stroke="rgba(96,165,250,0.7)" stroke-width="1.5" stroke-dasharray="4,2"/>
+                                <text x="50" y="54" text-anchor="middle" fill="white" font-size="8" font-weight="bold">Li</text>
+                                <text x="50" y="88" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-size="7">n=2, r=152pm</text>
+                                <!-- Na: 3 shells -->
+                                <circle cx="150" cy="50" r="8" fill="rgba(251,191,36,0.9)"/>
+                                <circle cx="150" cy="50" r="16" fill="none" stroke="rgba(96,165,250,0.4)" stroke-width="1.5" stroke-dasharray="4,2"/>
+                                <circle cx="150" cy="50" r="27" fill="none" stroke="rgba(96,165,250,0.6)" stroke-width="1.5" stroke-dasharray="4,2"/>
+                                <circle cx="150" cy="50" r="40" fill="none" stroke="rgba(96,165,250,0.8)" stroke-width="1.5" stroke-dasharray="4,2"/>
+                                <text x="150" y="54" text-anchor="middle" fill="white" font-size="8" font-weight="bold">Na</text>
+                                <text x="150" y="96" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-size="7">n=3, r=186pm</text>
+                            </svg>
+                        </div>
+                        <div class="info-card" style="flex:1;">
+                            <p>電子層數<strong>越多</strong>，外層電子<strong>距核越遠</strong>，原子半徑越大。</p>
+                            <p style="margin-top:0.4rem; font-size:0.9rem; color:rgba(255,255,255,0.6);">這是同族元素由上至下半徑增大的主要原因。</p>
+                        </div>
+                    </div>
+                    <div class="panel">
+                        <h2>② 有效核電荷（Z*）</h2>
+                        <div class="info-card" style="background:rgba(248,113,113,0.08); border-color:rgba(248,113,113,0.3);">
+                            <p>$Z^* = Z - \sigma$</p>
+                            <p style="font-size:0.85rem; margin-top:0.2rem; color:rgba(255,255,255,0.6);">Z = 核電荷數，σ = 屏蔽常數</p>
+                        </div>
+                        <div class="info-card" style="margin-top:0.5rem;">
+                            <p><strong>Z* 越大</strong>：</p>
+                            <ul style="margin-top:0.3rem;">
+                                <li>對外層電子吸引力越強</li>
+                                <li>電子雲被拉緊</li>
+                                <li>原子半徑<strong>減小</strong></li>
+                            </ul>
+                        </div>
+                        <div class="highlight-box" style="margin-top:0.5rem;">
+                            <p><strong>同週期</strong>由左至右：Z 增加，但 σ 增加較少（同層屏蔽弱），所以 Z* 淨增大。</p>
+                        </div>
+                    </div>
+                    <div class="panel">
+                        <h2>③ 屏蔽效應（σ）</h2>
+                        <div class="svg-container" style="flex:0 0 110px;">
+                            <svg viewBox="0 0 200 120">
+                                <!-- nucleus -->
+                                <circle cx="100" cy="60" r="12" fill="rgba(248,113,113,0.9)"/>
+                                <text x="100" y="64" text-anchor="middle" fill="white" font-size="9" font-weight="bold">核</text>
+                                <!-- inner shell -->
+                                <circle cx="100" cy="60" r="30" fill="none" stroke="rgba(52,211,153,0.5)" stroke-width="1.5" stroke-dasharray="3,2"/>
+                                <!-- inner electrons -->
+                                <circle cx="100" cy="30" r="5" fill="rgba(52,211,153,0.8)"/>
+                                <circle cx="130" cy="60" r="5" fill="rgba(52,211,153,0.8)"/>
+                                <circle cx="100" cy="90" r="5" fill="rgba(52,211,153,0.8)"/>
+                                <circle cx="70" cy="60" r="5" fill="rgba(52,211,153,0.8)"/>
+                                <!-- outer shell -->
+                                <circle cx="100" cy="60" r="55" fill="none" stroke="rgba(96,165,250,0.5)" stroke-width="1.5" stroke-dasharray="3,2"/>
+                                <!-- outer electron -->
+                                <circle cx="100" cy="5" r="6" fill="rgba(96,165,250,0.9)"/>
+                                <!-- shield arrow -->
+                                <path d="M100,30 L100,18" stroke="rgba(52,211,153,0.8)" stroke-width="1.5" marker-end="url(#shieldArrow)"/>
+                                <defs>
+                                    <marker id="shieldArrow" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+                                        <path d="M0,0 L6,3 L0,6 Z" fill="rgba(52,211,153,0.8)"/>
+                                    </marker>
+                                </defs>
+                                <text x="155" y="30" fill="rgba(52,211,153,0.9)" font-size="8">內層電子</text>
+                                <text x="155" y="42" fill="rgba(52,211,153,0.9)" font-size="8">屏蔽</text>
+                                <text x="100" y="115" text-anchor="middle" fill="rgba(96,165,250,0.8)" font-size="8">外層電子受屏蔽，感受 Z* &lt; Z</text>
+                            </svg>
+                        </div>
+                        <div class="info-card" style="flex:1; margin-top:0.3rem;">
+                            <p>內層電子對外層電子有<strong>屏蔽（遮蔽）作用</strong>，使外層電子感受到的核電荷 Z* 小於實際 Z。</p>
+                            <p style="margin-top:0.4rem; font-size:0.9rem; color:rgba(255,255,255,0.6);">屏蔽效應越大，Z* 越小，半徑越大。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══ Slide 6: 互動滑桿：比較大小 ══ -->
+            <div class="slide" id="slide-compare">
+                <h1>互動比較：拖曳觀察原子半徑變化</h1>
+                <div class="grid-2">
+                    <div class="panel">
+                        <h2>同週期比較（第三週期）</h2>
+                        <p style="font-size:0.9rem; margin-bottom:0.5rem;">拖曳滑桿選擇元素：</p>
+                        <input type="range" id="period-slider" min="0" max="6" value="0" style="margin-bottom:0.5rem;">
+                        <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:rgba(255,255,255,0.5); margin-bottom:0.8rem;">
+                            <span>Na</span><span>Mg</span><span>Al</span><span>Si</span><span>P</span><span>S</span><span>Cl</span>
+                        </div>
+                        <div id="period-display" style="display:flex; flex-direction:column; align-items:center; gap:0.8rem; flex:1; justify-content:center;">
+                            <div id="period-atom" class="atom-circle" style="width:93px; height:93px; background:radial-gradient(circle at 35% 35%, rgba(251,191,36,0.8), rgba(180,130,0,0.9)); font-size:1.1rem; box-shadow:0 0 20px rgba(251,191,36,0.5); transition:all 0.4s ease;">Na</div>
+                            <div id="period-info" style="text-align:center;">
+                                <div style="font-size:1.4rem; font-weight:800; color:var(--accent-yellow);">186 pm</div>
+                                <div style="font-size:0.9rem; color:rgba(255,255,255,0.5);">Z = 11 | 電子組態: 2,8,1</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="panel">
+                        <h2>同族比較（IA 族）</h2>
+                        <p style="font-size:0.9rem; margin-bottom:0.5rem;">拖曳滑桿選擇元素：</p>
+                        <input type="range" id="group-slider" min="0" max="4" value="0" style="margin-bottom:0.5rem;">
+                        <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:rgba(255,255,255,0.5); margin-bottom:0.8rem;">
+                            <span>Li</span><span>Na</span><span>K</span><span>Rb</span><span>Cs</span>
+                        </div>
+                        <div id="group-display" style="display:flex; flex-direction:column; align-items:center; gap:0.8rem; flex:1; justify-content:center;">
+                            <div id="group-atom" class="atom-circle" style="width:76px; height:76px; background:radial-gradient(circle at 35% 35%, rgba(251,191,36,0.8), rgba(180,130,0,0.9)); font-size:1rem; box-shadow:0 0 16px rgba(251,191,36,0.5); transition:all 0.4s ease;">Li</div>
+                            <div id="group-info" style="text-align:center;">
+                                <div style="font-size:1.4rem; font-weight:800; color:var(--accent-green);">152 pm</div>
+                                <div style="font-size:0.9rem; color:rgba(255,255,255,0.5);">Z = 3 | 第 2 週期</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══ Slide 7: 離子半徑比較 ══ -->
+            <div class="slide">
+                <h1>原子半徑 vs. 離子半徑</h1>
+                <div class="grid-2">
+                    <div class="panel">
+                        <h2>陽離子（失去電子）→ 半徑縮小</h2>
+                        <div class="info-card" style="border-color:rgba(248,113,113,0.4); background:rgba(248,113,113,0.05);">
+                            <p><strong>失去電子</strong>後：</p>
+                            <ul style="margin-top:0.3rem;">
+                                <li>電子數減少，電子間排斥力降低</li>
+                                <li>有效核電荷對剩餘電子吸引力相對增強</li>
+                                <li>半徑<strong style="color:var(--accent-red);">明顯縮小</strong></li>
+                                <li>若失去最外層所有電子，則少一個電子層！</li>
+                            </ul>
+                        </div>
+                        <div style="display:flex; align-items:center; justify-content:center; gap:1.5rem; margin-top:0.8rem;">
+                            <div style="text-align:center;">
+                                <div class="atom-circle" style="width:70px;height:70px; background:radial-gradient(circle at 35% 35%, rgba(251,191,36,0.8), rgba(180,130,0,0.9)); font-size:0.9rem; box-shadow:0 0 15px rgba(251,191,36,0.4);">Na</div>
+                                <div style="font-size:0.8rem; color:rgba(255,255,255,0.5); margin-top:4px;">186 pm</div>
+                            </div>
+                            <div style="font-size:2rem; color:var(--accent-red);">→</div>
+                            <div style="text-align:center;">
+                                <div class="atom-circle" style="width:38px;height:38px; background:radial-gradient(circle at 35% 35%, rgba(251,191,36,0.7), rgba(180,130,0,0.8)); font-size:0.8rem; border:2px solid rgba(248,113,113,0.6); box-shadow:0 0 15px rgba(248,113,113,0.4);">Na⁺</div>
+                                <div style="font-size:0.8rem; color:rgba(255,255,255,0.5); margin-top:4px;">116 pm</div>
+                            </div>
+                            <div style="font-size:1.3rem; color:var(--accent-red);">↓ 38%</div>
+                        </div>
+                        <div class="highlight-box" style="margin-top:0.8rem;">
+                            <p>Na (186 pm) → Na⁺ (116 pm) → <strong>縮小 38%！</strong></p>
+                            <p>Mg (160 pm) → Mg²⁺ (86 pm) → <strong>縮小 46%！</strong></p>
+                        </div>
+                    </div>
+                    <div class="panel">
+                        <h2>陰離子（得到電子）→ 半徑增大</h2>
+                        <div class="info-card" style="border-color:rgba(52,211,153,0.4); background:rgba(52,211,153,0.05);">
+                            <p><strong>得到電子</strong>後：</p>
+                            <ul style="margin-top:0.3rem;">
+                                <li>電子數增加，電子間排斥力增大</li>
+                                <li>核電荷數不變，對每個電子吸引力相對減弱</li>
+                                <li>半徑<strong style="color:var(--accent-green);">明顯增大</strong></li>
+                            </ul>
+                        </div>
+                        <div style="display:flex; align-items:center; justify-content:center; gap:1.5rem; margin-top:0.8rem;">
+                            <div style="text-align:center;">
+                                <div class="atom-circle" style="width:50px;height:50px; background:radial-gradient(circle at 35% 35%, rgba(192,132,252,0.85), rgba(120,30,200,0.9)); font-size:0.85rem; box-shadow:0 0 12px rgba(192,132,252,0.4);">F</div>
+                                <div style="font-size:0.8rem; color:rgba(255,255,255,0.5); margin-top:4px;">72 pm</div>
+                            </div>
+                            <div style="font-size:2rem; color:var(--accent-green);">→</div>
+                            <div style="text-align:center;">
+                                <div class="atom-circle" style="width:88px;height:88px; background:radial-gradient(circle at 35% 35%, rgba(192,132,252,0.7), rgba(120,30,200,0.8)); font-size:0.9rem; border:2px solid rgba(52,211,153,0.6); box-shadow:0 0 18px rgba(52,211,153,0.4);">F⁻</div>
+                                <div style="font-size:0.8rem; color:rgba(255,255,255,0.5); margin-top:4px;">119 pm</div>
+                            </div>
+                            <div style="font-size:1.3rem; color:var(--accent-green);">↑ 65%</div>
+                        </div>
+                        <div class="highlight-box" style="margin-top:0.8rem;">
+                            <p>F (72 pm) → F⁻ (119 pm) → <strong>增大 65%！</strong></p>
+                            <p>Cl (99 pm) → Cl⁻ (167 pm) → <strong>增大 69%！</strong></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══ Slide 8: 等電子序列 ══ -->
+            <div class="slide">
+                <h1>等電子序列（Isoelectronic Series）</h1>
+                <div style="display:flex; flex-direction:column; flex:1; gap:1rem; overflow:hidden;">
+                    <div class="panel" style="flex:0 0 auto;">
+                        <p><strong>等電子序列</strong>：電子數相同的一組離子或原子，比較其半徑大小時，<em>核電荷數越大，半徑越小</em>。</p>
+                    </div>
+                    <div class="grid-2" style="flex:1;">
+                        <div class="panel">
+                            <h2>10 電子序列（氖電子組態）</h2>
+                            <div style="flex:1; display:grid; grid-template-rows:1fr auto; min-height:0; padding:0.5rem 0;">
+                                <!-- 圓圈列：底部對齊 -->
+                                <div style="display:grid; grid-template-columns:repeat(6,1fr); align-items:center; justify-items:center; gap:0.4rem; padding:0 0.3rem;">
+                                    <div class="atom-circle" style="width:105px;height:105px; background:radial-gradient(circle at 35% 35%, rgba(248,113,113,0.75), rgba(150,20,20,0.9)); font-size:0.9rem; box-shadow:0 0 18px rgba(248,113,113,0.4);">O²⁻</div>
+                                    <div class="atom-circle" style="width:90px;height:90px; background:radial-gradient(circle at 35% 35%, rgba(192,132,252,0.75), rgba(100,20,180,0.9)); font-size:0.9rem; box-shadow:0 0 16px rgba(192,132,252,0.4);">F⁻</div>
+                                    <div class="atom-circle" style="width:66px;height:66px; background:radial-gradient(circle at 35% 35%, rgba(22,211,238,0.75), rgba(0,130,180,0.9)); font-size:0.9rem; box-shadow:0 0 14px rgba(22,211,238,0.4);">Ne</div>
+                                    <div class="atom-circle" style="width:46px;height:46px; background:radial-gradient(circle at 35% 35%, rgba(52,211,153,0.75), rgba(10,140,80,0.9)); font-size:0.9rem; box-shadow:0 0 12px rgba(52,211,153,0.4);">Na⁺</div>
+                                    <div class="atom-circle" style="width:34px;height:34px; background:radial-gradient(circle at 35% 35%, rgba(251,191,36,0.75), rgba(160,110,0,0.9)); font-size:0.75rem; box-shadow:0 0 10px rgba(251,191,36,0.4);">Mg²⁺</div>
+                                    <div class="atom-circle" style="width:26px;height:26px; background:radial-gradient(circle at 35% 35%, rgba(251,146,60,0.75), rgba(160,60,0,0.9)); font-size:0.65rem; box-shadow:0 0 10px rgba(251,146,60,0.4);">Al³⁺</div>
+                                </div>
+                                <!-- 文字標籤列：固定高度，水平對齊 -->
+                                <div style="display:grid; grid-template-columns:repeat(6,1fr); justify-items:center; gap:0.4rem; padding:6px 0.3rem 0; border-top:1px solid rgba(255,255,255,0.08); margin-top:6px;">
+                                    <div style="font-size:0.78rem; color:rgba(255,255,255,0.6); text-align:center; line-height:1.4;">Z=8<br>126 pm</div>
+                                    <div style="font-size:0.78rem; color:rgba(255,255,255,0.6); text-align:center; line-height:1.4;">Z=9<br>119 pm</div>
+                                    <div style="font-size:0.78rem; color:rgba(255,255,255,0.6); text-align:center; line-height:1.4;">Z=10<br>(稀有氣體)</div>
+                                    <div style="font-size:0.78rem; color:rgba(255,255,255,0.6); text-align:center; line-height:1.4;">Z=11<br>116 pm</div>
+                                    <div style="font-size:0.78rem; color:rgba(255,255,255,0.6); text-align:center; line-height:1.4;">Z=12<br>86 pm</div>
+                                    <div style="font-size:0.78rem; color:rgba(255,255,255,0.6); text-align:center; line-height:1.4;">Z=13<br>68 pm</div>
+                                </div>
+                            </div>
+                            <div style="text-align:center; font-size:0.82rem; color:rgba(255,255,255,0.45); margin-top:0.4rem;">← 半徑遞減，核電荷增大 →</div>
+                        </div>
+                        <div class="panel">
+                            <h2>18 電子序列（氬電子組態）</h2>
+                            <div style="flex:1; display:grid; grid-template-rows:1fr auto; min-height:0; padding:0.5rem 0;">
+                                <!-- 圓圈列：底部對齊 -->
+                                <div style="display:grid; grid-template-columns:repeat(4,1fr); align-items:center; justify-items:center; gap:0.4rem; padding:0 0.5rem;">
+                                    <div class="atom-circle" style="width:110px;height:110px; background:radial-gradient(circle at 35% 35%, rgba(248,113,113,0.75), rgba(150,20,20,0.9)); font-size:0.9rem; box-shadow:0 0 18px rgba(248,113,113,0.4);">S²⁻</div>
+                                    <div class="atom-circle" style="width:92px;height:92px; background:radial-gradient(circle at 35% 35%, rgba(192,132,252,0.75), rgba(100,20,180,0.9)); font-size:0.9rem; box-shadow:0 0 15px rgba(192,132,252,0.4);">Cl⁻</div>
+                                    <div class="atom-circle" style="width:50px;height:50px; background:radial-gradient(circle at 35% 35%, rgba(52,211,153,0.75), rgba(10,140,80,0.9)); font-size:0.9rem; box-shadow:0 0 12px rgba(52,211,153,0.4);">K⁺</div>
+                                    <div class="atom-circle" style="width:34px;height:34px; background:radial-gradient(circle at 35% 35%, rgba(251,191,36,0.75), rgba(160,110,0,0.9)); font-size:0.8rem; box-shadow:0 0 10px rgba(251,191,36,0.4);">Ca²⁺</div>
+                                </div>
+                                <!-- 文字標籤列：固定高度，水平對齊 -->
+                                <div style="display:grid; grid-template-columns:repeat(4,1fr); justify-items:center; gap:0.4rem; padding:6px 0.5rem 0; border-top:1px solid rgba(255,255,255,0.08); margin-top:6px;">
+                                    <div style="font-size:0.78rem; color:rgba(255,255,255,0.6); text-align:center; line-height:1.4;">Z=16<br>~170 pm</div>
+                                    <div style="font-size:0.78rem; color:rgba(255,255,255,0.6); text-align:center; line-height:1.4;">Z=17<br>167 pm</div>
+                                    <div style="font-size:0.78rem; color:rgba(255,255,255,0.6); text-align:center; line-height:1.4;">Z=19<br>152 pm</div>
+                                    <div style="font-size:0.78rem; color:rgba(255,255,255,0.6); text-align:center; line-height:1.4;">Z=20<br>114 pm</div>
+                                </div>
+                            </div>
+                            <div class="highlight-box" style="margin-top:0.5rem; flex-shrink:0;">
+                                <p><strong>規律：</strong>電子數相同時，核電荷 Z 越大 → 有效核電荷 Z* 越大 → 半徑越小</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══ Slide 9: 範例一 ══ -->
+            <div class="slide">
+                <h1>範例練習 1</h1>
+                <div class="panel" style="position:relative; flex:1;">
+                    <div class="ans-overlay" id="ans-1">
+                        <h2>詳細解析</h2>
+                        <div style="font-size:1.2rem; line-height:1.9; margin-top:0.8rem;" class="scroll-panel">
+                            <p><strong>題目：</strong>比較 Na、Mg、Al 的原子半徑大小</p>
+                            <br>
+                            <p><strong>分析：</strong>Na、Mg、Al 同在第三週期，由左至右排列。</p>
+                            <p>→ 同週期，由左至右，核電荷數增大，有效核電荷增大，半徑遞減</p>
+                            <br>
+                            <p><strong>核電荷數：</strong>Na(Z=11) &lt; Mg(Z=12) &lt; Al(Z=13)</p>
+                            <p><strong>電子層數：</strong>三者均為 3 層（第三週期）</p>
+                            <p><strong>有效核電荷：</strong>Z*(Na) &lt; Z*(Mg) &lt; Z*(Al)</p>
+                            <br>
+                            <p><strong>結論：</strong></p>
+                            <p style="font-size:1.5rem; color:var(--accent-green); font-weight:800;">Na > Mg > Al</p>
+                            <p style="color:rgba(255,255,255,0.6);">186 pm &gt; 160 pm &gt; 143 pm</p>
+                        </div>
+                        <button class="btn-action" onclick="toggleAns('ans-1')">返回題目</button>
+                    </div>
+                    <h2>比較大小：第三週期金屬</h2>
+                    <p style="font-size:1.4rem; margin-top:1rem; line-height:2;">
+                        試比較 $\text{Na}$、$\text{Mg}$、$\text{Al}$ 三種元素的<strong>原子半徑</strong>大小，並說明理由。
+                    </p>
+                    <div class="info-card" style="margin-top:1rem;">
+                        <p>提示：三者均在第三週期，從左至右排列。請從核電荷數與有效核電荷的角度分析。</p>
+                    </div>
+                    <div style="display:flex; gap:1rem; margin-top:auto; justify-content:center;">
+                        <button class="btn-action" onclick="toggleAns('ans-1')">顯示解題過程</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══ Slide 10: 範例二 ══ -->
+            <div class="slide">
+                <h1>範例練習 2</h1>
+                <div class="panel" style="position:relative; flex:1;">
+                    <div class="ans-overlay" id="ans-2">
+                        <h2>詳細解析</h2>
+                        <div style="font-size:1.15rem; line-height:1.9; margin-top:0.8rem;" class="scroll-panel">
+                            <p><strong>比較：</strong>Na⁺、Mg²⁺、Al³⁺ 的離子半徑（均為 10 電子）</p>
+                            <br>
+                            <p><strong>等電子序列分析：</strong>三者均含 10 個電子（氖電子組態）</p>
+                            <p>→ 電子數相同，核電荷數越大，有效核電荷越大，對電子吸引力越強，半徑越小</p>
+                            <br>
+                            <table style="width:100%; border-collapse:collapse; font-size:1.05rem;">
+                                <tr style="color:var(--accent-cyan);">
+                                    <td style="padding:6px 12px; border:1px solid rgba(255,255,255,0.15);">離子</td>
+                                    <td style="padding:6px 12px; border:1px solid rgba(255,255,255,0.15);">核電荷 Z</td>
+                                    <td style="padding:6px 12px; border:1px solid rgba(255,255,255,0.15);">電子數</td>
+                                    <td style="padding:6px 12px; border:1px solid rgba(255,255,255,0.15);">半徑 (pm)</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:6px 12px; border:1px solid rgba(255,255,255,0.1);">Na⁺</td>
+                                    <td style="padding:6px 12px; border:1px solid rgba(255,255,255,0.1);">11</td>
+                                    <td style="padding:6px 12px; border:1px solid rgba(255,255,255,0.1);">10</td>
+                                    <td style="padding:6px 12px; border:1px solid rgba(255,255,255,0.1); color:var(--accent-yellow);">116 pm</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:6px 12px; border:1px solid rgba(255,255,255,0.1);">Mg²⁺</td>
+                                    <td style="padding:6px 12px; border:1px solid rgba(255,255,255,0.1);">12</td>
+                                    <td style="padding:6px 12px; border:1px solid rgba(255,255,255,0.1);">10</td>
+                                    <td style="padding:6px 12px; border:1px solid rgba(255,255,255,0.1); color:var(--accent-yellow);">86 pm</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:6px 12px; border:1px solid rgba(255,255,255,0.1);">Al³⁺</td>
+                                    <td style="padding:6px 12px; border:1px solid rgba(255,255,255,0.1);">13</td>
+                                    <td style="padding:6px 12px; border:1px solid rgba(255,255,255,0.1);">10</td>
+                                    <td style="padding:6px 12px; border:1px solid rgba(255,255,255,0.1); color:var(--accent-yellow);">68 pm</td>
+                                </tr>
+                            </table>
+                            <br>
+                            <p><strong>結論：</strong></p>
+                            <p style="font-size:1.5rem; color:var(--accent-green); font-weight:800;">Na⁺ > Mg²⁺ > Al³⁺</p>
+                        </div>
+                        <button class="btn-action" onclick="toggleAns('ans-2')">返回題目</button>
+                    </div>
+                    <h2>等電子序列的離子半徑比較</h2>
+                    <p style="font-size:1.4rem; margin-top:1rem; line-height:2;">
+                        $\text{Na}^+$、$\text{Mg}^{2+}$、$\text{Al}^{3+}$ 均含有 <strong>10 個電子</strong>，試比較其<strong>離子半徑</strong>大小。
+                    </p>
+                    <div class="info-card" style="margin-top:1rem;">
+                        <p>提示：這是等電子序列。電子數相同時，比較<strong>核電荷數（Z）</strong>的大小來判斷半徑。</p>
+                    </div>
+                    <div style="display:flex; gap:1rem; margin-top:auto; justify-content:center;">
+                        <button class="btn-action" onclick="toggleAns('ans-2')">顯示解題過程</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══ Slide 11: 範例三 ══ -->
+            <div class="slide">
+                <h1>範例練習 3</h1>
+                <div class="panel" style="position:relative; flex:1;">
+                    <div class="ans-overlay" id="ans-3">
+                        <h2>詳細解析</h2>
+                        <div style="font-size:1.15rem; line-height:1.9; margin-top:0.8rem;" class="scroll-panel">
+                            <p><strong>題目：</strong>排列 O, S, F, Cl 原子半徑由大到小</p>
+                            <br>
+                            <p><strong>確認位置：</strong></p>
+                            <table style="width:100%; border-collapse:collapse; font-size:1.05rem; margin-bottom:0.8rem;">
+                                <tr style="color:var(--accent-cyan);">
+                                    <td style="padding:6px 10px; border:1px solid rgba(255,255,255,0.15);">元素</td>
+                                    <td style="padding:6px 10px; border:1px solid rgba(255,255,255,0.15);">族</td>
+                                    <td style="padding:6px 10px; border:1px solid rgba(255,255,255,0.15);">週期</td>
+                                    <td style="padding:6px 10px; border:1px solid rgba(255,255,255,0.15);">半徑 (pm)</td>
+                                </tr>
+                                <tr><td style="padding:6px 10px; border:1px solid rgba(255,255,255,0.1);">O</td><td style="padding:6px 10px; border:1px solid rgba(255,255,255,0.1);">VIA</td><td style="padding:6px 10px; border:1px solid rgba(255,255,255,0.1);">2</td><td style="padding:6px 10px; border:1px solid rgba(255,255,255,0.1); color:var(--accent-yellow);">73 pm</td></tr>
+                                <tr><td style="padding:6px 10px; border:1px solid rgba(255,255,255,0.1);">S</td><td style="padding:6px 10px; border:1px solid rgba(255,255,255,0.1);">VIA</td><td style="padding:6px 10px; border:1px solid rgba(255,255,255,0.1);">3</td><td style="padding:6px 10px; border:1px solid rgba(255,255,255,0.1); color:var(--accent-yellow);">104 pm</td></tr>
+                                <tr><td style="padding:6px 10px; border:1px solid rgba(255,255,255,0.1);">F</td><td style="padding:6px 10px; border:1px solid rgba(255,255,255,0.1);">VIIA</td><td style="padding:6px 10px; border:1px solid rgba(255,255,255,0.1);">2</td><td style="padding:6px 10px; border:1px solid rgba(255,255,255,0.1); color:var(--accent-yellow);">72 pm</td></tr>
+                                <tr><td style="padding:6px 10px; border:1px solid rgba(255,255,255,0.1);">Cl</td><td style="padding:6px 10px; border:1px solid rgba(255,255,255,0.1);">VIIA</td><td style="padding:6px 10px; border:1px solid rgba(255,255,255,0.1);">3</td><td style="padding:6px 10px; border:1px solid rgba(255,255,255,0.1); color:var(--accent-yellow);">99 pm</td></tr>
+                            </table>
+                            <p><strong>比較邏輯：</strong></p>
+                            <p>① 同族比較：S > O（第3週期 > 第2週期）；Cl > F（第3週期 > 第2週期）</p>
+                            <p>② 同週期比較：O > F（VIA 在 VIIA 左邊）；S > Cl</p>
+                            <p>③ 跨週期：S > Cl > O > F（第三週期整體大於第二週期）</p>
+                            <br>
+                            <p style="font-size:1.5rem; color:var(--accent-green); font-weight:800;">S > Cl > O > F</p>
+                            <p style="color:rgba(255,255,255,0.6);">104 > 99 > 73 > 72 pm</p>
+                        </div>
+                        <button class="btn-action" onclick="toggleAns('ans-3')">返回題目</button>
+                    </div>
+                    <h2>跨週期元素的大小排列</h2>
+                    <p style="font-size:1.4rem; margin-top:1rem; line-height:2.2;">
+                        試將 $\text{O}$、$\text{S}$、$\text{F}$、$\text{Cl}$ 四個元素的原子半徑由<strong>大到小</strong>排列。
+                    </p>
+                    <div class="info-card" style="margin-top:0.8rem;">
+                        <p>提示：先確認各元素在週期表中的位置（族別與週期），再分別從同週期和同族兩個方向進行比較。</p>
+                    </div>
+                    <div style="display:flex; gap:1rem; margin-top:auto; justify-content:center;">
+                        <button class="btn-action" onclick="toggleAns('ans-3')">顯示解題過程</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══ Slide 12: 單元挑戰 ══ -->
+            <div class="slide" id="slide-game">
+                <h1 style="color:var(--accent-purple);">單元挑戰：觀念連連看</h1>
+                <div style="flex:1; position:relative; background:rgba(0,0,0,0.2); border-radius:20px; overflow:hidden; margin-top:0.5rem;">
+                    <svg id="game-svg" style="position:absolute; width:100%; height:100%; pointer-events:none;"></svg>
+                    <div style="display:grid; grid-template-columns:1fr auto 1fr; height:100%; padding:16px 20px; gap:0; align-items:stretch;">
+                        <div id="left-column" style="display:flex; flex-direction:column; justify-content:space-around; gap:8px; padding-right:12px;"></div>
+                        <div id="dot-column" style="display:flex; flex-direction:column; justify-content:space-around; gap:8px; width:220px;"></div>
+                        <div id="right-column" style="display:flex; flex-direction:column; justify-content:space-around; gap:8px; padding-left:12px;"></div>
+                    </div>
+                    <div id="game-feedback" style="display:none; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); background:var(--accent-green); color:#000; padding:2rem 4rem; border-radius:20px; font-size:2rem; font-weight:900; z-index:100;">🎉 恭喜完成！</div>
+                </div>
+                <div style="text-align:center; margin-top:0.8rem;">
+                    <button class="btn-action-outline" onclick="resetGame()">重新挑戰 ↺</button>
+                </div>
+            </div>
+
+            <!-- ══ Slide 13: 總結 ══ -->
+            <div class="slide">
+                <h1>章節總結</h1>
+                <div class="grid-2">
+                    <div class="panel">
+                        <h2>📐 核心觀念回顧</h2>
+                        <div class="scroll-panel" style="flex:1;">
+                            <div class="info-card" style="margin-bottom:0.5rem;">
+                                <p><strong>① 定義：</strong>同種原子鍵結時，核間距的一半</p>
+                            </div>
+                            <div class="info-card" style="margin-bottom:0.5rem; border-color:rgba(248,113,113,0.4);">
+                                <p><strong>② 同週期規律：</strong>由左至右，Z* 增大 → 半徑<em>減小</em></p>
+                            </div>
+                            <div class="info-card" style="margin-bottom:0.5rem; border-color:rgba(52,211,153,0.4);">
+                                <p><strong>③ 同族規律：</strong>由上至下，電子層數增加 → 半徑<em>增大</em></p>
+                            </div>
+                            <div class="info-card" style="margin-bottom:0.5rem; border-color:rgba(192,132,252,0.4);">
+                                <p><strong>④ 陽離子：</strong>失去電子 → 半徑<em>顯著縮小</em>（少一層尤甚）</p>
+                            </div>
+                            <div class="info-card" style="margin-bottom:0.5rem; border-color:rgba(251,191,36,0.4);">
+                                <p><strong>⑤ 陰離子：</strong>得到電子 → 半徑<em>增大</em></p>
+                            </div>
+                            <div class="info-card" style="border-color:rgba(251,146,60,0.4);">
+                                <p><strong>⑥ 等電子序列：</strong>電子數相同時，Z 越大 → 半徑越小</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="panel">
+                        <h2>🗺️ 概念地圖</h2>
+                        <svg viewBox="0 0 400 320" style="width:100%; height:100%; max-height:280px;">
+                            <!-- Center -->
+                            <rect x="150" y="130" width="100" height="40" rx="12" fill="rgba(96,165,250,0.25)" stroke="var(--accent-blue)" stroke-width="2"/>
+                            <text x="200" y="155" text-anchor="middle" fill="var(--accent-blue)" font-size="13" font-weight="bold">原子半徑</text>
+                            <!-- Top: 影響因素 -->
+                            <rect x="140" y="15" width="120" height="34" rx="10" fill="rgba(251,191,36,0.18)" stroke="var(--accent-yellow)" stroke-width="1.5"/>
+                            <text x="200" y="36" text-anchor="middle" fill="var(--accent-yellow)" font-size="11">影響因素</text>
+                            <line x1="200" y1="49" x2="200" y2="130" stroke="rgba(255,255,255,0.25)" stroke-width="1.5" stroke-dasharray="4,2"/>
+                            <!-- Left: 同週期減小 -->
+                            <rect x="10" y="125" width="115" height="50" rx="10" fill="rgba(248,113,113,0.15)" stroke="var(--accent-red)" stroke-width="1.5"/>
+                            <text x="67" y="145" text-anchor="middle" fill="var(--accent-red)" font-size="11">同週期</text>
+                            <text x="67" y="162" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="10">由左→右 減小 ↘</text>
+                            <line x1="125" y1="150" x2="150" y2="150" stroke="rgba(255,255,255,0.25)" stroke-width="1.5" stroke-dasharray="4,2"/>
+                            <!-- Right: 同族增大 -->
+                            <rect x="275" y="125" width="115" height="50" rx="10" fill="rgba(52,211,153,0.15)" stroke="var(--accent-green)" stroke-width="1.5"/>
+                            <text x="332" y="145" text-anchor="middle" fill="var(--accent-green)" font-size="11">同族</text>
+                            <text x="332" y="162" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="10">由上→下 增大 ↗</text>
+                            <line x1="250" y1="150" x2="275" y2="150" stroke="rgba(255,255,255,0.25)" stroke-width="1.5" stroke-dasharray="4,2"/>
+                            <!-- Bottom left: 陽離子 -->
+                            <rect x="30" y="250" width="110" height="50" rx="10" fill="rgba(192,132,252,0.15)" stroke="var(--accent-purple)" stroke-width="1.5"/>
+                            <text x="85" y="270" text-anchor="middle" fill="var(--accent-purple)" font-size="11">陽離子</text>
+                            <text x="85" y="287" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="10">失電子 → 縮小</text>
+                            <line x1="150" y1="165" x2="85" y2="250" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" stroke-dasharray="4,2"/>
+                            <!-- Bottom right: 陰離子 -->
+                            <rect x="260" y="250" width="110" height="50" rx="10" fill="rgba(251,146,60,0.15)" stroke="var(--accent-orange)" stroke-width="1.5"/>
+                            <text x="315" y="270" text-anchor="middle" fill="var(--accent-orange)" font-size="11">陰離子</text>
+                            <text x="315" y="287" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="10">得電子 → 增大</text>
+                            <line x1="250" y1="165" x2="315" y2="250" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" stroke-dasharray="4,2"/>
+                            <!-- Z* label -->
+                            <text x="200" y="90" text-anchor="middle" fill="rgba(255,255,255,0.4)" font-size="10">Z*（有效核電荷）↑ → 半徑 ↓</text>
+                            <text x="200" y="105" text-anchor="middle" fill="rgba(255,255,255,0.4)" font-size="10">電子層數 ↑ → 半徑 ↑</text>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- /slides-container -->
+
+        <canvas id="drawing-layer"></canvas>
+    </div><!-- /presentation-area -->
+
+    <div id="slide-info">1 / 13</div>
+
+    <!-- ═══════════════════ FLOATING TOOLBAR ═══════════════════ -->
+    <div id="toolbar">
+        <div id="drag-handle">≡</div>
+        <button class="btn-tool" id="btn-prev" title="上一頁">▲</button>
+        <button class="btn-tool" id="btn-next" title="下一頁">▼</button>
+        <div style="height:1px; width:30px; background:rgba(255,255,255,0.2); margin:4px 0;"></div>
+        <button class="btn-tool" id="btn-draw" title="手寫功能">✎</button>
+        <div id="color-picker" style="display:none; flex-direction:column; gap:7px; margin-top:4px;">
+            <div class="color-dot" style="width:22px;height:22px;background:#f0f4ff;border-radius:50%;cursor:pointer;border:2px solid transparent;" data-color="#f0f4ff"></div>
+            <div class="color-dot" style="width:22px;height:22px;background:#f87171;border-radius:50%;cursor:pointer;border:2px solid transparent;" data-color="#f87171"></div>
+            <div class="color-dot" style="width:22px;height:22px;background:#60a5fa;border-radius:50%;cursor:pointer;border:2px solid transparent;" data-color="#60a5fa"></div>
+            <div class="color-dot" style="width:22px;height:22px;background:#34d399;border-radius:50%;cursor:pointer;border:2px solid transparent;" data-color="#34d399"></div>
+            <div class="color-dot" style="width:22px;height:22px;background:#fbbf24;border-radius:50%;cursor:pointer;border:2px solid transparent;" data-color="#fbbf24"></div>
+        </div>
+        <div id="eraser-tools" style="display:none; width:100%; flex-direction:column; gap:7px; align-items:center; border-top:1px solid rgba(255,255,255,0.1); padding-top:8px;">
+            <button class="btn-tool" id="btn-eraser" title="橡皮擦">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M16.24,3.56L21.19,8.51C21.97,9.29 21.97,10.55 21.19,11.33L12.01,20.5H22V22.5H10.12L2.81,15.19C2.03,14.41 2.03,13.15 2.81,12.37L12,3.19C12.78,2.41 14.05,2.41 14.83,3.19L16.24,3.56M4.22,13.78L10.83,20.39L14.83,16.39L8.22,9.78L4.22,13.78Z"/></svg>
+            </button>
+            <button class="btn-tool" id="btn-clear" title="清除手寫">🗑</button>
+        </div>
+        <div style="height:1px; width:30px; background:rgba(255,255,255,0.2); margin:4px 0;"></div>
+        <a href="../../index.html" class="btn-tool" id="btn-home" title="回到化學網首頁" style="text-decoration:none; display:flex; align-items:center; justify-content:center;">🏠</a>
+    </div>
+
+</div><!-- /app -->
+
+<script>
+    // ═══════════════ Core State ═══════════════
+    let currentSlide = 0;
+    let isDrawingMode = false;
+    let drawMode = 'pen';
+    let penColor = '#f0f4ff';
+    let slideDrawings = {};
+    let lastX = 0, lastY = 0;
+    let isDrawing = false;
+
+    const slides = document.querySelectorAll('.slide');
+    const slideInfo = document.getElementById('slide-info');
+    const canvas = document.getElementById('drawing-layer');
+    const ctx = canvas.getContext('2d');
+
+    function toggleAns(id) {
+        const overlay = document.getElementById(id);
+        overlay.style.display = (overlay.style.display === 'flex') ? 'none' : 'flex';
+    }
+
+    function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        restoreDrawing();
+        if (slides[currentSlide] && slides[currentSlide].id === 'slide-game') drawConnections();
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    function getCoords(e) {
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        return [clientX - rect.left, clientY - rect.top];
+    }
+
+    function startDrawing(e) { if (!isDrawingMode) return; isDrawing = true; [lastX, lastY] = getCoords(e); }
+    function draw(e) {
+        if (!isDrawing) return;
+        const [x, y] = getCoords(e);
+        ctx.beginPath(); ctx.moveTo(lastX, lastY); ctx.lineTo(x, y);
+        ctx.strokeStyle = drawMode === 'eraser' ? '#0a0f1e' : penColor;
+        ctx.lineWidth = drawMode === 'eraser' ? 38 : 3.5;
+        ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.stroke();
+        [lastX, lastY] = [x, y];
+    }
+    function stopDrawing() {
+        if (isDrawing) { isDrawing = false; slideDrawings[currentSlide] = canvas.toDataURL(); }
+    }
+    function restoreDrawing() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        if (slideDrawings[currentSlide]) {
+            const img = new Image();
+            img.onload = () => ctx.drawImage(img, 0, 0);
+            img.src = slideDrawings[currentSlide];
+        }
+    }
+
+    canvas.addEventListener('mousedown', startDrawing);
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('mouseup', stopDrawing);
+    canvas.addEventListener('touchstart', (e) => { if(isDrawingMode) e.preventDefault(); startDrawing(e); }, {passive:false});
+    canvas.addEventListener('touchmove', (e) => { if(isDrawingMode) e.preventDefault(); draw(e); }, {passive:false});
+    canvas.addEventListener('touchend', stopDrawing);
+
+    function updateSlides() {
+        slides.forEach((s, i) => s.classList.toggle('active', i === currentSlide));
+        slideInfo.textContent = `${currentSlide + 1} / ${slides.length}`;
+        restoreDrawing();
+        if (slides[currentSlide].id === 'slide-game') initGame();
+        if (slides[currentSlide].id === 'slide-ptable') initPTable();
+        if (slides[currentSlide].id === 'slide-compare') initCompare();
+    }
+
+    document.getElementById('btn-next').addEventListener('click', () => { if (currentSlide < slides.length - 1) { currentSlide++; updateSlides(); } });
+    document.getElementById('btn-prev').addEventListener('click', () => { if (currentSlide > 0) { currentSlide--; updateSlides(); } });
+
+    // Swipe support
+    let touchStartX = 0, touchStartY = 0;
+    document.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; touchStartY = e.touches[0].clientY; }, {passive:true});
+    document.addEventListener('touchend', (e) => {
+        if (isDrawingMode) return;
+        const dx = e.changedTouches[0].clientX - touchStartX;
+        const dy = e.changedTouches[0].clientY - touchStartY;
+        if (Math.abs(dx) < 60 && Math.abs(dy) > 40) {
+            if (dy < 0 && currentSlide < slides.length - 1) { currentSlide++; updateSlides(); }
+            if (dy > 0 && currentSlide > 0) { currentSlide--; updateSlides(); }
+        }
+    }, {passive:true});
+
+    document.getElementById('btn-draw').addEventListener('click', (e) => {
+        isDrawingMode = !isDrawingMode;
+        if (isDrawingMode) drawMode = 'pen';
+        e.currentTarget.classList.toggle('active-tool', isDrawingMode);
+        canvas.classList.toggle('drawing-active', isDrawingMode);
+        document.getElementById('color-picker').style.display = isDrawingMode ? 'flex' : 'none';
+        document.getElementById('eraser-tools').style.display = isDrawingMode ? 'flex' : 'none';
+    });
+
+    document.getElementById('btn-eraser').addEventListener('click', (e) => {
+        drawMode = (drawMode === 'eraser' ? 'pen' : 'eraser');
+        e.currentTarget.classList.toggle('active-tool', drawMode === 'eraser');
+    });
+
+    document.querySelectorAll('.color-dot').forEach(dot => {
+        dot.addEventListener('click', () => {
+            document.querySelectorAll('.color-dot').forEach(d => d.style.borderColor = 'transparent');
+            dot.style.borderColor = 'white';
+            penColor = dot.dataset.color;
+            drawMode = 'pen';
+            document.getElementById('btn-eraser').classList.remove('active-tool');
+        });
+    });
+
+    document.getElementById('btn-clear').addEventListener('click', () => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        slideDrawings[currentSlide] = null;
+    });
+
+    document.getElementById('btn-start').addEventListener('click', () => {
+        document.getElementById('start-overlay').style.display = 'none';
+        if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(() => {});
+        updateSlides();
+    });
+
+    document.getElementById('btn-home').addEventListener('click', () => { window.history.back(); });
+
+    // ═══════════════ Toolbar Drag ═══════════════
+    const tb = document.getElementById('toolbar'), dh = document.getElementById('drag-handle');
+    let isDT = false, tOY = 0;
+    const sDT = (y) => { isDT = true; tOY = y - tb.offsetTop; };
+    const mDT = (y) => { if (isDT) { tb.style.top = (y - tOY) + 'px'; tb.style.bottom = 'auto'; tb.style.transform = 'none'; } };
+    dh.addEventListener('mousedown', (e) => sDT(e.clientY));
+    window.addEventListener('mousemove', (e) => mDT(e.clientY));
+    window.addEventListener('mouseup', () => isDT = false);
+    dh.addEventListener('touchstart', (e) => sDT(e.touches[0].clientY), {passive:true});
+    window.addEventListener('touchmove', (e) => { if(isDT) mDT(e.touches[0].clientY); }, {passive:true});
+    window.addEventListener('touchend', () => isDT = false);
+
+    // ═══════════════ Floating Atoms (Start Screen) ═══════════════
+    const atomContainer = document.getElementById('float-atoms');
+    const atomData = [
+        {size:120, x:10, y:20, tx:'30px', ty:'-40px', dur:'18s'},
+        {size:80, x:70, y:10, tx:'-20px', ty:'50px', dur:'22s'},
+        {size:200, x:5, y:60, tx:'50px', ty:'30px', dur:'30s'},
+        {size:60, x:85, y:70, tx:'-40px', ty:'-60px', dur:'16s'},
+        {size:150, x:60, y:50, tx:'20px', ty:'-30px', dur:'25s'},
+        {size:90, x:30, y:80, tx:'-30px', ty:'40px', dur:'20s'},
+    ];
+    atomData.forEach(a => {
+        const el = document.createElement('div');
+        el.className = 'atom-float';
+        el.style.cssText = `width:${a.size}px; height:${a.size}px; left:${a.x}%; top:${a.y}%; --tx:${a.tx}; --ty:${a.ty}; animation-duration:${a.dur};`;
+        atomContainer.appendChild(el);
+    });
+
+    // ═══════════════ Interactive Periodic Table (Slide 4) ═══════════════
+    const ptData = [
+        {sym:'H',  Z:1,  period:1, group:1,  r:53},
+        {sym:'He', Z:2,  period:1, group:18, r:31},
+        {sym:'Li', Z:3,  period:2, group:1,  r:152},
+        {sym:'Be', Z:4,  period:2, group:2,  r:112},
+        {sym:'B',  Z:5,  period:2, group:13, r:87},
+        {sym:'C',  Z:6,  period:2, group:14, r:77},
+        {sym:'N',  Z:7,  period:2, group:15, r:75},
+        {sym:'O',  Z:8,  period:2, group:16, r:73},
+        {sym:'F',  Z:9,  period:2, group:17, r:72},
+        {sym:'Ne', Z:10, period:2, group:18, r:38},
+        {sym:'Na', Z:11, period:3, group:1,  r:186},
+        {sym:'Mg', Z:12, period:3, group:2,  r:160},
+        {sym:'Al', Z:13, period:3, group:13, r:143},
+        {sym:'Si', Z:14, period:3, group:14, r:117},
+        {sym:'P',  Z:15, period:3, group:15, r:110},
+        {sym:'S',  Z:16, period:3, group:16, r:104},
+        {sym:'Cl', Z:17, period:3, group:17, r:99},
+        {sym:'Ar', Z:18, period:3, group:18, r:71},
+        {sym:'K',  Z:19, period:4, group:1,  r:227},
+        {sym:'Ca', Z:20, period:4, group:2,  r:197},
+        {sym:'Ga', Z:31, period:4, group:13, r:122},
+        {sym:'Ge', Z:32, period:4, group:14, r:122},
+        {sym:'As', Z:33, period:4, group:15, r:119},
+        {sym:'Se', Z:34, period:4, group:16, r:116},
+        {sym:'Br', Z:35, period:4, group:17, r:114},
+        {sym:'Kr', Z:36, period:4, group:18, r:88},
+        {sym:'Rb', Z:37, period:5, group:1,  r:248},
+        {sym:'Sr', Z:38, period:5, group:2,  r:215},
+        {sym:'In', Z:49, period:5, group:13, r:163},
+        {sym:'Sn', Z:50, period:5, group:14, r:140},
+        {sym:'Sb', Z:51, period:5, group:15, r:141},
+        {sym:'Te', Z:52, period:5, group:16, r:135},
+        {sym:'I',  Z:53, period:5, group:17, r:133},
+        {sym:'Xe', Z:54, period:5, group:18, r:108},
+        {sym:'Cs', Z:55, period:6, group:1,  r:265},
+        {sym:'Ba', Z:56, period:6, group:2,  r:222},
+        {sym:'Tl', Z:81, period:6, group:13, r:170},
+        {sym:'Pb', Z:82, period:6, group:14, r:175},
+        {sym:'Bi', Z:83, period:6, group:15, r:150},
+        {sym:'Po', Z:84, period:6, group:16, r:168},
+        {sym:'At', Z:85, period:6, group:17, r:127},
+        {sym:'Rn', Z:86, period:6, group:18, r:120},
+    ];
+
+    let ptableInited = false;
+    function initPTable() {
+        if (ptableInited) return;
+        ptableInited = true;
+        const grid = document.getElementById('ptable-grid');
+        const maxR = 265, minR = 31;
+
+        // 建立中間 B 族的嵌入式資訊面板
+        const infoBox = document.createElement('div');
+        infoBox.id = 'ptable-info-embedded';
+        infoBox.style.cssText = `
+            grid-column: 3 / 13;
+            grid-row: 1 / 4;
+            background: rgba(15, 23, 42, 0.45);
+            border: 1px dashed rgba(255, 255, 255, 0.25);
+            border-radius: 12px;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.3rem 0.6rem;
+            color: #f0f4ff;
+            box-shadow: inset 0 0 15px rgba(255, 255, 255, 0.05), 0 6px 20px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+            max-height: 100%;
+        `;
+
+        // 預設提示內容（帶有呼吸燈閃爍效果的點擊圖示）
+        const defaultHTML = `
+            <div style="text-align: center; display: flex; flex-direction: column; align-items: center; gap: 0.3rem; animation: pulse 2s infinite ease-in-out;">
+                <div style="font-size: 1.4rem; filter: drop-shadow(0 0 5px rgba(96,165,250,0.5)); line-height: 1;">👆</div>
+                <div style="font-size: 0.85rem; font-weight: 500; color: rgba(240, 244, 255, 0.85); letter-spacing: 0.5px;">
+                    點選四周元素查看半徑詳細資料
+                </div>
+                <div style="font-size: 0.68rem; color: rgba(255, 255, 255, 0.45);">
+                    (IA、IIA 與 IIIA ~ VIIIA 主族元素)
+                </div>
+            </div>
+        `;
+        infoBox.innerHTML = defaultHTML;
+
+        // 動態注入 pulse 動畫
+        if (!document.getElementById('ptable-pulse-style')) {
+            const style = document.createElement('style');
+            style.id = 'ptable-pulse-style';
+            style.innerHTML = `
+                @keyframes pulse {
+                    0%, 100% { transform: scale(1); opacity: 0.8; }
+                    50% { transform: scale(1.04); opacity: 1; filter: drop-shadow(0 0 6px rgba(96,165,250,0.5)); }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        // 把 infoBox 放入網格中
+        grid.appendChild(infoBox);
+
+        // Build a row-col mapping
+        const cells = {};
+        ptData.forEach(el => {
+            cells[`${el.period}-${el.group}`] = el;
+        });
+
+        let lastSelectedDiv = null;
+
+        for (let period = 1; period <= 6; period++) {
+            for (let group = 1; group <= 18; group++) {
+                // 跳過被 infoBox 佔用的區域 (第 1~3 週期的第 3~12 族)
+                if (period >= 1 && period <= 3 && group >= 3 && group <= 12) {
+                    continue;
+                }
+
+                const key = `${period}-${group}`;
+                const el = cells[key];
+                const div = document.createElement('div');
+                div.className = 'pt-cell';
+                div.style.aspectRatio = '1';
+
+                if (el) {
+                    const frac = (el.r - minR) / (maxR - minR);
+                    // Red for large, blue for small
+                    const r = Math.round(255 * frac);
+                    const b = Math.round(255 * (1 - frac));
+                    const g = Math.round(80 * (1 - Math.abs(frac - 0.5) * 2));
+                    div.style.background = `rgba(${r},${g},${b},0.55)`;
+                    div.style.border = `1px solid rgba(${r},${g},${b},0.8)`;
+                    div.style.color = 'white';
+                    div.textContent = el.sym;
+                    div.title = `${el.sym}: ${el.r} pm`;
+                    div.style.cursor = 'pointer';
+
+                    div.addEventListener('click', () => {
+                        // 復原前一個被選取的元素
+                        if (lastSelectedDiv) {
+                            lastSelectedDiv.style.boxShadow = 'none';
+                            lastSelectedDiv.style.transform = 'scale(1)';
+                            lastSelectedDiv.style.borderColor = lastSelectedDiv.dataset.originalBorderColor;
+                            lastSelectedDiv.style.zIndex = '1';
+                        }
+
+                        // 為目前點選的元素加上白色高亮描邊
+                        div.dataset.originalBorderColor = `rgba(${r},${g},${b},0.8)`;
+                        div.style.boxShadow = `0 0 10px rgba(255,255,255,0.9), inset 0 0 5px rgba(255,255,255,0.5)`;
+                        div.style.borderColor = 'rgba(255,255,255,0.95)';
+                        div.style.transform = 'scale(1.12)';
+                        div.style.zIndex = '15';
+                        lastSelectedDiv = div;
+
+                        // 計算原子球的顯示大小 (縮小至 18px 到 34px 之間，完全不會撐開網格)
+                        const sz = 18 + frac * 16;
+                        
+                        // 更新嵌入式資訊卡片內容為「上下排列、極精緻緊湊、限制大小」
+                        infoBox.style.borderStyle = 'solid';
+                        infoBox.style.borderColor = `rgba(${r},${g},${b},0.45)`;
+                        infoBox.innerHTML = `
+                            <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; width:100%; height:100%; gap:4px; box-sizing:border-box; overflow:hidden;">
+                                <!-- 上排：元素符號 Z序 標籤 -->
+                                <div style="display:flex; align-items:center; justify-content:center; gap:5px; font-size:0.8rem; font-weight:bold; flex-wrap:nowrap; width:100%;">
+                                    <span style="font-weight:900; font-size:1.15rem; color:#fff; text-shadow:0 0 5px rgba(255,255,255,0.4);">${el.sym}</span>
+                                    <span style="font-size:0.75rem; color:rgba(255,255,255,0.45); font-weight:normal;">(Z = ${el.Z})</span>
+                                    <span style="font-size:0.6rem; padding:1px 4px; background:rgba(59,130,246,0.25); border:1px solid rgba(59,130,246,0.4); border-radius:3px; color:#93c5fd; white-space:nowrap;">第 ${el.period} 週期</span>
+                                    <span style="font-size:0.6rem; padding:1px 4px; background:rgba(16,185,129,0.25); border:1px solid rgba(16,185,129,0.4); border-radius:3px; color:#6ee7b7; white-space:nowrap;">第 ${el.group} 族</span>
+                                </div>
+
+                                <!-- 中排：原子球體示意 -->
+                                <div class="atom-circle" style="
+                                    width:${sz}px; 
+                                    height:${sz}px; 
+                                    background:radial-gradient(circle at 35% 35%, rgba(${r},${g},${b},0.95), rgba(${Math.max(0,r-80)},${Math.max(0,g-20)},${Math.max(0,b-80)},1)); 
+                                    font-size:${sz * 0.22}px; 
+                                    box-shadow: 0 0 ${8 + frac * 10}px rgba(${r},${g},${b},0.5), inset 0 0 4px rgba(255,255,255,0.35);
+                                    border: 1px solid rgba(255,255,255,0.2);
+                                    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.2);
+                                    animation: floatAtom 2.5s infinite ease-in-out;
+                                    line-height: 1;
+                                    margin: 1px 0;
+                                ">${el.sym}</div>
+
+                                <!-- 下排：共價半徑數值 -->
+                                <div style="font-size:0.85rem; font-weight:800; color:var(--accent-yellow); text-shadow: 0 0 6px rgba(251,191,36,0.25); white-space:nowrap;">
+                                    共價半徑：<span style="font-size:1.05rem; font-family:var(--font-mono, monospace);">${el.r}</span> pm
+                                </div>
+                            </div>
+                        `;
+
+                        // 注入懸浮動畫
+                        if (!document.getElementById('ptable-float-style')) {
+                            const floatStyle = document.createElement('style');
+                            floatStyle.id = 'ptable-float-style';
+                            floatStyle.innerHTML = `
+                                @keyframes floatAtom {
+                                    0%, 100% { transform: translateY(0); }
+                                    50% { transform: translateY(-2px); }
+                                }
+                            `;
+                            document.head.appendChild(floatStyle);
+                        }
+                    });
+                } else {
+                    // Empty or d-block skip
+                    div.style.background = 'transparent';
+                    div.style.border = 'none';
+                }
+                grid.appendChild(div);
+            }
+        }
+    }
+
+    // ═══════════════ Interactive Compare Sliders (Slide 6) ═══════════════
+    const periodElements = [
+        {sym:'Na',r:186,Z:11,cfg:'2,8,1'},
+        {sym:'Mg',r:160,Z:12,cfg:'2,8,2'},
+        {sym:'Al',r:143,Z:13,cfg:'2,8,3'},
+        {sym:'Si',r:117,Z:14,cfg:'2,8,4'},
+        {sym:'P', r:110,Z:15,cfg:'2,8,5'},
+        {sym:'S', r:104,Z:16,cfg:'2,8,6'},
+        {sym:'Cl',r:99, Z:17,cfg:'2,8,7'},
+    ];
+    const groupElements = [
+        {sym:'Li',r:152,Z:3, period:2},
+        {sym:'Na',r:186,Z:11,period:3},
+        {sym:'K', r:227,Z:19,period:4},
+        {sym:'Rb',r:248,Z:37,period:5},
+        {sym:'Cs',r:265,Z:55,period:6},
+    ];
+    const maxPR = 186, minPR = 99;
+    const maxGR = 265, minGR = 152;
+
+    let compareInited = false;
+    function initCompare() {
+        if (compareInited) return;
+        compareInited = true;
+
+        const pSlider = document.getElementById('period-slider');
+        const gSlider = document.getElementById('group-slider');
+
+        function updatePeriod() {
+            const idx = parseInt(pSlider.value);
+            const el = periodElements[idx];
+            const sz = 36 + (el.r - minPR) / (maxPR - minPR) * 70;
+            const frac = (el.r - minPR) / (maxPR - minPR);
+            const atom = document.getElementById('period-atom');
+            const info = document.getElementById('period-info');
+            atom.style.width = sz + 'px'; atom.style.height = sz + 'px';
+            atom.style.fontSize = (sz * 0.22) + 'px';
+            atom.textContent = el.sym;
+            // Color gradient: blue for small, yellow for large
+            const hue = 200 + frac * 50;
+            atom.style.background = `radial-gradient(circle at 35% 35%, hsla(${hue},80%,65%,0.85), hsla(${hue},70%,35%,0.95))`;
+            atom.style.boxShadow = `0 0 ${12 + frac * 20}px hsla(${hue},70%,50%,0.5)`;
+            info.innerHTML = `<div style="font-size:1.4rem;font-weight:800;color:var(--accent-yellow);">${el.r} pm</div><div style="font-size:0.9rem;color:rgba(255,255,255,0.5);">Z = ${el.Z} | 電子組態: ${el.cfg}</div>`;
+        }
+        function updateGroup() {
+            const idx = parseInt(gSlider.value);
+            const el = groupElements[idx];
+            const sz = 38 + (el.r - minGR) / (maxGR - minGR) * 80;
+            const frac = (el.r - minGR) / (maxGR - minGR);
+            const atom = document.getElementById('group-atom');
+            const info = document.getElementById('group-info');
+            atom.style.width = sz + 'px'; atom.style.height = sz + 'px';
+            atom.style.fontSize = (sz * 0.20) + 'px';
+            atom.textContent = el.sym;
+            const hue = 130 + frac * 40;
+            atom.style.background = `radial-gradient(circle at 35% 35%, hsla(${hue},70%,60%,0.85), hsla(${hue},60%,30%,0.95))`;
+            atom.style.boxShadow = `0 0 ${12 + frac * 25}px hsla(${hue},70%,50%,0.5)`;
+            info.innerHTML = `<div style="font-size:1.4rem;font-weight:800;color:var(--accent-green);">${el.r} pm</div><div style="font-size:0.9rem;color:rgba(255,255,255,0.5);">Z = ${el.Z} | 第 ${el.period} 週期</div>`;
+        }
+        pSlider.addEventListener('input', updatePeriod);
+        gSlider.addEventListener('input', updateGroup);
+    }
+
+    // ═══════════════ Matching Game (Slide 12) ═══════════════
+    // 全部題庫（14 對），每次隨機抽 PICK_N 題
+    const gamePool = [
+        {id:'A',  left:'同週期，由左至右',        right:'原子半徑遞減'},
+        {id:'B',  left:'同族，由上至下',           right:'原子半徑遞增'},
+        {id:'C',  left:'原子失去電子',             right:'形成陽離子，半徑縮小'},
+        {id:'D',  left:'原子得到電子',             right:'形成陰離子，半徑增大'},
+        {id:'E',  left:'等電子序列中',             right:'Z 越大，半徑越小'},
+        {id:'F',  left:'有效核電荷（Z*）增大',     right:'原子半徑減小'},
+        {id:'G',  left:'電子層數增加',             right:'原子半徑增大'},
+        {id:'H',  left:'共價半徑',                 right:'同種原子鍵結核間距之半'},
+        {id:'I',  left:'金屬半徑',                 right:'金屬晶體相鄰核間距之半'},
+        {id:'J',  left:'凡得瓦半徑',               right:'稀有氣體，不鍵結時使用'},
+        {id:'K',  left:'Na → Na⁺',                right:'半徑縮小約 38%'},
+        {id:'L',  left:'F → F⁻',                  right:'半徑增大約 65%'},
+        {id:'M',  left:'週期表左下角元素',          right:'原子半徑最大'},
+        {id:'N',  left:'屏蔽效應（σ）越大',         right:'有效核電荷 Z* 越小'},
+    ];
+    const PICK_N = 5;
+    let gameData = [];
+    let connections = [], gStartDot = null, gLine = null, isDraggingGame = false;
+
+    function pickGameData() {
+        // Fisher-Yates shuffle then take first PICK_N
+        const arr = [...gamePool];
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr.slice(0, PICK_N);
+    }
+
+    function initGame() {
+        connections = []; gStartDot = null; gLine = null; isDraggingGame = false;
+        gameData = pickGameData();   // 每次隨機抽 5 題
+        const lc = document.getElementById('left-column');
+        const dc = document.getElementById('dot-column');
+        const rc = document.getElementById('right-column');
+        const svg = document.getElementById('game-svg');
+        if (!lc || !rc) return;
+        lc.innerHTML = ''; if (dc) dc.innerHTML = ''; rc.innerHTML = ''; svg.innerHTML = '';
+        document.getElementById('game-feedback').style.display = 'none';
+
+        const shuffledRight = [...gameData].sort(() => Math.random() - 0.5);
+
+        // Left column: label text only (aligned right), dots go to center column
+        gameData.forEach(item => {
+            // Left label
+            const lDiv = document.createElement('div');
+            lDiv.style.cssText = 'display:flex; align-items:center; justify-content:flex-start; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.12); border-radius:12px; padding:0.6rem 1rem; font-size:clamp(0.85rem,1.1vw,1rem); min-height:52px;';
+            lDiv.textContent = item.left;
+            lc.appendChild(lDiv);
+        });
+
+        // Center dot column: left dot | gap | right dot, one row per item
+        // We need to interleave with shuffledRight order for right dots
+        // Build left dots in gameData order, right dots in shuffledRight order
+        gameData.forEach((lItem, i) => {
+            const rItem = shuffledRight[i];
+            const row = document.createElement('div');
+            row.style.cssText = 'display:flex; align-items:center; justify-content:space-between; height:52px;';
+
+            const lDot = document.createElement('div');
+            lDot.className = 'dot left-dot';
+            lDot.dataset.id = lItem.id;
+
+            const rDot = document.createElement('div');
+            rDot.className = 'dot right-dot';
+            rDot.dataset.id = rItem.id;
+            // Store the right item text to sync with right column order
+            rDot.dataset.rowIndex = i;
+
+            row.appendChild(lDot);
+            row.appendChild(rDot);
+            if (dc) dc.appendChild(row);
+        });
+
+        // Right column: label text only (aligned left), order = shuffledRight
+        shuffledRight.forEach(item => {
+            const rDiv = document.createElement('div');
+            rDiv.style.cssText = 'display:flex; align-items:center; justify-content:flex-end; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.12); border-radius:12px; padding:0.6rem 1rem; font-size:clamp(0.85rem,1.1vw,1rem); min-height:52px;';
+            rDiv.textContent = item.right;
+            rc.appendChild(rDiv);
+        });
+
+        document.querySelectorAll('.dot').forEach(dot => {
+            dot.addEventListener('mousedown', gDragStart);
+            dot.addEventListener('touchstart', gDragStart, {passive:false});
+        });
+        window.addEventListener('mousemove', gDragMove);
+        window.addEventListener('touchmove', gDragMove, {passive:false});
+        window.addEventListener('mouseup', gDragEnd);
+        window.addEventListener('touchend', gDragEnd);
+    }
+
+    function gDragStart(e) {
+        e.preventDefault();
+        if (e.currentTarget.classList.contains('active')) return;
+        isDraggingGame = true;
+        gStartDot = e.currentTarget;
+        const cx = e.touches ? e.touches[0].clientX : e.clientX;
+        const cy = e.touches ? e.touches[0].clientY : e.clientY;
+        const rect = document.getElementById('game-svg').getBoundingClientRect();
+        const dr = gStartDot.getBoundingClientRect();
+        gLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        gLine.setAttribute('x1', dr.left + dr.width/2 - rect.left);
+        gLine.setAttribute('y1', dr.top + dr.height/2 - rect.top);
+        gLine.setAttribute('x2', cx - rect.left);
+        gLine.setAttribute('y2', cy - rect.top);
+        gLine.setAttribute('stroke', 'var(--accent-blue)');
+        gLine.setAttribute('stroke-width', '3');
+        gLine.setAttribute('stroke-dasharray', '6,3');
+        document.getElementById('game-svg').appendChild(gLine);
+    }
+
+    function gDragMove(e) {
+        if (!isDraggingGame || !gLine) return;
+        const cx = e.touches ? e.touches[0].clientX : e.clientX;
+        const cy = e.touches ? e.touches[0].clientY : e.clientY;
+        const rect = document.getElementById('game-svg').getBoundingClientRect();
+        gLine.setAttribute('x2', cx - rect.left); gLine.setAttribute('y2', cy - rect.top);
+    }
+
+    function gDragEnd(e) {
+        if (!isDraggingGame) return;
+        isDraggingGame = false;
+        const cx = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
+        const cy = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
+        let tDot = null;
+        document.querySelectorAll('.dot').forEach(dot => {
+            const r = dot.getBoundingClientRect();
+            if (cx >= r.left-18 && cx <= r.right+18 && cy >= r.top-18 && cy <= r.bottom+18) tDot = dot;
+        });
+        if (tDot && tDot !== gStartDot && gStartDot.classList.contains('left-dot') !== tDot.classList.contains('left-dot') && !tDot.classList.contains('active')) {
+            if (gStartDot.dataset.id === tDot.dataset.id) {
+                gStartDot.classList.add('active'); tDot.classList.add('active');
+                connections.push({from: gStartDot, to: tDot});
+                const rect = document.getElementById('game-svg').getBoundingClientRect();
+                const tr = tDot.getBoundingClientRect();
+                gLine.setAttribute('x2', tr.left + tr.width/2 - rect.left);
+                gLine.setAttribute('y2', tr.top + tr.height/2 - rect.top);
+                gLine.setAttribute('stroke', 'var(--accent-green)');
+                gLine.setAttribute('stroke-dasharray', 'none');
+                gLine = null;
+                if (connections.length === gameData.length) {
+                    const fb = document.getElementById('game-feedback');
+                    fb.style.display = 'block';
+                    setTimeout(() => fb.style.display = 'none', 3000);
+                }
+            } else {
+                gLine.setAttribute('stroke', 'var(--accent-red)');
+                const l = gLine; gLine = null; setTimeout(() => l.remove(), 600);
+            }
+        } else if (gLine) { gLine.remove(); gLine = null; }
+        gStartDot = null;
+    }
+
+    function drawConnections() {
+        const svg = document.getElementById('game-svg');
+        if (!svg) return;
+        svg.innerHTML = '';
+        const rect = svg.getBoundingClientRect();
+        connections.forEach(c => {
+            const r1 = c.from.getBoundingClientRect(), r2 = c.to.getBoundingClientRect();
+            const l = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            l.setAttribute('x1', r1.left+r1.width/2-rect.left); l.setAttribute('y1', r1.top+r1.height/2-rect.top);
+            l.setAttribute('x2', r2.left+r2.width/2-rect.left); l.setAttribute('y2', r2.top+r2.height/2-rect.top);
+            l.setAttribute('stroke', 'var(--accent-green)'); l.setAttribute('stroke-width', '3');
+            svg.appendChild(l);
+        });
+    }
+    function resetGame() { initGame(); }
+</script>
+</body>
+</html>

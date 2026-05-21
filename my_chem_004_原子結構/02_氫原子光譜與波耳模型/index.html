@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>氫原子光譜與波耳模型 - 互動教學</title>
+    <script>
+        MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']], processEscapes: true },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --text-main: #f8fafc;
+            --accent-blue: #38bdf8;
+            --accent-green: #34d399;
+            --accent-red: #f87171;
+            --accent-yellow: #fbbf24;
+            --accent-purple: #a855f7;
+            --accent-cyan: #22d3ee;
+            --glass: rgba(255, 255, 255, 0.04);
+            --glass-border: rgba(255, 255, 255, 0.12);
+        }
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+        body, html { width: 100%; height: 100%; background-color: var(--bg-dark); color: var(--text-main); font-family: 'Segoe UI', 'Microsoft JhengHei', sans-serif; overflow: hidden; background-image: radial-gradient(rgba(168, 85, 247, 0.08) 1.2px, transparent 1.2px); background-size: 30px 30px; }
+        
+        #app { position: relative; width: 100vw; height: 100vh; overflow: hidden; display: flex; justify-content: center; align-items: center; }
+        
+        #start-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--bg-dark); z-index: 5000; display: flex; flex-direction: column; justify-content: center; align-items: center; background-image: radial-gradient(rgba(168, 85, 247, 0.15) 2px, transparent 2px); background-size: 60px 60px; }
+        .btn-start { background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue)); color: #0f172a; border: none; padding: 1.2rem 3.5rem; border-radius: 60px; font-size: 1.6rem; font-weight: 800; cursor: pointer; transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 0 30px rgba(168, 85, 247, 0.5); }
+        .btn-start:hover { transform: scale(1.1); box-shadow: 0 0 50px rgba(168, 85, 247, 0.7); color: #fff; }
+
+        #presentation-area { position: relative; width: 100vw; height: 100vh; overflow: hidden; }
+        #slides-container { position: absolute; top: 2vh; left: 4vw; right: 4vw; bottom: 3vh; }
+        
+        .slide { position: absolute; top: 0; left: 0; width: 100%; height: 100%; padding: 1rem 4rem 0.5rem 0.5rem; opacity: 0; pointer-events: none; transition: opacity 0.4s ease, transform 0.4s ease; transform: scale(0.99); display: flex; flex-direction: column; overflow: hidden; }
+        .slide.active { opacity: 1; pointer-events: auto; z-index: 10; transform: scale(1); }
+        .slide-iframe { padding: 0 !important; }
+        .slide-iframe iframe { width: 100%; height: 100%; border: none; border-radius: 12px; }
+        
+        h1 { color: var(--accent-blue); font-size: clamp(1.8rem, 3vw, 2.5rem); margin-bottom: 0.8rem; display: flex; align-items: center; gap: 0.8rem; border-bottom: 2px solid rgba(56, 189, 248, 0.2); padding-bottom: 0.4rem; flex-shrink: 0; }
+        h1::before { content: ""; width: 8px; height: 32px; background: linear-gradient(to bottom, var(--accent-blue), var(--accent-purple)); border-radius: 4px; }
+        h2 { color: var(--accent-yellow); font-size: clamp(1.2rem, 1.8vw, 1.5rem); margin: 0.5rem 0; font-weight: 600; flex-shrink: 0; }
+        
+        p, li { font-size: clamp(1rem, 1.4vw, 1.25rem); line-height: 1.6; margin-bottom: 0.6rem; }
+        strong { color: var(--accent-cyan); font-weight: 700; }
+        
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; flex: 1; min-height: 0; overflow: hidden; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem; flex: 1; min-height: 0; overflow: hidden; }
+        .panel { background: var(--glass); border: 1.5px solid var(--glass-border); border-radius: 20px; padding: 1.4rem; backdrop-filter: blur(12px); display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
+        
+        .formula-box { background: rgba(0, 0, 0, 0.4); border-radius: 12px; border-left: 6px solid var(--accent-green); padding: 1rem; margin: 0.8rem 0; text-align: center; font-size: clamp(1.5rem, 2.2vw, 2rem); box-shadow: inset 0 2px 10px rgba(0,0,0,0.5); flex-shrink: 0; font-family: 'Cambria Math', 'Times New Roman', serif; }
+        
+        .info-card { background: rgba(56, 189, 248, 0.08); border-radius: 14px; padding: 1rem; border: 1px solid rgba(56, 189, 248, 0.3); margin: 0.6rem 0; flex-shrink: 0; }
+
+        /* Navigation Toolbar */
+        #toolbar { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); background: rgba(15, 23, 42, 0.9); padding: 12px 6px; border-radius: 30px; display: flex; flex-direction: column; gap: 10px; align-items: center; z-index: 2000; border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 15px 45px rgba(0,0,0,0.7); backdrop-filter: blur(20px); width: 50px; }
+        .btn-tool { background: transparent; color: rgba(255,255,255,0.6); border: 1px solid rgba(255,255,255,0.15); width: 34px; height: 34px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.25s; font-size: 1.2rem; }
+        .btn-tool:hover { background: rgba(255,255,255,0.15); color: #fff; transform: translateY(-2px); }
+        .btn-tool.active-tool { background: var(--accent-blue); color: #0f172a; border-color: var(--accent-blue); box-shadow: 0 0 15px var(--accent-blue); }
+        .btn-tool:disabled { opacity: 0.3; cursor: not-allowed; transform: none; }
+        
+        #drag-handle { width: 100%; text-align: center; color: rgba(255,255,255,0.4); cursor: grab; padding: 2px 0; font-size: 1.4rem; line-height: 0.5; margin-bottom: 2px; }
+
+        #slide-info { position: absolute; bottom: 5px; left: 20px; z-index: 100; font-size: 1rem; color: rgba(255,255,255,0.6); background: rgba(0,0,0,0.5); padding: 6px 15px; border-radius: 40px; border: 1px solid rgba(255,255,255,0.15); backdrop-filter: blur(8px); font-weight: bold; }
+
+        #drawing-layer { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 50; pointer-events: none; touch-action: none; }
+        #drawing-layer.drawing-active { pointer-events: auto; }
+
+        .ans-overlay { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(10, 15, 30, 0.98); z-index: 100; flex-direction: column; padding: 2rem; border-radius: 20px; border: 3px solid var(--accent-red); animation: fadeIn 0.3s ease; overflow-y: auto; }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        
+        .btn-action { background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue)); color: #fff; border: none; padding: 0.8rem 1.8rem; border-radius: 10px; cursor: pointer; font-weight: 700; font-size: 1.1rem; transition: 0.2s; align-self: center; margin-top: auto; flex-shrink: 0; }
+        .btn-action:hover { filter: brightness(1.1); transform: scale(1.05); }
+
+        .svg-container { flex: 1; display: flex; justify-content: center; align-items: center; min-height: 0; overflow: hidden; margin-top: 10px; }
+        .svg-container svg { max-height: 100%; max-width: 100%; }
+        
+        .glow-text { text-shadow: 0 0 10px currentColor; }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div id="start-overlay">
+            <h1 style="border:none; font-size: 4.5rem; text-align:center; margin-bottom: 0.5rem; text-shadow: 0 0 40px rgba(168,85,247,0.4); color: var(--text-main);">氫原子光譜</h1>
+            <p style="font-size: 2.2rem; color: var(--accent-cyan); margin-bottom: 4rem; font-weight: bold;">與波耳氫原子模型</p>
+            <button class="btn-start" id="btn-start">開始探索教學</button>
+        </div>
+
+        <div id="presentation-area">
+            <div id="slides-container">
+                
+                <!-- Slide 1: 光的粒子性與波動性 -->
+                <div class="slide active">
+                    <h1>光的二象性與光譜</h1>
+                    <div class="grid-2">
+                        <div style="display: flex; flex-direction: column; gap: 15px;">
+                            <div class="panel">
+                                <h2>光的波動性</h2>
+                                <p>光是一種電磁波，在真空中具有固定的傳播速率 $c$。波長 ($\lambda$) 與頻率 ($\nu$) 成反比。</p>
+                                <div style="display: flex; align-items: center; gap: 1rem; margin-top: 0.5rem;">
+                                    <div class="formula-box" style="border-left-color: var(--accent-blue); margin: 0; text-align: left; padding: 0.8rem 1.2rem;">
+                                        $c = \lambda \cdot \nu$
+                                    </div>
+                                    <ul style="margin-left: 1rem; font-size: 1.1rem; flex: 1;">
+                                        <li>$c$ (光速) $\approx 3 \times 10^8$ m/s</li>
+                                        <li>波長較長（如紅光） $\rightarrow$ 頻率較低</li>
+                                        <li>波長較短（如紫光） $\rightarrow$ 頻率較高</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="panel">
+                                <h2>光的粒子性</h2>
+                                <p>愛因斯坦提出<strong>光子</strong>理論，光能量是不連續的量子化形式，光子的能量 $E$ 與其頻率成正比。</p>
+                                <div style="display: flex; align-items: center; gap: 1rem; margin-top: 0.5rem;">
+                                    <div class="formula-box" style="border-left-color: var(--accent-red); margin: 0; text-align: left; padding: 0.8rem 1.2rem;">
+                                        $E = h\nu = \frac{hc}{\lambda}$
+                                    </div>
+                                    <div style="flex: 1;">
+                                        <p style="font-size: 1.1rem; color: var(--muted); margin-bottom: 0;">$h$ 為普朗克常數 ($6.626 \times 10^{-34} \text{ J}\cdot\text{s}$)</p>
+                                    </div>
+                                </div>
+                                <div class="info-card" style="border-color: var(--accent-yellow); margin-bottom: 0; margin-top: 0.5rem;">
+                                    <p><strong>能量特性：</strong>波長愈短的電磁波 (例如：紫外光、X射線)，其光子能量愈高。</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="panel">
+                            <h2>光譜的分類</h2>
+                            <p>根據光的組成，光譜主要分為兩種形式：</p>
+                            <div class="info-card" style="border-color: var(--accent-purple);">
+                                <h3 style="color: var(--accent-purple); margin-bottom: 0.5rem; font-size: 1.2rem;">1. 連續光譜 (Continuous Spectrum)</h3>
+                                <p>包含各種連續波長的電磁波。<br>例：太陽光、白熾燈泡發出的白光經過三稜鏡折射後，呈現如彩虹般的連續光帶。</p>
+                            </div>
+                            <div class="info-card" style="border-color: var(--accent-green);">
+                                <h3 style="color: var(--accent-green); margin-bottom: 0.5rem; font-size: 1.2rem;">2. 線光譜 (Line Spectrum)</h3>
+                                <p>只含有<strong>特殊波長</strong> (不連續) 的電磁波。<br>例：氣體放電管中高溫激發的原子光譜 (如氫原子光譜、霓虹燈)。</p>
+                            </div>
+                            
+                            <div class="svg-container">
+                                <svg width="100%" height="150" viewBox="0 0 400 150">
+                                    <text x="20" y="25" fill="#fff" font-size="14">連續光譜</text>
+                                    <defs>
+                                        <linearGradient id="rainbow" x1="0%" y1="0%" x2="100%" y2="0%">
+                                            <stop offset="0%" stop-color="purple"/>
+                                            <stop offset="20%" stop-color="blue"/>
+                                            <stop offset="40%" stop-color="cyan"/>
+                                            <stop offset="60%" stop-color="green"/>
+                                            <stop offset="80%" stop-color="yellow"/>
+                                            <stop offset="100%" stop-color="red"/>
+                                        </linearGradient>
+                                    </defs>
+                                    <rect x="20" y="35" width="360" height="30" fill="url(#rainbow)" />
+                                    
+                                    <text x="20" y="100" fill="#fff" font-size="14">線光譜 (發射)</text>
+                                    <rect x="20" y="110" width="360" height="30" fill="#000" stroke="#333" />
+                                    <!-- Hydrogen visible lines roughly: 410, 434, 486, 656 -->
+                                    <rect x="50" y="110" width="4" height="30" fill="purple" />
+                                    <rect x="90" y="110" width="4" height="30" fill="blue" />
+                                    <rect x="150" y="110" width="4" height="30" fill="cyan" />
+                                    <rect x="300" y="110" width="4" height="30" fill="red" />
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 2: Example 1 -->
+                <div class="slide">
+                    <h1>範例練習 1</h1>
+                    <div class="panel" style="position: relative; flex: 1;">
+                        <div class="ans-overlay" id="ans-1">
+                            <h2>解析步驟</h2>
+                            <div style="font-size: 1.4rem; line-height: 2.0; margin-top: 1.5rem;">
+                                1. 根據愛因斯坦的光量子理論，光子的能量公式為：<br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;$E = \frac{hc}{\lambda}$<br>
+                                2. 由公式可知，光子的能量 $E$ 與其波長 $\lambda$ 成<strong>反比</strong>。<br>
+                                3. 已知兩電磁波的波長分別為 $a\text{ nm}$ 與 $b\text{ nm}$：<br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;$\lambda_1 = a$<br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;$\lambda_2 = b$<br>
+                                4. 故其能量比為波長的倒數比：<br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;$E_1 : E_2 = \frac{1}{\lambda_1} : \frac{1}{\lambda_2} = \frac{1}{a} : \frac{1}{b} = \mathbf{b : a}$
+                                <br><br>
+                                <strong style="color: var(--accent-green); font-size: 1.8rem;">答案：$b : a$</strong>
+                            </div>
+                            <button class="btn-action" onclick="toggleAns('ans-1')">返回題目</button>
+                        </div>
+                        <h2>光子能量與波長的關係</h2>
+                        <p style="font-size: 1.8rem; margin-top: 2rem; line-height: 1.8;">
+                            兩電磁波的波長分別為 $a\text{ nm}$ 與 $b\text{ nm}$，<br>則這兩種電磁波的光子能量比為？
+                        </p>
+                        <div style="font-size: 1.5rem; margin-top: 2rem; display: flex; flex-direction: column; gap: 1rem; padding-left: 2rem;">
+                            <div>(A) $a : b$</div>
+                            <div>(B) $\sqrt{a} : \sqrt{b}$</div>
+                            <div>(C) $b : a$</div>
+                            <div>(D) $\sqrt{b} : \sqrt{a}$</div>
+                        </div>
+                        <button class="btn-action" style="margin-top: auto;" onclick="toggleAns('ans-1')">顯示解題過程</button>
+                    </div>
+                </div>
+
+                <!-- Slide 3: Hydrogen Spectrum & Rydberg -->
+                <div class="slide">
+                    <h1>氫原子光譜與芮得柏方程式</h1>
+                    <div class="grid-2">
+                        <div class="panel">
+                            <h2>氫原子的放電光譜</h2>
+                            <p>將氫氣置於低壓放電管中，通以高電壓放電，可產生紫紅色的光。經過分光儀後，呈現出<strong>不連續的線光譜</strong>。</p>
+                            
+                            <div class="info-card" style="border-color: var(--accent-purple);">
+                                <strong>主要的譜線系列：</strong>
+                                <ul style="margin-left: 1.5rem; margin-top: 0.5rem;">
+                                    <li><span style="color:var(--accent-purple);font-weight:bold;">來曼系 (Lyman)</span>：位於<strong>紫外光區</strong></li>
+                                    <li><span style="color:var(--accent-blue);font-weight:bold;">巴耳麥系 (Balmer)</span>：位於<strong>可見光區</strong><br>(最先被發現，含紅、綠、藍、紫四條可見譜線)</li>
+                                    <li><span style="color:var(--accent-red);font-weight:bold;">帕申系 (Paschen)</span>：位於<strong>紅外光區</strong></li>
+                                </ul>
+                            </div>
+                            
+                            <h2 style="margin-top: 1rem;">芮得柏方程式 (Rydberg Equation)</h2>
+                            <p>1888年，芮得柏提出一個能完美描述所有氫原子光譜譜線波長的經驗公式：</p>
+                            <div class="formula-box">
+                                $\frac{1}{\lambda} = R_H \left( \frac{1}{n_l^2} - \frac{1}{n_h^2} \right)$
+                            </div>
+                            <p style="font-size: 1.1rem; color: var(--muted); text-align: center;">
+                                $R_H \approx 1.097 \times 10^7 \text{ m}^{-1}$ (芮得柏常數)<br>
+                                $n_l$ 為低能階主量子數，$n_h$ 為高能階主量子數 ($n_h > n_l$)
+                            </p>
+                        </div>
+                        <div class="panel">
+                            <h2>各系列對應的 $n_l$</h2>
+                            <div style="background: rgba(0,0,0,0.3); border-radius: 12px; padding: 15px; margin-top: 10px; flex: 1;">
+                                <svg width="100%" height="100%" viewBox="0 0 400 300">
+                                    <!-- Energy Levels -->
+                                    <line x1="100" y1="280" x2="350" y2="280" stroke="#fff" stroke-width="2" />
+                                    <text x="80" y="285" fill="#fff" font-size="14" text-anchor="end">n=1</text>
+                                    
+                                    <line x1="100" y1="200" x2="350" y2="200" stroke="#fff" stroke-width="2" />
+                                    <text x="80" y="205" fill="#fff" font-size="14" text-anchor="end">n=2</text>
+                                    
+                                    <line x1="100" y1="140" x2="350" y2="140" stroke="#fff" stroke-width="2" />
+                                    <text x="80" y="145" fill="#fff" font-size="14" text-anchor="end">n=3</text>
+                                    
+                                    <line x1="100" y1="100" x2="350" y2="100" stroke="#fff" stroke-width="2" />
+                                    <text x="80" y="105" fill="#fff" font-size="14" text-anchor="end">n=4</text>
+                                    
+                                    <line x1="100" y1="70" x2="350" y2="70" stroke="#fff" stroke-width="2" />
+                                    <text x="80" y="75" fill="#fff" font-size="14" text-anchor="end">n=5</text>
+                                    
+                                    <line x1="100" y1="50" x2="350" y2="50" stroke="#fff" stroke-width="2" stroke-dasharray="4,4" />
+                                    <text x="80" y="55" fill="#fff" font-size="14" text-anchor="end">n=∞</text>
+                                    
+                                    <defs>
+                                        <marker id="arr" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+                                            <path d="M 0 0 L 6 3 L 0 6 Z" fill="currentColor" />
+                                        </marker>
+                                    </defs>
+                                    
+                                    <!-- Lyman Series -->
+                                    <g stroke="var(--accent-purple)" stroke-width="2" marker-end="url(#arr)" color="var(--accent-purple)">
+                                        <line x1="120" y1="200" x2="120" y2="275" />
+                                        <line x1="140" y1="140" x2="140" y2="275" />
+                                        <line x1="160" y1="100" x2="160" y2="275" />
+                                        <line x1="180" y1="50" x2="180" y2="275" />
+                                    </g>
+                                    <text x="150" y="295" fill="var(--accent-purple)" font-size="14" text-anchor="middle" font-weight="bold">來曼系 (紫外光, n₁=1)</text>
+                                    
+                                    <!-- Balmer Series -->
+                                    <g stroke="var(--accent-blue)" stroke-width="2" marker-end="url(#arr)" color="var(--accent-blue)">
+                                        <line x1="220" y1="140" x2="220" y2="195" />
+                                        <line x1="240" y1="100" x2="240" y2="195" />
+                                        <line x1="260" y1="70" x2="260" y2="195" />
+                                        <line x1="280" y1="50" x2="280" y2="195" />
+                                    </g>
+                                    <text x="250" y="220" fill="var(--accent-blue)" font-size="14" text-anchor="middle" font-weight="bold">巴耳麥系 (可見光, n₁=2)</text>
+                                    
+                                    <!-- Paschen Series -->
+                                    <g stroke="var(--accent-red)" stroke-width="2" marker-end="url(#arr)" color="var(--accent-red)">
+                                        <line x1="310" y1="100" x2="310" y2="135" />
+                                        <line x1="330" y1="70" x2="330" y2="135" />
+                                        <line x1="350" y1="50" x2="350" y2="135" />
+                                    </g>
+                                    <text x="330" y="160" fill="var(--accent-red)" font-size="14" text-anchor="middle" font-weight="bold">帕申系 (紅外光, n₁=3)</text>
+                                    
+                                    <!-- Energy axis -->
+                                    <line x1="30" y1="280" x2="30" y2="30" stroke="rgba(255,255,255,0.4)" stroke-width="1" marker-end="url(#arr)" color="rgba(255,255,255,0.4)" />
+                                    <text x="20" y="150" fill="rgba(255,255,255,0.4)" font-size="14" text-anchor="middle" transform="rotate(-90 20,150)">能階能量 (E)</text>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 4: Rydberg Experiment (Iframe) -->
+                <div class="slide slide-iframe">
+                    <iframe src="rydberg_experiment.html"></iframe>
+                </div>
+
+                <!-- Slide 5: Example 2 -->
+                <div class="slide">
+                    <h1>範例練習 2</h1>
+                    <div class="panel" style="position: relative; flex: 1;">
+                        <div class="ans-overlay" id="ans-2">
+                            <h2>解析步驟</h2>
+                            <div style="font-size: 1.25rem; line-height: 1.8; margin-top: 1rem;">
+                                1. 根據芮得柏方程式： $\frac{1}{\lambda} = R_H (\frac{1}{n_l^2} - \frac{1}{n_h^2})$<br>
+                                2. 來曼系列中，<strong>波長最長</strong>代表<strong>能量最小</strong>，即 $n = 2 \to n = 1$ 的躍遷。<br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;$\frac{1}{121.5} = R_H (\frac{1}{1^2} - \frac{1}{2^2}) = R_H \times \frac{3}{4}$<br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;故可求得 $R_H = \frac{4}{3 \times 121.5}$<br>
+                                3. 巴耳麥系列中，<strong>波長最短</strong>代表<strong>能量最大</strong>，即 $n = \infty \to n = 2$ 的躍遷 (系列極限)。<br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;$\frac{1}{\lambda_x} = R_H (\frac{1}{2^2} - \frac{1}{\infty^2}) = R_H \times \frac{1}{4}$<br>
+                                4. 將 $R_H$ 代入：<br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;$\frac{1}{\lambda_x} = \left(\frac{4}{3 \times 121.5}\right) \times \frac{1}{4} = \frac{1}{3 \times 121.5}$<br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;$\lambda_x = 3 \times 121.5 = \mathbf{364.5 \text{ nm}}$
+                                <br><br>
+                                <strong style="color: var(--accent-green); font-size: 1.6rem;">答案：364.5 nm</strong>
+                            </div>
+                            <button class="btn-action" onclick="toggleAns('ans-2')">返回題目</button>
+                        </div>
+                        <h2>光譜線波長極值計算</h2>
+                        <p style="font-size: 1.5rem; margin-top: 2rem; line-height: 1.8;">
+                            已知來曼系列中<strong>波長最長</strong>的譜線其波長為 $121.5\text{ nm}$，<br>則巴耳麥系列中<strong>波長最短</strong>的譜線，其波長為多少？
+                        </p>
+                        <div style="font-size: 1.4rem; margin-top: 2rem; display: flex; flex-direction: column; gap: 1rem; padding-left: 2rem;">
+                            <div>(A) $364.5\text{ nm}$</div>
+                            <div>(B) $91.5\text{ nm}$</div>
+                            <div>(C) $161.5\text{ nm}$</div>
+                            <div>(D) $502.0\text{ nm}$</div>
+                        </div>
+                        <button class="btn-action" style="margin-top: auto;" onclick="toggleAns('ans-2')">顯示解題過程</button>
+                    </div>
+                </div>
+
+                <!-- Slide 6: Bohr Hydrogen Model -->
+                <div class="slide">
+                    <h1>波耳氫原子模型</h1>
+                    <div class="grid-2">
+                        <div style="display: flex; flex-direction: column; gap: 15px;">
+                            <div class="panel">
+                                <h2>1913年 波耳的三大假設</h2>
+                                <p>為了解釋原子穩定性與離散的線光譜，波耳引用了量子化概念，提出三大假設：</p>
+                                <ul style="margin-left: 1.5rem; margin-top: 0.5rem; font-size: 1.1rem; line-height: 1.5;">
+                                    <li><strong style="color:var(--accent-yellow)">假設一 (定態軌道)：</strong>電子只能在特定半徑的圓形軌道上運動，此時不會輻射能量，處於穩定狀態。</li>
+                                    <li style="margin-top: 0.5rem;"><strong style="color:var(--accent-blue)">假設二 (角動量量子化)：</strong>電子的角動量 $L$ 必須是 $h/2\pi$ 的整數倍。</li>
+                                    <li style="margin-top: 0.5rem;"><strong style="color:var(--accent-red)">假設三 (頻率條件)：</strong>電子在不同定態軌道間躍遷時，會吸收或釋放特定能量的光子。$\Delta E = h\nu$</li>
+                                </ul>
+                            </div>
+                            <div class="panel">
+                                <h2>波耳氫原子能階公式</h2>
+                                <p>經由假設推導，波耳得出氫原子在主量子數 $n$ 的軌道能量為：</p>
+                                <div class="formula-box" style="border-left-color: var(--accent-purple);">
+                                    $E_n = -\frac{13.6}{n^2} \text{ (eV)}$
+                                </div>
+                                <div class="info-card" style="margin-bottom:0;">
+                                    <p><strong>特性：</strong><br>
+                                    - 基態 (n=1) 能量最低，為 $-13.6 \text{ eV}$。<br>
+                                    - 隨著 $n$ 增大，能階愈密集，能量趨近於 $0$ (游離態)。</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="panel" style="padding: 12px; display: flex; flex-direction: column; gap: 10px;">
+                            <h2 style="margin: 0;">能階與躍遷動態示意圖</h2>
+                            <style>
+                                .photon-in { color: var(--accent-cyan); animation: flyIn 2.5s infinite; }
+                                .electron-jump { animation: jumpUp 2.5s infinite; }
+                                .electron-fall { animation: dropDown 2.5s infinite; }
+                                .photon-out { color: var(--accent-red); animation: flyOut 2.5s infinite; }
+                                
+                                /* Absorption */
+                                @keyframes flyIn {
+                                    0% { transform: translate(70px, 50px); opacity: 0; }
+                                    5% { transform: translate(70px, 50px); opacity: 1; }
+                                    40% { transform: translate(130px, 90px); opacity: 1; }
+                                    41%, 100% { opacity: 0; }
+                                }
+                                @keyframes jumpUp {
+                                    0%, 40% { transform: translateY(0); opacity: 1; }
+                                    70% { transform: translateY(-60px); opacity: 1; }
+                                    95% { transform: translateY(-60px); opacity: 1; }
+                                    96%, 100% { opacity: 0; }
+                                }
+                                
+                                /* Emission */
+                                @keyframes dropDown {
+                                    0%, 10% { transform: translateY(0); opacity: 1; }
+                                    40% { transform: translateY(60px); opacity: 1; }
+                                    95% { transform: translateY(60px); opacity: 1; }
+                                    96%, 100% { opacity: 0; }
+                                }
+                                @keyframes flyOut {
+                                    0%, 40% { transform: translate(150px, 100px); opacity: 0; }
+                                    41% { transform: translate(150px, 100px); opacity: 1; }
+                                    75% { transform: translate(220px, 60px); opacity: 1; }
+                                    76%, 100% { opacity: 0; }
+                                }
+                            </style>
+
+                            <!-- Top: Absorption -->
+                            <div style="background: rgba(0,0,0,0.3); border-radius: 12px; flex: 1; position: relative; overflow: hidden; min-height: 150px;">
+                                <span style="position:absolute; top:8px; left:12px; color:var(--accent-cyan); font-weight:bold; font-size:1.1rem; text-shadow: 0 0 5px rgba(34, 211, 238, 0.4);">吸收光子 (Absorption)</span>
+                                <svg width="100%" height="100%" viewBox="0 0 300 140" style="position:absolute; bottom:0;">
+                                    <defs>
+                                        <g id="photon-wave">
+                                            <path d="M0,0 Q5,5 10,0 T20,0 T30,0 T40,0" fill="none" stroke="currentColor" stroke-width="2.5" stroke-dasharray="4,3"/>
+                                            <polygon points="40,-3 46,0 40,3" fill="currentColor" />
+                                        </g>
+                                    </defs>
+                                    <circle cx="150" cy="140" r="10" fill="#ef4444" />
+                                    <text x="150" y="144" fill="#fff" font-size="12" text-anchor="middle" font-weight="bold">+</text>
+                                    <circle cx="150" cy="140" r="40" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="2" />
+                                    <circle cx="150" cy="140" r="70" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="2" />
+                                    <circle cx="150" cy="140" r="100" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="2" />
+                                    <text x="150" y="90" fill="#fff" font-size="12" text-anchor="middle">n=1</text>
+                                    <text x="150" y="60" fill="#fff" font-size="12" text-anchor="middle">n=2</text>
+                                    <text x="150" y="30" fill="#fff" font-size="12" text-anchor="middle">n=3</text>
+                                    
+                                    <g class="photon-in">
+                                        <use href="#photon-wave" transform="rotate(30)" />
+                                    </g>
+                                    
+                                    <!-- Animated Electron Jump -->
+                                    <circle cx="150" cy="100" r="6" fill="#fbbf24" class="electron-jump" />
+                                </svg>
+                            </div>
+
+                            <!-- Bottom: Emission -->
+                            <div style="background: rgba(0,0,0,0.3); border-radius: 12px; flex: 1; position: relative; overflow: hidden; min-height: 150px;">
+                                <span style="position:absolute; top:8px; left:12px; color:var(--accent-red); font-weight:bold; font-size:1.1rem; text-shadow: 0 0 5px rgba(248, 113, 113, 0.4);">發射光子 (Emission)</span>
+                                <svg width="100%" height="100%" viewBox="0 0 300 140" style="position:absolute; bottom:0;">
+                                    <circle cx="150" cy="140" r="10" fill="#ef4444" />
+                                    <text x="150" y="144" fill="#fff" font-size="12" text-anchor="middle" font-weight="bold">+</text>
+                                    <circle cx="150" cy="140" r="40" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="2" />
+                                    <circle cx="150" cy="140" r="70" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="2" />
+                                    <circle cx="150" cy="140" r="100" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="2" />
+                                    <text x="150" y="90" fill="#fff" font-size="12" text-anchor="middle">n=1</text>
+                                    <text x="150" y="60" fill="#fff" font-size="12" text-anchor="middle">n=2</text>
+                                    <text x="150" y="30" fill="#fff" font-size="12" text-anchor="middle">n=3</text>
+                                    
+                                    <!-- Animated Electron Fall -->
+                                    <circle cx="150" cy="40" r="6" fill="#fbbf24" class="electron-fall" />
+                                    
+                                    <g class="photon-out">
+                                        <use href="#photon-wave" transform="rotate(-30)" />
+                                    </g>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 7: Bohr Derivation (Iframe) -->
+                <div class="slide slide-iframe">
+                    <iframe src="bohr_derivation_blogger.html"></iframe>
+                </div>
+
+                <!-- Slide 8: Bohr Atom Model Interactive (Iframe) -->
+                <div class="slide slide-iframe">
+                    <iframe src="bohr_atom_model.html"></iframe>
+                </div>
+
+                <!-- Slide 9: Example 3 -->
+                <div class="slide">
+                    <h1>範例練習 3</h1>
+                    <div class="panel" style="position: relative; flex: 1;">
+                        <div class="ans-overlay" id="ans-3">
+                            <h2>解析步驟</h2>
+                            <div style="font-size: 1.3rem; line-height: 1.8; margin-top: 1rem;">
+                                1. 紫外光區的光譜為<strong>來曼系</strong>，所有躍遷的低能階均為 $n = 1$。<br>
+                                2. 光子的頻率 $\nu \propto \Delta E = 13.6 (\frac{1}{1^2} - \frac{1}{n^2})$。<br>
+                                3. 紫外光區第一條線 (能量最低)：$n = 2 \to n = 1$<br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;$\nu_1 \propto (\frac{1}{1^2} - \frac{1}{2^2}) = 1 - \frac{1}{4} = \frac{3}{4}$<br>
+                                4. 紫外光區第三條線：能量較高，依序為 $3 \to 1$(第二條)，$4 \to 1$(第三條)。<br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;$\nu_3 \propto (\frac{1}{1^2} - \frac{1}{4^2}) = 1 - \frac{1}{16} = \frac{15}{16}$<br>
+                                5. 求頻率比：<br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;$\nu_1 : \nu_3 = \frac{3}{4} : \frac{15}{16} = \frac{12}{16} : \frac{15}{16} = 12 : 15 = \mathbf{4 : 5}$
+                                <br><br>
+                                <strong style="color: var(--accent-green); font-size: 1.6rem;">答案：4 : 5</strong>
+                            </div>
+                            <button class="btn-action" onclick="toggleAns('ans-3')">返回題目</button>
+                        </div>
+                        <h2>氫原子能階躍遷與頻率計算</h2>
+                        <p style="font-size: 1.6rem; margin-top: 2rem; line-height: 1.8;">
+                            氫原子光譜中，紫外光區第一條線與第三條線的頻率比為何？
+                        </p>
+                        <div style="font-size: 1.5rem; margin-top: 2rem; display: flex; flex-direction: column; gap: 1rem; padding-left: 2rem;">
+                            <div>(A) $1 : 3$</div>
+                            <div>(B) $1 : 9$</div>
+                            <div>(C) $4 : 9$</div>
+                            <div>(D) $4 : 5$</div>
+                        </div>
+                        <button class="btn-action" style="margin-top: auto;" onclick="toggleAns('ans-3')">顯示解題過程</button>
+                    </div>
+                </div>
+
+                <!-- Slide 10: Example 4 -->
+                <div class="slide">
+                    <h1>範例練習 4</h1>
+                    <div class="grid-2">
+                        <div class="panel">
+                            <h2>氫原子光譜分析</h2>
+                            <p style="font-size: 1.25rem;">下圖為氫原子光譜的紫外光區及可見光區的譜線，試回答下列問題：</p>
+                            <div style="text-align: center; margin: 15px 0; background: rgba(255,255,255,0.9); border-radius: 12px; padding: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+                                <img src="2.png" alt="氫原子光譜圖" style="max-width: 100%; max-height: 200px; object-fit: contain;">
+                            </div>
+                            <ol style="margin-left: 1.8rem; font-size: 1.25rem; line-height: 1.8;">
+                                <li>來曼系列是哪一區？</li>
+                                <li>電子由 $n=4$ 降至 $n=2$ 的譜線是哪一條？</li>
+                                <li>譜線 $e$ 與 $d$ 的頻率比如何？</li>
+                                <li>巴耳末系列第三條譜線是電子由哪一能階降至哪一能階？</li>
+                                <li>譜線 $b$ 與 $d$ 的波長比如何？</li>
+                            </ol>
+                        </div>
+                        <div class="panel" style="position: relative;">
+                            <div class="ans-overlay" id="ans-4">
+                                <h2>詳細解析</h2>
+                                <div style="font-size: 1.15rem; line-height: 1.8; margin-top: 1rem; padding-right: 10px;">
+                                    <p><strong>(1) 來曼系列是哪一區？</strong><br>
+                                    <span style="color:var(--accent-green);">答：紫外光區。</span><br>
+                                    <span style="font-size:1rem; color:#aaa;">(來曼系列能量較高，位於紫外光區；巴耳末系列位於可見光區)</span></p>
+                                    
+                                    <p><strong>(2) 由 $n=4$ 降至 $n=2$ 的譜線？</strong><br>
+                                    <span style="color:var(--accent-green);">答：譜線 e。</span><br>
+                                    <span style="font-size:1rem; color:#aaa;">(此為巴耳末系列第二條，對應 $n=4 \to 2$)</span></p>
+                                    
+                                    <p><strong>(3) 譜線 $e$ 與 $d$ 的頻率比？</strong><br>
+                                    頻率 $\nu \propto \Delta E$<br>
+                                    $\nu_e \propto (\frac{1}{2^2} - \frac{1}{4^2}) = \frac{3}{16}$<br>
+                                    $\nu_d \propto (\frac{1}{2^2} - \frac{1}{3^2}) = \frac{5}{36}$<br>
+                                    <span style="color:var(--accent-green);">答：$\nu_e : \nu_d = \frac{3}{16} : \frac{5}{36} = 27 : 20$</span></p>
+                                    
+                                    <p><strong>(4) 巴耳末系列第三條譜線？</strong><br>
+                                    巴耳末系列落至 $n=2$。<br>
+                                    第一條：$3 \to 2$；第二條：$4 \to 2$；第三條：$5 \to 2$<br>
+                                    <span style="color:var(--accent-green);">答：$n=5$ 降至 $n=2$</span></p>
+                                    
+                                    <p><strong>(5) 譜線 $b$ 與 $d$ 的波長比？</strong><br>
+                                    波長 $\lambda \propto \frac{1}{\Delta E}$<br>
+                                    $b$ 為來曼系列第二條 ($3 \to 1$)：$\Delta E_b \propto (\frac{1}{1^2} - \frac{1}{3^2}) = \frac{8}{9}$<br>
+                                    $d$ 為巴耳末系列第一條 ($3 \to 2$)：$\Delta E_d \propto (\frac{1}{2^2} - \frac{1}{3^2}) = \frac{5}{36}$<br>
+                                    $\lambda_b : \lambda_d = \Delta E_d : \Delta E_b = \frac{5}{36} : \frac{8}{9}$<br>
+                                    <span style="color:var(--accent-green);">答：$\lambda_b : \lambda_d = 5 : 32$</span></p>
+                                </div>
+                                <button class="btn-action" onclick="toggleAns('ans-4')">關閉詳解</button>
+                            </div>
+                            
+                            <div style="display:flex; flex-direction:column; justify-content:center; align-items:center; height:100%; text-align:center;">
+                                <h3 style="color:var(--accent-blue); margin-bottom: 20px;">點擊下方按鈕以顯示詳解</h3>
+                                <button class="btn-action" onclick="toggleAns('ans-4')">顯示解題過程</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Navigation Toolbar -->
+        <div id="toolbar">
+            <div id="drag-handle">≡</div>
+            <button class="btn-tool" id="btn-prev" title="上一頁">▲</button>
+            <button class="btn-tool" id="btn-next" title="下一頁">▼</button>
+            <div style="height: 1px; width: 30px; background: rgba(255,255,255,0.2); margin: 5px 0;"></div>
+            
+            <button class="btn-tool" id="btn-draw" title="手寫功能">✎</button>
+            
+            <div id="color-picker" style="display: none; flex-direction: column; gap: 8px; margin-top: 5px;">
+                <div class="color-dot" style="width: 24px; height: 24px; background: #f8fafc; border-radius: 50%; cursor: pointer; border: 2px solid transparent;" data-color="#f8fafc"></div>
+                <div class="color-dot" style="width: 24px; height: 24px; background: #f87171; border-radius: 50%; cursor: pointer; border: 2px solid transparent;" data-color="#f87171"></div>
+                <div class="color-dot" style="width: 24px; height: 24px; background: #38bdf8; border-radius: 50%; cursor: pointer; border: 2px solid transparent;" data-color="#38bdf8"></div>
+                <div class="color-dot" style="width: 24px; height: 24px; background: #34d399; border-radius: 50%; cursor: pointer; border: 2px solid transparent;" data-color="#34d399"></div>
+            </div>
+
+            <div id="eraser-tools" style="display: none; width: 100%; flex-direction: column; gap: 8px; align-items: center; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;">
+                <button class="btn-tool" id="btn-eraser" title="橡皮擦">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M16.24,3.56L21.19,8.51C21.97,9.29 21.97,10.55 21.19,11.33L12.01,20.5H22V22.5H10.12L2.81,15.19C2.03,14.41 2.03,13.15 2.81,12.37L12,3.19C12.78,2.41 14.05,2.41 14.83,3.19L16.24,3.56M4.22,13.78L10.83,20.39L14.83,16.39L8.22,9.78L4.22,13.78Z"/></svg>
+                </button>
+                <button class="btn-tool" id="btn-clear" title="清除手寫">🗑</button>
+            </div>
+            
+            <div style="height: 1px; width: 30px; background: rgba(255,255,255,0.2); margin: 5px 0;"></div>
+            <button class="btn-tool" id="btn-home" title="回到首頁">🏠</button>
+        </div>
+
+        <div id="slide-info">Slide 1 / 9</div>
+        <canvas id="drawing-layer"></canvas>
+    </div>
+
+    <script>
+        // Start Overlay
+        document.getElementById('btn-start').addEventListener('click', function() {
+            document.getElementById('start-overlay').style.display = 'none';
+            
+            // 嘗試進入全螢幕模式
+            const docEl = document.documentElement;
+            if (docEl.requestFullscreen) {
+                docEl.requestFullscreen().catch(err => console.log(err));
+            } else if (docEl.webkitRequestFullscreen) { /* Safari */
+                docEl.webkitRequestFullscreen();
+            } else if (docEl.msRequestFullscreen) { /* IE11 */
+                docEl.msRequestFullscreen();
+            }
+        });
+
+        // Presentation Logic
+        const slides = document.querySelectorAll('.slide');
+        let currentSlide = 0;
+        const infoEl = document.getElementById('slide-info');
+
+        function updateSlides() {
+            slides.forEach((s, i) => {
+                if (i === currentSlide) {
+                    s.classList.add('active');
+                } else {
+                    s.classList.remove('active');
+                }
+            });
+            infoEl.textContent = `Slide ${currentSlide + 1} / ${slides.length}`;
+            if (typeof restoreDrawing === 'function') restoreDrawing();
+        }
+
+        document.getElementById('btn-prev').addEventListener('click', () => {
+            if (currentSlide > 0) {
+                currentSlide--;
+                updateSlides();
+            }
+        });
+
+        document.getElementById('btn-next').addEventListener('click', () => {
+            if (currentSlide < slides.length - 1) {
+                currentSlide++;
+                updateSlides();
+            }
+        });
+
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === 'PageDown') {
+                if (currentSlide < slides.length - 1) { currentSlide++; updateSlides(); }
+            } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp' || e.key === 'PageUp') {
+                if (currentSlide > 0) { currentSlide--; updateSlides(); }
+            }
+        });
+
+        function toggleAns(id) {
+            const el = document.getElementById(id);
+            if (el.style.display === 'flex') {
+                el.style.display = 'none';
+            } else {
+                el.style.display = 'flex';
+            }
+        }
+
+        // Toolbar Dragging
+        const toolbar = document.getElementById('toolbar');
+        const dragHandle = document.getElementById('drag-handle');
+        let isDragging = false, startY, startTop;
+
+        dragHandle.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            startY = e.clientY;
+            startTop = toolbar.offsetTop;
+            toolbar.style.transform = 'none';
+            toolbar.style.top = startTop + 'px';
+            e.preventDefault();
+        });
+        
+        dragHandle.addEventListener('touchstart', (e) => {
+            isDragging = true;
+            startY = e.touches[0].clientY;
+            startTop = toolbar.offsetTop;
+            toolbar.style.transform = 'none';
+            toolbar.style.top = startTop + 'px';
+            e.preventDefault();
+        }, {passive: false});
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            const deltaY = e.clientY - startY;
+            toolbar.style.top = (startTop + deltaY) + 'px';
+        });
+        
+        window.addEventListener('touchmove', (e) => {
+            if (!isDragging) return;
+            const deltaY = e.touches[0].clientY - startY;
+            toolbar.style.top = (startTop + deltaY) + 'px';
+        }, {passive: false});
+
+        window.addEventListener('mouseup', () => isDragging = false);
+        window.addEventListener('touchend', () => isDragging = false);
+
+        // Drawing Layer
+        let isDrawingMode = false;
+        let drawMode = 'pen';
+        let penColor = '#f8fafc';
+        let slideDrawings = {};
+        let lastX = 0, lastY = 0;
+
+        const canvas = document.getElementById('drawing-layer');
+        const ctx = canvas.getContext('2d');
+        let isDrawing = false;
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            restoreDrawing();
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        function getCoords(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            return [clientX - rect.left, clientY - rect.top];
+        }
+
+        function startDrawing(e) {
+            if (!isDrawingMode) return;
+            isDrawing = true;
+            [lastX, lastY] = getCoords(e);
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            const [x, y] = getCoords(e);
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(x, y);
+            
+            if (drawMode === 'eraser') {
+                ctx.globalCompositeOperation = 'destination-out';
+                ctx.lineWidth = 40;
+                ctx.strokeStyle = 'rgba(0,0,0,1)';
+            } else {
+                ctx.globalCompositeOperation = 'source-over';
+                ctx.lineWidth = 3;
+                ctx.strokeStyle = penColor;
+            }
+            
+            ctx.lineCap = 'round';
+            ctx.stroke();
+            [lastX, lastY] = [x, y];
+        }
+
+        function stopDrawing() {
+            if (isDrawing) {
+                isDrawing = false;
+                slideDrawings[currentSlide] = canvas.toDataURL();
+            }
+        }
+
+        function restoreDrawing() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if (slideDrawings[currentSlide]) {
+                const img = new Image();
+                img.onload = () => ctx.drawImage(img, 0, 0);
+                img.src = slideDrawings[currentSlide];
+            }
+        }
+
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('mouseleave', stopDrawing);
+        canvas.addEventListener('touchstart', (e) => { if(isDrawingMode) e.preventDefault(); startDrawing(e); }, {passive: false});
+        canvas.addEventListener('touchmove', (e) => { if(isDrawingMode) e.preventDefault(); draw(e); }, {passive: false});
+        canvas.addEventListener('touchend', stopDrawing);
+
+        document.getElementById('btn-draw').addEventListener('click', (e) => {
+            isDrawingMode = !isDrawingMode;
+            if (isDrawingMode) drawMode = 'pen';
+            e.currentTarget.classList.toggle('active-tool', isDrawingMode);
+            canvas.classList.toggle('drawing-active', isDrawingMode);
+            document.getElementById('color-picker').style.display = isDrawingMode ? 'flex' : 'none';
+            document.getElementById('eraser-tools').style.display = isDrawingMode ? 'flex' : 'none';
+        });
+
+        document.getElementById('btn-eraser').addEventListener('click', (e) => {
+            drawMode = (drawMode === 'eraser' ? 'pen' : 'eraser');
+            e.currentTarget.classList.toggle('active-tool', drawMode === 'eraser');
+        });
+
+        document.querySelectorAll('.color-dot').forEach(dot => {
+            dot.addEventListener('click', () => {
+                document.querySelectorAll('.color-dot').forEach(d => d.style.borderColor = 'transparent');
+                dot.style.borderColor = 'white';
+                penColor = dot.dataset.color;
+                drawMode = 'pen';
+                document.getElementById('btn-eraser').classList.remove('active-tool');
+            });
+        });
+
+        document.getElementById('btn-clear').addEventListener('click', () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            slideDrawings[currentSlide] = null;
+        });
+        
+        document.getElementById('btn-home').addEventListener('click', () => {
+            window.location.href = '../../index.html';
+        });
+
+        updateSlides();
+    </script>
+</body>
+</html>
