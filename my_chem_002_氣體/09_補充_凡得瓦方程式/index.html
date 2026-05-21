@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>凡得瓦方程式：理想氣體的修正 | 互動教學網頁</title>
+    <meta name="description" content="深入淺出地介紹凡得瓦方程式，透過互動模擬了解真實氣體的體積與壓力修正，掌握參數 a 與 b 的物理意義。">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Noto+Sans+TC:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+    <nav id="main-nav">
+        <div class="logo">Van der Waals</div>
+        <ul>
+            <li><a href="#hero">首頁</a></li>
+            <li><a href="#limitations">理想之限</a></li>
+            <li><a href="#volume">體積修正</a></li>
+            <li><a href="#pressure">壓力修正</a></li>
+            <li><a href="#equation">凡得瓦方程</a></li>
+        </ul>
+    </nav>
+
+    <header id="hero" class="section">
+        <div class="container">
+            <h1 class="animate-up">凡得瓦方程式</h1>
+            <p class="subtitle animate-up delay-1">從理想回歸真實：氣體行為的完美修正</p>
+            <div class="equation-main animate-up delay-2">
+                \[ \left( P + \frac{an^2}{V^2} \right) (V - nb) = nRT \]
+            </div>
+            <a href="#limitations" class="scroll-indicator animate-up delay-3">
+                <span>展開探索</span>
+                <div class="arrow"></div>
+            </a>
+        </div>
+        <div class="bg-particles" id="hero-particles"></div>
+    </header>
+
+    <section id="limitations" class="section">
+        <div class="container">
+            <div class="content text-center" style="max-width: 800px; margin: 0 auto;">
+                <h2>理想氣體的「理想」假設</h2>
+                <p>理想氣體定律 \(PV=nRT\) 建立在兩個關鍵假設上：</p>
+                <ul class="check-list" style="display: inline-block; text-align: left;">
+                    <li><strong>分子無體積</strong>：氣體分子被視為沒有體積的質點。</li>
+                    <li><strong>無作用力</strong>：分子之間不存在吸引力或排斥力。</li>
+                </ul>
+                <p class="highlight">但在高壓或低溫下，這些假設不再成立，導致實驗結果與理論產生偏離。</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="volume" class="section">
+        <div class="container">
+            <div class="grid-reverse">
+                <div class="content">
+                    <div class="param-badge">參數 b</div>
+                    <h2>體積修正：排除體積</h2>
+                    <p>真實氣體分子本身佔有空間。因此，分子可自由活動的空間不再是整個容器體積 \(V\)，而是必須減去分子自身佔據的空間。</p>
+                    <div class="formula-box">
+                        \( V_{available} = V - nb \)
+                    </div>
+                    <p>其中 <strong>\(b\)</strong> 代表每莫耳分子所佔據的有效體積。</p>
+                </div>
+                <div class="visual">
+                    <div class="interactive-box card glass">
+                        <div class="control-group">
+                            <label>分子大小 (b)</label>
+                            <input type="range" id="b-slider" min="5" max="30" value="10">
+                        </div>
+                        <canvas id="volume-canvas"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="pressure" class="section">
+        <div class="container">
+            <div class="grid">
+                <div class="content">
+                    <div class="param-badge secondary">參數 a</div>
+                    <h2>壓力修正：分子引力</h2>
+                    <p>真實氣體分子間存在<strong>凡得瓦力</strong>。當分子接近容器壁時，會受到內部其他分子的向內拉力，減弱了碰撞器壁的衝擊力。</p>
+                    <div class="formula-box">
+                        \( P_{ideal} = P_{measured} + \frac{an^2}{V^2} \)
+                    </div>
+                    <p>其中 <strong>\(a\)</strong> 反映了分子間吸引力的強度。</p>
+                </div>
+                <div class="visual">
+                    <div class="interactive-box card glass">
+                        <div class="control-group">
+                            <label>吸引力強度 (a)</label>
+                            <input type="range" id="a-slider" min="0" max="100" value="20">
+                        </div>
+                        <canvas id="pressure-canvas"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="equation" class="section">
+        <div class="container text-center">
+            <h2>凡得瓦方程式全貌</h2>
+            <div class="equation-full glass">
+                <div class="eq-row">
+                    <div class="eq-part p-color">
+                        <div class="math">\[ \left( P + \frac{an^2}{V^2} \right) \]</div>
+                        <div class="eq-label">修正後的「理想壓力」</div>
+                    </div>
+                    <div class="eq-part v-color">
+                        <div class="math">\[ (V - nb) \]</div>
+                        <div class="eq-label">修正後的「可用體積」</div>
+                    </div>
+                    <div class="eq-equal">\[ = \]</div>
+                    <div class="eq-part r-color">
+                        <div class="math">\[ nRT \]</div>
+                        <div class="eq-label">理想氣體常態</div>
+                    </div>
+                </div>
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>氣體</th>
+                            <th>a (L²·atm/mol²)</th>
+                            <th>b (L/mol)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>He</td>
+                            <td>0.034</td>
+                            <td>0.0237</td>
+                        </tr>
+                        <tr>
+                            <td>H₂</td>
+                            <td>0.244</td>
+                            <td>0.0266</td>
+                        </tr>
+                        <tr>
+                            <td>H₂O</td>
+                            <td>5.464</td>
+                            <td>0.0305</td>
+                        </tr>
+                        <tr>
+                            <td>CO₂</td>
+                            <td>3.592</td>
+                            <td>0.0427</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2026 化學教學網 - 凡得瓦方程式專題</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

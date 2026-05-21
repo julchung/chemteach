@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>波以耳定律 - 互動式教學網頁</title>
+    <script>
+        MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']], processEscapes: true },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --bg-panel: rgba(30, 41, 59, 0.7);
+            --text-main: #f8fafc;
+            --accent-blue: #38bdf8;
+            --accent-green: #34d399;
+            --accent-red: #f87171;
+            --accent-yellow: #fbbf24;
+            --accent-purple: #a855f7;
+            --accent-cyan: #22d3ee;
+            --glass: rgba(255, 255, 255, 0.1);
+            --mercury: #94a3b8;
+        }
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-tap-highlight-color: transparent; }
+        body, html { width: 100%; height: 100%; background-color: var(--bg-dark); color: var(--text-main); font-family: 'Inter', 'SF Pro Display', 'Microsoft JhengHei', system-ui, -apple-system, sans-serif; overflow: hidden; background-image: radial-gradient(rgba(56, 189, 248, 0.05) 1px, transparent 1px); background-size: 40px 40px; }
+        
+        #app { position: relative; width: 100vw; height: 100vh; overflow: hidden; }
+        
+        /* Start Screen */
+        #start-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--bg-dark); z-index: 1000; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; background-image: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%); }
+        .hero-title { font-size: clamp(3rem, 8vw, 5rem); font-weight: 800; background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 1rem; letter-spacing: -0.02em; }
+        .hero-subtitle { font-size: clamp(1.2rem, 3vw, 1.8rem); color: var(--mercury); margin-bottom: 4rem; font-weight: 300; }
+        
+        /* Presentation Area */
+        #presentation-area { position: relative; width: 100vw; height: 100vh; overflow: hidden; }
+        #slides-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+        
+        .slide { position: absolute; top: 0; left: 0; width: 100%; height: 100%; padding: 1.5rem 15% 2rem 10%; opacity: 0; pointer-events: none; transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; overflow-y: auto; z-index: 1; }
+        .slide.active { opacity: 1; pointer-events: auto; z-index: 10; transform: translateX(0); }
+        .slide.prev { transform: translateX(-50px); }
+        .slide.next { transform: translateX(50px); }
+        
+        @media (max-width: 1024px) { .slide { padding: 3rem 10% 3rem 8%; } }
+        @media (max-width: 768px) { .slide { padding: 2rem 5rem 2rem 2rem; } }
+
+        h1 { font-size: clamp(2rem, 4vw, 3rem); color: var(--accent-blue); margin-bottom: 0.8rem; display: flex; align-items: center; gap: 15px; }
+        h1::before { content: ''; width: 8px; height: 1.2em; background: var(--accent-blue); border-radius: 4px; display: inline-block; }
+        
+        h2 { font-size: clamp(1.3rem, 2.5vw, 2rem); color: var(--accent-yellow); margin: 0.8rem 0 0.3rem; }
+        p, li { font-size: clamp(1.1rem, 1.8vw, 1.4rem); line-height: 1.5; margin-bottom: 0.6rem; color: #cbd5e1; }
+        ul { margin-left: 2rem; margin-bottom: 0.8rem; }
+        li { margin-bottom: 0.4rem; }
+        
+        .highlight { color: var(--accent-cyan); font-weight: 600; }
+        .important { color: var(--accent-red); font-weight: 700; }
+
+        /* Components */
+        .card { background: var(--bg-panel); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 1.2rem; backdrop-filter: blur(12px); box-shadow: 0 20px 50px rgba(0,0,0,0.3); height: 100%; display: flex; flex-direction: column; }
+        .formula-box { background: rgba(0,0,0,0.4); border-left: 6px solid var(--accent-green); padding: 1rem; border-radius: 0 15px 15px 0; margin: 0.8rem 0; font-size: clamp(1.5rem, 2.5vw, 2.2rem); text-align: center; color: var(--accent-green); }
+        
+        .flex-row { display: flex; flex-wrap: wrap; gap: 2rem; margin-top: 1rem; flex: 1; }
+        .flex-col { flex: 1 1 350px; min-width: 300px; }
+        
+        .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; width: 100%; }
+
+        /* Drawing Layer */
+        #drawing-layer { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 100; pointer-events: none; touch-action: none; }
+        #drawing-layer.drawing-active { pointer-events: auto; cursor: crosshair; }
+        
+        #toolbar { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); background: rgba(15, 23, 42, 0.9); padding: 10px 5px; border-radius: 20px; display: flex; flex-direction: column; gap: 8px; align-items: center; z-index: 2000; border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 10px 25px rgba(0,0,0,0.5); backdrop-filter: blur(10px); width: 45px; }
+        .btn-tool { background: transparent; color: rgba(255,255,255,0.6); border: 1px solid rgba(255,255,255,0.2); padding: 6px 10px; border-radius: 15px; cursor: pointer; font-size: 0.8rem; font-weight: normal; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 5px; width: 100%; text-align: center; }
+        .btn-tool:hover { background: rgba(255,255,255,0.1); }
+        .btn-tool.active-tool, .btn-tool.primary { background: var(--accent-blue); border-color: var(--accent-blue); color: #000; }
+        .btn-tool svg { width: 20px; height: 20px; fill: currentColor; }
+        
+        .color-picker { display: none; grid-template-columns: 1fr; width: 100%; padding-top: 5px; gap: 4px; }
+        .color-swatch { width: 20px; height: 20px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; transition: transform 0.2s; margin: 0 auto; }
+        .color-swatch.selected { border-color: white; transform: scale(1.2); }
+        
+        #drag-handle { width: 100%; text-align: center; color: rgba(255,255,255,0.4); cursor: grab; padding: 2px 0; margin-bottom: 5px; margin-top: -5px; user-select: none; font-size: 1.2rem; line-height: 0.5; }
+        #slide-indicator { position: fixed; bottom: 30px; left: 30px; background: rgba(0,0,0,0.5); padding: 8px 20px; border-radius: 30px; font-weight: 700; color: var(--accent-blue); border: 1px solid var(--accent-blue); z-index: 100; backdrop-filter: blur(5px); }
+
+        /* Interactive Elements */
+        .sim-container { width: 100%; height: 300px; background: rgba(0,0,0,0.3); border-radius: 15px; position: relative; margin: 1rem 0; overflow: hidden; }
+        
+        /* Matching Game */
+        .game-area { display: flex; justify-content: space-between; position: relative; margin-top: 0.5rem; min-height: 350px; flex: 1; }
+        .game-col { display: flex; flex-direction: column; gap: 10px; width: 32%; }
+        .game-item { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 0.8rem 1.2rem; border-radius: 12px; display: flex; align-items: center; position: relative; cursor: pointer; transition: all 0.3s; min-height: 55px; }
+        .game-item:hover { background: rgba(255,255,255,0.1); border-color: var(--accent-blue); }
+        .game-item span { flex: 1; font-size: 1.1rem; }
+        .dot { width: 18px; height: 18px; background: white; border-radius: 50%; position: absolute; top: 50%; transform: translateY(-50%); box-shadow: 0 0 10px rgba(255,255,255,0.5); transition: all 0.3s; z-index: 5; }
+        .dot.active { background: var(--accent-green); box-shadow: 0 0 20px var(--accent-green); transform: translateY(-50%) scale(1.3); }
+        .left-dot { right: -9px; }
+        .right-dot { left: -9px; }
+        
+        #game-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2; }
+        
+        /* Table Styling */
+        .chem-table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 1.1rem; }
+        .chem-table th { background: rgba(56, 189, 248, 0.2); color: var(--accent-blue); padding: 12px; border: 1px solid rgba(255,255,255,0.1); }
+        .chem-table td { padding: 12px; border: 1px solid rgba(255,255,255,0.1); text-align: center; }
+
+        /* Animation Keyframes */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-in { animation: fadeIn 0.8s ease-out forwards; }
+        
+        /* Answer Overlay */
+        .ans-overlay { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.95); z-index: 20; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; border-radius: 20px; text-align: center; border: 2px solid var(--accent-green); animation: fadeIn 0.3s ease; }
+        .ans-title { font-size: 2.5rem; color: var(--accent-green); font-weight: 800; margin-bottom: 1.5rem; }
+        .ans-body { font-size: 1.3rem; line-height: 1.8; margin-bottom: 2rem; color: #f1f5f9; }
+        
+        /* SVG Animation */
+        .piston-body { fill: #475569; stroke: #94a3b8; stroke-width: 2; }
+        .piston-head { fill: #1e293b; stroke: #94a3b8; stroke-width: 2; transition: transform 1s ease-in-out; }
+        .gas-particle { fill: var(--accent-cyan); r: 3; filter: blur(1px); }
+
+        /* Scrollbar */
+        .slide::-webkit-scrollbar { width: 6px; }
+        .slide::-webkit-scrollbar-track { background: transparent; }
+        .slide::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- Start Overlay -->
+        <div id="start-overlay">
+            <div class="fade-in">
+                <h1 class="hero-title">波以耳定律</h1>
+                <p class="hero-subtitle">Boyle's Law: Pressure & Volume Relationship</p>
+                <button id="btn-start" class="btn btn-primary">▶ 開始互動教學</button>
+            </div>
+        </div>
+
+        <div id="presentation-area">
+            <div id="slides-container">
+                
+                <!-- Slide 1: Introduction -->
+                <div class="slide active">
+                    <h1>波以耳定律簡介</h1>
+                    <div class="flex-row">
+                        <div class="flex-col" style="flex: 1.8;">
+                            <div class="card">
+                                <h2>歷史背景</h2>
+                                <p><span class="highlight">1662年</span>，英國科學家<span class="highlight">波以耳 (Robert Boyle)</span> 透過實驗研究密閉氣體的體積與壓力關係。</p>
+                                <h2>定律內容</h2>
+                                <p>在<span class="important">定溫</span>下，定量氣體的體積 ($V$) 與其壓力 ($P$) 成<span class="important">反比</span>。</p>
+                                <div class="formula-box">
+                                    $P \propto \frac{1}{V} \implies PV = k$
+                                </div>
+                                <p>若狀態由 1 改變至 2，則：</p>
+                                <div class="formula-box" style="border-left-color: var(--accent-blue);">
+                                    $P_1V_1 = P_2V_2$
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex-col" style="flex: 1;">
+                            <div class="card" style="align-items: center; justify-content: center;">
+                                <h2 style="margin-top: 0;">實驗原型：J型管</h2>
+                                <svg viewBox="0 0 200 300" style="width: 100%; max-width: 250px;">
+                                    <!-- J-Tube -->
+                                    <path d="M 60,120 V 220 A 40,40 0 0 0 140,220 V 30" fill="none" stroke="white" stroke-width="12" />
+                                    <path d="M 60,110 V 220 A 40,40 0 0 0 140,220 V 30" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="10" />
+                                    <!-- Mercury fill -->
+                                    <path d="M 60,180 V 220 A 40,40 0 0 0 140,220 V 150" fill="none" stroke="var(--mercury)" stroke-width="10" />
+                                    <!-- Caps -->
+                                    <circle cx="60" cy="120" r="6" fill="white" />
+                                    <circle cx="60" cy="110" r="5" fill="rgba(255,255,255,0.1)" />
+                                    <!-- Labels -->
+                                    <text x="60" y="105" fill="white" font-size="14" text-anchor="middle">密閉端(氣體)</text>
+                                    <text x="140" y="15" fill="white" font-size="14" text-anchor="middle">開口端</text>
+                                    <line x1="45" y1="180" x2="75" y2="180" stroke="var(--accent-yellow)" stroke-width="1" stroke-dasharray="2" />
+                                    <line x1="125" y1="150" x2="155" y2="150" stroke="var(--accent-yellow)" stroke-width="1" stroke-dasharray="2" />
+                                    <text x="100" y="170" fill="var(--accent-yellow)" font-size="14" text-anchor="middle">h</text>
+                                </svg>
+                                <p style="font-size: 0.9rem; text-align: center; margin-top: 1rem;">透過改變水銀高度差 $h$ 來觀察氣體體積變化。</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 2: Graphs -->
+                <div class="slide">
+                    <h1>圖形特徵</h1>
+                    <div class="grid-2">
+                        <div class="card">
+                            <h2>(1) $P$ vs $V$ 圖</h2>
+                            <p>圖形為一條<span class="highlight">等溫線 (Isotherm)</span>，幾何上稱為<span class="important">雙曲線</span>。</p>
+                            <svg viewBox="0 0 200 150" style="width: 100%; height: 180px;">
+                                <!-- Axes -->
+                                <line x1="20" y1="130" x2="180" y2="130" stroke="white" stroke-width="2" marker-end="url(#arrow)" />
+                                <line x1="20" y1="130" x2="20" y2="10" stroke="white" stroke-width="2" marker-end="url(#arrow)" />
+                                
+                                <!-- Area P1V1 -->
+                                <rect x="20" y="70" width="20" height="60" fill="var(--accent-blue)" fill-opacity="0.3" />
+                                <line x1="40" y1="70" x2="40" y2="130" stroke="var(--accent-blue)" stroke-width="1" stroke-dasharray="2" />
+                                <line x1="20" y1="70" x2="40" y2="70" stroke="var(--accent-blue)" stroke-width="1" stroke-dasharray="2" />
+                                <text x="40" y="142" fill="var(--accent-blue)" font-size="10" text-anchor="middle">V1</text>
+                                <text x="15" y="74" fill="var(--accent-blue)" font-size="10" text-anchor="end">P1</text>
+
+                                <!-- Area P2V2 -->
+                                <rect x="20" y="110" width="60" height="20" fill="var(--accent-yellow)" fill-opacity="0.3" />
+                                <line x1="80" y1="110" x2="80" y2="130" stroke="var(--accent-yellow)" stroke-width="1" stroke-dasharray="2" />
+                                <line x1="20" y1="110" x2="80" y2="110" stroke="var(--accent-yellow)" stroke-width="1" stroke-dasharray="2" />
+                                <text x="80" y="142" fill="var(--accent-yellow)" font-size="10" text-anchor="middle">V2</text>
+                                <text x="15" y="114" fill="var(--accent-yellow)" font-size="10" text-anchor="end">P2</text>
+
+                                <!-- Curve -->
+                                <path d="M 32,40 Q 34,120 175,124" fill="none" stroke="var(--accent-cyan)" stroke-width="3" />
+                                
+                                <text x="180" y="145" fill="white" font-size="12" text-anchor="end">V (體積)</text>
+                                <text x="15" y="10" fill="white" font-size="12">P (壓力)</text>
+                            </svg>
+                            <p style="font-size: 0.9rem;">乘積 $PV$ 始終相等，即圖形下方矩形面積相同。</p>
+                        </div>
+                        <div class="card">
+                            <h2>(2) $V$ vs $1/P$ 圖</h2>
+                            <p>體積與壓力的倒數成<span class="highlight">正比</span>，圖形為通過原點的<span class="important">直線</span>。</p>
+                            <svg viewBox="0 0 200 150" style="width: 100%; height: 180px;">
+                                <line x1="20" y1="130" x2="180" y2="130" stroke="white" stroke-width="2" marker-end="url(#arrow)" />
+                                <line x1="20" y1="130" x2="20" y2="10" stroke="white" stroke-width="2" marker-end="url(#arrow)" />
+                                <line x1="20" y1="130" x2="160" y2="30" stroke="var(--accent-green)" stroke-width="3" />
+                                <text x="180" y="145" fill="white" font-size="12" text-anchor="end">1/P</text>
+                                <text x="15" y="10" fill="white" font-size="12">V</text>
+                            </svg>
+                            <p style="font-size: 0.9rem;">直線斜率代表 $PV$ 常數 $k$，隨溫度 $T$ 或莫耳數 $n$ 增加而變大。</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 3: Molecular Theory -->
+                <div class="slide">
+                    <h1>微觀解釋：動力論觀點</h1>
+                    <div class="flex-row">
+                        <div class="flex-col" style="flex: 1.5;">
+                            <div class="card">
+                                <h2>碰撞頻率與壓力</h2>
+                                <p>氣體壓力源自於分子對容器壁的<span class="highlight">碰撞</span>。</p>
+                                <ul style="margin-top: 1rem;">
+                                    <li>當體積 $V$ 減半時，單位體積內的分子數變為 <span class="important">2 倍</span>。</li>
+                                    <li>在相同速率下，分子碰撞器壁的<span class="important">頻率</span>也變為 2 倍。</li>
+                                    <li>因此產生的壓力 $P$ 變為 2 倍。</li>
+                                </ul>
+                                <div class="formula-box" style="border-left-color: var(--accent-purple);">
+                                    $f \propto \frac{n}{V} \sqrt{\frac{T}{M}}$
+                                </div>
+                                <p style="font-size: 1rem; opacity: 0.8;">定溫定莫耳數下，碰撞頻率 $f \propto 1/V$。</p>
+                            </div>
+                        </div>
+                        <div class="flex-col" style="flex: 1;">
+                            <div class="card">
+                                <h2>示意模型</h2>
+                                <div class="sim-container" id="piston-sim">
+                                    <svg viewBox="0 0 200 200" style="width: 100%; height: 100%;">
+                                        <!-- Cylinder -->
+                                        <rect x="50" y="20" width="100" height="150" rx="5" class="piston-body" />
+                                        <!-- Piston -->
+                                        <g id="piston-head-group">
+                                            <rect x="52" y="60" width="96" height="10" rx="2" class="piston-head" />
+                                            <rect x="95" y="10" width="10" height="50" rx="2" fill="#94a3b8" />
+                                        </g>
+                                        <!-- Particles -->
+                                        <g id="particles-container"></g>
+                                    </svg>
+                                </div>
+                                <button class="btn btn-primary" style="width: 100%; height: 45px; font-size: 1rem;" onclick="togglePiston()">模擬：體積減半</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 4: Practice 1 -->
+                <div class="slide">
+                    <h1>例題 1</h1>
+                    <div class="card" style="position: relative;">
+                        <div class="ans-overlay" id="ans-1">
+                            <div class="ans-title">解答：10 毫升</div>
+                            <div class="ans-body">
+                                根據 $P_1V_1 = P_2V_2$：<br>
+                                $0.20 \text{ atm} \times 40 \text{ mL} = 0.80 \text{ atm} \times V_2$<br>
+                                $8 = 0.80 V_2 \implies V_2 = 10 \text{ mL}$
+                            </div>
+                            <button class="btn btn-primary" onclick="toggleAns('ans-1')">關閉</button>
+                        </div>
+                        <p style="font-size: 1.5rem;">某定量氣體之體積在 $0.20$ 大氣壓時為 $40$ 毫升，假設溫度保持不變，當壓力升至 $0.80$ 大氣壓時，此氣體的體積變為若干？</p>
+                        <!-- Image area removed as requested -->
+                        <button class="btn btn-primary" style="position: absolute; bottom: 1.2rem; right: 1.2rem; height: 40px; padding: 0 1.2rem; font-size: 0.9rem;" onclick="toggleAns('ans-1')">顯示解析</button>
+                    </div>
+                </div>
+
+                <!-- Slide 5: Practice 2 -->
+                <div class="slide">
+                    <h1>例題 2</h1>
+                    <div class="card" style="position: relative;">
+                        <div class="ans-overlay" id="ans-2">
+                            <div class="ans-title">解答：(B) 20 公尺</div>
+                            <div class="ans-body">
+                                1. 水面壓力 $P_1 = 1 \text{ atm} \approx 10.3 \text{ m 水柱}$ (取 $10 \text{ m}$ 估算)。<br>
+                                2. 湖底壓力 $P_2 = P_1 + h = (10 + h) \text{ m 水柱}$。<br>
+                                3. $V_1 = 3V_2$ (水面體積是湖底的 3 倍)。<br>
+                                4. $P_1V_1 = P_2V_2 \implies 10 \times 3V_2 = (10 + h) \times V_2$<br>
+                                5. $30 = 10 + h \implies h = 20 \text{ m}$。
+                            </div>
+                            <button class="btn btn-primary" onclick="toggleAns('ans-2')">關閉</button>
+                        </div>
+                        <p style="font-size: 1.3rem;">在 $1$ 大氣壓下，有一氣泡由水池底部上升至水面，體積變為原來的 $3$ 倍。設溫度不變，則水深約為：<br>
+                        (A) 30 (B) 20 (C) 3 (D) 2 公尺。</p>
+                        <div style="flex: 1; display: flex; justify-content: center; align-items: center; background: rgba(0,0,0,0.2); border-radius: 15px;">
+                            <svg viewBox="0 0 200 150" style="width: 100%; height: 200px;">
+                                <!-- Water -->
+                                <rect x="0" y="30" width="200" height="120" fill="rgba(56, 189, 248, 0.2)" />
+                                <!-- Depth h -->
+                                <line x1="40" y1="30" x2="90" y2="30" stroke="var(--accent-yellow)" stroke-width="1" stroke-dasharray="2" />
+                                <line x1="40" y1="130" x2="90" y2="130" stroke="var(--accent-yellow)" stroke-width="1" stroke-dasharray="2" />
+                                <line x1="50" y1="30" x2="50" y2="130" stroke="var(--accent-yellow)" stroke-width="1" />
+                                <text x="45" y="85" fill="var(--accent-yellow)" font-size="14" text-anchor="end">h</text>
+                                <!-- Bubbles -->
+                                <circle cx="100" cy="130" r="5" fill="rgba(255,255,255,0.4)" stroke="white" />
+                                <circle cx="105" cy="80" r="10" fill="rgba(255,255,255,0.4)" stroke="white" />
+                                <circle cx="100" cy="35" r="15" fill="rgba(255,255,255,0.4)" stroke="white" />
+                                <text x="125" y="135" fill="white" font-size="10">P2 = 1 + h/10 atm, V</text>
+                                <text x="125" y="35" fill="white" font-size="10">P1 = 1 atm, 3V</text>
+                            </svg>
+                        </div>
+                        <button class="btn btn-primary" style="position: absolute; bottom: 1.2rem; right: 1.2rem; height: 40px; padding: 0 1.2rem; font-size: 0.9rem;" onclick="toggleAns('ans-2')">顯示解析</button>
+                    </div>
+                </div>
+
+                <!-- Slide 6: Practice 3 (Tube Problem) -->
+                <div class="slide">
+                    <h1>例題 3</h1>
+                    <div class="card" style="position: relative;">
+                        <div class="ans-overlay" id="ans-3">
+                            <div class="ans-title">解答：(B) $p \cdot l / (p + a)$</div>
+                            <div class="ans-body">
+                                1. 水平時：氣體壓力 $P_1 = p$, 體積 $V_1 = l \cdot A$ (A為截面積)。<br>
+                                2. 開口向下垂直時：水銀柱重量 $a$ 向下拉。<br>
+                                3. $P_2 + a = p \implies P_2 = p - a$。<br>
+                                4. $P_1V_1 = P_2V_2 \implies p \cdot l \cdot A = (p - a) \cdot V_2$<br>
+                                5. $V_2 = p \cdot l / (p - a) \cdot A \implies l_2 = p \cdot l / (p - a)$。<br>
+                                <span style="font-size: 0.9rem; color: var(--accent-red);">*註：原題圖示若開口向上則為 (p+a)，請依實際開口方向判斷。</span>
+                            </div>
+                            <button class="btn btn-primary" onclick="toggleAns('ans-3')">關閉</button>
+                        </div>
+                        <p style="font-size: 1.2rem;">一端封閉之細長玻璃管中，封入一長為 $a \text{ cm}$ 的汞柱。保持水平時，被封入空氣柱長為 $l \text{ cm}$。若當玻璃管管口垂直向<span class="important">下</span>時，被封入空氣柱長為若干？ (設大氣壓力為 $p \text{ cmHg}$)</p>
+                        <div style="flex: 1; display: flex; flex-direction: row; justify-content: space-evenly; align-items: center; margin: 2rem 0;">
+                            <!-- (1) Horizontal Tube -->
+                            <div style="display: flex; flex-direction: column; align-items: center; gap: 10px;">
+                                <svg viewBox="-15 0 310 60" style="width: 250px; height: 60px;">
+                                    <path d="M 280,10 H 10 A 20,20 0 0 0 10,50 H 280" fill="none" stroke="white" stroke-width="2" />
+                                    <rect x="180" y="12" width="60" height="36" fill="var(--mercury)" />
+                                    <text x="100" y="35" fill="white" font-size="14" text-anchor="middle">空氣 (l)</text>
+                                    <text x="210" y="35" fill="var(--bg-dark)" font-size="14" text-anchor="middle" font-weight="bold">a</text>
+                                </svg>
+                                <p style="color: var(--accent-cyan); font-size: 1rem;">(1) 水平放置</p>
+                            </div>
+
+                            <!-- (2) Vertical Tube (90deg CW) -->
+                            <div style="display: flex; flex-direction: column; align-items: center; gap: 10px;">
+                                <svg viewBox="0 0 60 300" style="width: 60px; height: 250px;">
+                                    <path d="M 10,280 V 30 A 20,20 0 0 1 50,30 V 280" fill="none" stroke="white" stroke-width="2" />
+                                    <rect x="12" y="180" width="36" height="60" fill="var(--mercury)" />
+                                    <text x="30" y="100" fill="white" font-size="14" text-anchor="middle">空氣 (l')</text>
+                                    <text x="30" y="215" fill="var(--bg-dark)" font-size="14" text-anchor="middle" font-weight="bold">a</text>
+                                </svg>
+                                <p style="color: var(--accent-red); font-size: 1rem;">(2) 管口向下</p>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary" style="position: absolute; bottom: 1.2rem; right: 1.2rem; height: 40px; padding: 0 1.2rem; font-size: 0.9rem;" onclick="toggleAns('ans-3')">顯示解析</button>
+                    </div>
+                </div>
+
+                <!-- Slide 7: Example 4 -->
+                <div class="slide">
+                    <h1>例題 4</h1>
+                    <div class="card" style="position: relative;">
+                        <div class="ans-overlay" id="ans-4">
+                            <div class="ans-title">解答：(a) 38 cm (b) 114 cmHg</div>
+                            <div class="ans-body">
+                                1. 狀態 1：$P_1 = 76 \text{ cmHg}, V_1 = 57 \cdot A$<br>
+                                2. 狀態 2：管底(封口)與液面等高，氣柱高 $h$。此時管內液面在液面下 $h$ 公分。<br>
+                                3. 故 $P_2 = P_0 + h = 76 + h, V_2 = h \cdot A$<br>
+                                4. $P_1V_1 = P_2V_2 \implies 76 \times 57 = (76 + h) \times h$<br>
+                                5. $h^2 + 76h - 4332 = 0 \implies (h+114)(h-38)=0$<br>
+                                6. $h = 38 \text{ cm}, P_2 = 76 + 38 = 114 \text{ cmHg}$
+                            </div>
+                            <button class="btn btn-primary" onclick="toggleAns('ans-4')">關閉</button>
+                        </div>
+                        <p style="font-size: 1.1rem; line-height: 1.4;">一玻璃管長 $57 \text{ cm}$, 管底封閉。在 $25^\circ\text{C}$, $1 \text{ atm}$ 下裝滿氮氣, 然後倒壓入一水銀槽內, 直到管底與水銀槽的水銀面等高。若外界仍為 $1 \text{ atm}$。試問:<br>
+                        (a) 管內氮氣高度 $h$ 為若干公分? (b) 管內氮氣壓力為若干 $\text{cmHg}$?</p>
+                        
+                        <div style="flex: 1; display: flex; justify-content: center; align-items: center; gap: 40px;">
+                            <svg viewBox="0 0 250 150" style="width: 100%; height: 200px;">
+                                <!-- Tank 1 (Left) -->
+                                <rect x="20" y="70" width="80" height="70" fill="var(--bg-panel)" stroke="var(--mercury)" />
+                                <rect x="20" y="70" width="80" height="70" fill="var(--mercury)" fill-opacity="0.2" />
+                                <line x1="20" y1="70" x2="100" y2="70" stroke="var(--accent-blue)" stroke-width="1" />
+                                
+                                <!-- Tube 1 (Above) -->
+                                <path d="M 50,70 V 13 H 70 V 70" fill="none" stroke="white" stroke-width="2" />
+                                <text x="75" y="45" fill="white" font-size="10">57cm</text>
+                                <text x="60" y="35" fill="var(--accent-cyan)" font-size="10" text-anchor="middle">N2</text>
+
+                                <!-- Tank 2 (Right) -->
+                                <rect x="140" y="70" width="80" height="70" fill="var(--bg-panel)" stroke="var(--mercury)" />
+                                <rect x="140" y="70" width="80" height="70" fill="var(--mercury)" fill-opacity="0.2" />
+                                <line x1="140" y1="70" x2="220" y2="70" stroke="var(--accent-blue)" stroke-width="1" />
+
+                                <!-- Tube 2 (Pushed in) -->
+                                <path d="M 170,127 V 70 H 190 V 127" fill="none" stroke="white" stroke-width="2" />
+                                <rect x="171" y="108" width="18" height="19" fill="var(--mercury)" fill-opacity="0.6" />
+                                <text x="200" y="95" fill="var(--accent-yellow)" font-size="10">h</text>
+                                <line x1="195" y1="70" x2="205" y2="70" stroke="var(--accent-yellow)" stroke-width="1" />
+                                <line x1="195" y1="108" x2="205" y2="108" stroke="var(--accent-yellow)" stroke-width="1" />
+                                <line x1="200" y1="70" x2="200" y2="108" stroke="var(--accent-yellow)" stroke-width="1" />
+                                
+                                <!-- Arrow -->
+                                <path d="M 105,80 L 135,80" stroke="var(--accent-blue)" stroke-width="2" marker-end="url(#arrow)" />
+                                <text x="120" y="75" fill="var(--accent-blue)" font-size="8" text-anchor="middle">壓入</text>
+                            </svg>
+                        </div>
+                        <button class="btn btn-primary" style="position: absolute; bottom: 1.2rem; right: 1.2rem; height: 40px; padding: 0 1.2rem; font-size: 0.9rem;" onclick="toggleAns('ans-4')">顯示解析</button>
+                    </div>
+                </div>
+
+                <!-- Slide 8: Example 5 -->
+                <div class="slide">
+                    <h1>例題 5</h1>
+                    <div class="card" style="position: relative;">
+                        <div class="ans-overlay" id="ans-5">
+                            <div class="ans-title">解答：32 mL</div>
+                            <div class="ans-body">
+                                1. 初始：$P_1 = 76 + 34 = 110, V_1 = 20 \cdot 1 = 20$<br>
+                                2. 末了：$V_2 = 25 \cdot 1 = 25 \implies P_2 = 110 \times 20 / 25 = 88$<br>
+                                3. 此時高度差 $h' = 88 - 76 = 12 \text{ cm}$<br>
+                                4. 左管液面下降 $25 - 20 = 5 \text{ cm}$<br>
+                                5. 右管液面相對於左管由 $+34$ 變為 $+12$，故右液面相對於左液面下降 $22 \text{ cm}$<br>
+                                6. 右液面相對於管子共下降 $5 + 22 = 27 \text{ cm}$<br>
+                                7. 取出總體積 = $(5 + 27) \times 1 = 32 \text{ mL}$
+                            </div>
+                            <button class="btn btn-primary" onclick="toggleAns('ans-5')">關閉</button>
+                        </div>
+                        <p style="font-size: 1.1rem;">在 $25^\circ\text{C}$, $1 \text{ atm}$ 下，如下圖，管的截面積為 $1 \text{ cm}^2$，需取出 ______ $\text{mL}$ 的水銀，才可使左管的體積變為 $25 \text{ cm}^3$？</p>
+                        <div style="flex: 1; display: flex; justify-content: flex-start; align-items: center; padding-left: 20px;">
+                            <svg viewBox="0 0 200 180" style="width: 350px; height: 280px;">
+                                <!-- J-Tube Tube (Centerline path with thick stroke) -->
+                                <path d="M 60,50 V 130 A 30,30 0 0 0 120,130 V 0" fill="none" stroke="white" stroke-width="12" />
+                                <!-- Mercury Fill (34cm difference > 20cm air column) -->
+                                <path d="M 60,90 V 130 A 30,30 0 0 0 120,130 V 22" fill="none" stroke="var(--mercury)" stroke-width="10" />
+                                
+                                <!-- Hemisphere Cap for Left Side -->
+                                <path d="M 54,50 A 6,6 0 0 1 66,50" fill="white" />
+                                
+                                <text x="60" y="40" fill="var(--accent-cyan)" font-size="12" text-anchor="middle">He</text>
+                                
+                                <!-- Dimension Lines for 20cm (He Column: 40 units) -->
+                                <line x1="40" y1="50" x2="60" y2="50" stroke="var(--accent-red)" stroke-width="1" stroke-dasharray="2" />
+                                <line x1="40" y1="90" x2="60" y2="90" stroke="var(--accent-red)" stroke-width="1" stroke-dasharray="2" />
+                                <path d="M 45,50 V 90" stroke="var(--accent-red)" stroke-width="1" marker-end="url(#arrow)" marker-start="url(#arrow)" />
+                                <text x="35" y="75" fill="var(--accent-red)" font-size="10" text-anchor="end">20cm</text>
+                                
+                                <!-- Dimension Lines for 34cm (Height Difference: 68 units) -->
+                                <line x1="120" y1="90" x2="160" y2="90" stroke="var(--accent-yellow)" stroke-width="1" stroke-dasharray="2" />
+                                <line x1="120" y1="22" x2="160" y2="22" stroke="var(--accent-yellow)" stroke-width="1" stroke-dasharray="2" />
+                                <path d="M 150,22 V 90" stroke="var(--accent-yellow)" stroke-width="1" marker-end="url(#arrow)" marker-start="url(#arrow)" />
+                                <text x="165" y="60" fill="var(--accent-yellow)" font-size="10" text-anchor="start">34cm</text>
+                            </svg>
+                        </div>
+                        <button class="btn btn-primary" style="position: absolute; bottom: 1.2rem; right: 1.2rem; height: 40px; padding: 0 1.2rem; font-size: 0.9rem;" onclick="toggleAns('ans-5')">顯示解析</button>
+                    </div>
+                </div>
+
+                <!-- Slide 7: Game -->
+                <div class="slide" id="slide-game">
+                    <h1>單元挑戰：概念連連看</h1>
+                    <p style="text-align: center; color: var(--accent-green);">請將左側概念連接至右側對應的科學描述。</p>
+                    <div class="game-area" id="game-container">
+                        <svg id="game-svg"></svg>
+                        <div class="game-col" id="left-col"></div>
+                        <div class="game-col" id="right-col"></div>
+                    </div>
+                    <div style="text-align: center; margin-top: 20px;">
+                        <button class="btn btn-primary" style="height: 45px; font-size: 1rem;" onclick="initGame()">重新開始遊戲</button>
+                    </div>
+                    <div id="game-feedback" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(16, 185, 129, 0.95); padding: 2rem 4rem; border-radius: 20px; font-size: 2.5rem; color: white; font-weight: bold; box-shadow: 0 0 50px rgba(16, 185, 129, 0.5); z-index: 100;">🎉 挑戰成功！</div>
+                </div>
+
+            </div>
+
+            <!-- Drawing Canvas -->
+            <canvas id="drawing-layer"></canvas>
+            
+            <div id="toolbar">
+                <div id="drag-handle" title="拖曳移動工具列">≡</div>
+                <button class="btn-tool" id="btn-prev" title="上一頁">▲</button>
+                <button class="btn-tool" id="btn-next" title="下一頁">▼</button>
+                <div style="height: 1px; width: 25px; background: rgba(255,255,255,0.3); margin: 6px 0;"></div>
+                
+                <button class="btn-tool" id="btn-draw" title="手寫模式">✎</button>
+                
+                <div class="color-picker" id="color-picker" style="display: none;">
+                    <div class="color-swatch selected" style="background: #f8fafc;" data-color="#f8fafc"></div>
+                    <div class="color-swatch" style="background: #f87171;" data-color="#f87171"></div>
+                    <div class="color-swatch" style="background: #38bdf8;" data-color="#38bdf8"></div>
+                    <div class="color-swatch" style="background: #fbbf24;" data-color="#fbbf24"></div>
+                    <div class="color-swatch" style="background: #34d399;" data-color="#34d399"></div>
+                </div>
+
+                <div id="size-picker" style="display: none; flex-direction: column; align-items: center; gap: 2px; margin: 2px 0; width: 100%; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 5px;">
+                    <input type="range" id="pen-size" min="1" max="20" value="3" style="width: 100%; height: 4px; cursor: pointer;">
+                </div>
+
+                <div id="eraser-tools" style="display: none; width: 100%; flex-direction: column; gap: 4px; align-items: center;">
+                    <button class="btn-tool" id="btn-eraser" title="橡皮擦">
+                        <svg viewBox="0 0 24 24"><path d="M16.24,3.56L21.19,8.51C21.97,9.29 21.97,10.55 21.19,11.33L12.01,20.5H22V22.5H10.12L2.81,15.19C2.03,14.41 2.03,13.15 2.81,12.37L12,3.19C12.78,2.41 14.05,2.41 14.83,3.19L16.24,3.56M4.22,13.78L10.83,20.39L14.83,16.39L8.22,9.78L4.22,13.78Z"/></svg>
+                    </button>
+                    <button class="btn-tool" id="btn-clear" title="全清">🗑</button>
+                </div>
+
+                <div style="height: 1px; width: 25px; background: rgba(255,255,255,0.3); margin: 6px 0;"></div>
+                <button class="btn-tool" id="btn-exit-fs" title="目錄">🏠</button>
+            </div>
+
+            <div id="slide-indicator">1 / 9</div>
+        </div>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        let isDrawingMode = false;
+        let drawMode = 'pen';
+        let penColor = '#f8fafc';
+        let penSize = 3;
+        let slideDrawings = {}; 
+        let lastX = 0;
+        let lastY = 0;
+
+        const slides = document.querySelectorAll('.slide');
+        const indicator = document.getElementById('slide-indicator');
+        const canvas = document.getElementById('drawing-layer');
+        const ctx = canvas.getContext('2d');
+        let isDrawing = false;
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            restoreDrawing();
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        function getCoords(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            return [clientX - rect.left, clientY - rect.top];
+        }
+
+        function startDrawing(e) {
+            if (!isDrawingMode) return;
+            isDrawing = true;
+            [lastX, lastY] = getCoords(e);
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            const [x, y] = getCoords(e);
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(x, y);
+            ctx.strokeStyle = drawMode === 'eraser' ? '#0f172a' : penColor;
+            ctx.lineWidth = drawMode === 'eraser' ? penSize * 10 : penSize;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+            [lastX, lastY] = [x, y];
+        }
+
+        function stopDrawing() {
+            if (isDrawing) {
+                isDrawing = false;
+                slideDrawings[currentSlide] = canvas.toDataURL();
+            }
+        }
+
+        function restoreDrawing() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if (slideDrawings[currentSlide]) {
+                const img = new Image();
+                img.onload = () => ctx.drawImage(img, 0, 0);
+                img.src = slideDrawings[currentSlide];
+            }
+        }
+
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDrawing(e); }, {passive: false});
+        canvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e); }, {passive: false});
+        canvas.addEventListener('touchend', stopDrawing);
+
+        function updateSlides() {
+            slides.forEach((s, i) => {
+                s.classList.remove('active', 'prev', 'next');
+                if (i === currentSlide) s.classList.add('active');
+                else if (i < currentSlide) s.classList.add('prev');
+                else s.classList.add('next');
+            });
+            indicator.textContent = `${currentSlide + 1} / ${slides.length}`;
+            restoreDrawing();
+            if (slides[currentSlide].id === 'slide-game') initGame();
+        }
+
+        document.getElementById('btn-next').addEventListener('click', () => { if (currentSlide < slides.length - 1) { currentSlide++; updateSlides(); } });
+        document.getElementById('btn-prev').addEventListener('click', () => { if (currentSlide > 0) { currentSlide--; updateSlides(); } });
+        document.getElementById('btn-exit-fs').addEventListener('click', () => { window.location.href = '../../index.html'; });
+
+        document.getElementById('btn-draw').addEventListener('click', (e) => {
+            isDrawingMode = !isDrawingMode;
+            if (isDrawingMode) drawMode = 'pen';
+            e.currentTarget.classList.toggle('active-tool', isDrawingMode);
+            canvas.classList.toggle('drawing-active', isDrawingMode);
+            document.getElementById('color-picker').style.display = isDrawingMode ? 'grid' : 'none';
+            document.getElementById('size-picker').style.display = isDrawingMode ? 'flex' : 'none';
+            document.getElementById('eraser-tools').style.display = isDrawingMode ? 'flex' : 'none';
+        });
+
+        document.getElementById('btn-eraser').addEventListener('click', (e) => {
+            drawMode = (drawMode === 'eraser' ? 'pen' : 'eraser');
+            e.currentTarget.classList.toggle('active-tool', drawMode === 'eraser');
+        });
+
+        document.querySelectorAll('.color-swatch').forEach(sw => {
+            sw.addEventListener('click', () => {
+                document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
+                sw.classList.add('selected');
+                penColor = sw.dataset.color;
+                drawMode = 'pen';
+                document.getElementById('btn-draw').classList.add('active-tool');
+                document.getElementById('btn-eraser').classList.remove('active-tool');
+            });
+        });
+
+        document.getElementById('pen-size').addEventListener('input', (e) => { penSize = parseInt(e.target.value); });
+        document.getElementById('btn-clear').addEventListener('click', () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            slideDrawings[currentSlide] = null;
+        });
+
+        document.getElementById('btn-start').addEventListener('click', () => {
+            document.getElementById('start-overlay').style.display = 'none';
+            if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen();
+            updateSlides();
+        });
+        const toolbar = document.getElementById('toolbar');
+        const handle = document.getElementById('drag-handle');
+        let isDraggingToolbar = false;
+        let toolbarY = 0;
+
+        handle.addEventListener('mousedown', (e) => {
+            isDraggingToolbar = true;
+            toolbarY = e.clientY - toolbar.offsetTop;
+            document.body.style.cursor = 'grabbing';
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isDraggingToolbar) return;
+            let newY = e.clientY - toolbarY;
+            newY = Math.max(20, Math.min(window.innerHeight - 300, newY));
+            toolbar.style.top = newY + 'px';
+            toolbar.style.transform = 'none';
+        });
+
+        window.addEventListener('mouseup', () => {
+            isDraggingToolbar = false;
+            document.body.style.cursor = 'default';
+        });
+
+        handle.addEventListener('touchstart', (e) => {
+            isDraggingToolbar = true;
+            toolbarY = e.touches[0].clientY - toolbar.offsetTop;
+        });
+
+        window.addEventListener('touchmove', (e) => {
+            if (!isDraggingToolbar) return;
+            let newY = e.touches[0].clientY - toolbarY;
+            newY = Math.max(20, Math.min(window.innerHeight - 300, newY));
+            toolbar.style.top = newY + 'px';
+            toolbar.style.transform = 'none';
+        });
+
+        window.addEventListener('touchend', () => {
+            isDraggingToolbar = false;
+        });
+
+        // --- Interaction Logic ---
+        function toggleAns(id) {
+            const el = document.getElementById(id);
+            el.style.display = (el.style.display === 'flex') ? 'none' : 'flex';
+        }
+
+        let isCompressed = false;
+        function togglePiston() {
+            const head = document.getElementById('piston-head-group');
+            isCompressed = !isCompressed;
+            head.style.transition = 'transform 1s cubic-bezier(0.4, 0, 0.2, 1)';
+            head.style.transform = isCompressed ? 'translateY(60px)' : 'translateY(0)';
+            
+            // Adjust particle movement range (simple visual effect)
+            animateParticles(isCompressed ? 0.5 : 1);
+        }
+
+        const particles = [];
+        function initParticles() {
+            const container = document.getElementById('particles-container');
+            if (particles.length > 0) return; // Only init once
+            for (let i = 0; i < 30; i++) {
+                const p = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                p.setAttribute('class', 'gas-particle');
+                const x = 60 + Math.random() * 80;
+                const y = 80 + Math.random() * 80;
+                const vx = (Math.random() - 0.5) * 2;
+                const vy = (Math.random() - 0.5) * 2;
+                particles.push({el: p, x, y, vx, vy});
+                container.appendChild(p);
+            }
+            requestAnimationFrame(updateParticles);
+        }
+
+        function updateParticles() {
+            const maxY = 165;
+            const minY = isCompressed ? 125 : 65;
+            
+            particles.forEach(p => {
+                p.x += p.vx;
+                p.y += p.vy;
+                
+                if (p.x < 55 || p.x > 145) p.vx *= -1;
+                if (p.y < minY || p.y > maxY) p.vy *= -1;
+                
+                // Ensure they don't get stuck outside
+                if (p.y < minY) p.y = minY;
+                
+                p.el.setAttribute('cx', p.x);
+                p.el.setAttribute('cy', p.y);
+            });
+            requestAnimationFrame(updateParticles);
+        }
+
+        function animateParticles(scale) {
+            particles.forEach(p => {
+                p.vx *= (1/scale);
+                p.vy *= (1/scale);
+            });
+        }
+
+        // Initialize simulation
+        initParticles();
+
+        // --- Game Logic ---
+        const gameDataPool = [
+            { left: '定溫定量氣體', right: '$PV = k$', match: 0 },
+            { left: '波以耳實驗裝置', right: 'J 型管', match: 1 },
+            { left: '體積與壓力關係', right: '反比 (Inverse)', match: 2 },
+            { left: '氣體壓力來源', right: '分子碰撞器壁', match: 3 },
+            { left: 'P vs V 圖形', right: '等溫雙曲線', match: 4 },
+            { left: 'P vs 1/V 圖形', right: '通過原點直線', match: 5 },
+            { left: '體積減半(定溫)', right: '壓力變為 2 倍', match: 6 },
+            { left: '1 atm (cmHg)', right: '76 cmHg', match: 7 },
+            { left: 'J型管(高度差 h)', right: '$P = P_0 + h$', match: 8 },
+            { left: '波以耳 (Boyle)', right: '1662 年發表', match: 9 }
+        ];
+
+        let connections = [];
+        let currentGameItems = 5;
+        let isDraggingGame = false;
+        let dragStartItem = null;
+        let tempLine = null;
+
+        function initGame() {
+            const leftCol = document.getElementById('left-col');
+            const rightCol = document.getElementById('right-col');
+            const svg = document.getElementById('game-svg');
+            leftCol.innerHTML = '';
+            rightCol.innerHTML = '';
+            svg.innerHTML = '';
+            connections = [];
+            document.getElementById('game-feedback').style.display = 'none';
+
+            // Select 5 random items from pool
+            const selectedItems = [...gameDataPool]
+                .sort(() => Math.random() - 0.5)
+                .slice(0, currentGameItems);
+
+            // Shuffle left and right independently
+            const shuffledLeft = [...selectedItems].sort(() => Math.random() - 0.5);
+            const shuffledRight = [...selectedItems].sort(() => Math.random() - 0.5);
+
+            shuffledLeft.forEach((item, i) => {
+                const div = document.createElement('div');
+                div.className = 'game-item';
+                div.dataset.match = item.match;
+                div.dataset.side = 'left';
+                div.style.touchAction = 'none';
+                div.innerHTML = `<span>${item.left}</span><div class="dot left-dot"></div>`;
+                div.addEventListener('pointerdown', handleGameDragStart);
+                leftCol.appendChild(div);
+            });
+
+            shuffledRight.forEach((item, i) => {
+                const div = document.createElement('div');
+                div.className = 'game-item';
+                div.dataset.match = item.match;
+                div.dataset.side = 'right';
+                div.style.touchAction = 'none';
+                div.innerHTML = `<div class="dot right-dot"></div><span>${item.right}</span>`;
+                div.addEventListener('pointerdown', handleGameDragStart);
+                rightCol.appendChild(div);
+            });
+
+            MathJax.typesetPromise();
+        }
+
+        function handleGameDragStart(e) {
+            const item = e.currentTarget;
+            if (item.classList.contains('connected')) return;
+            
+            isDraggingGame = true;
+            dragStartItem = item;
+            
+            const svg = document.getElementById('game-svg');
+            const rect = svg.getBoundingClientRect();
+            const dotRect = dragStartItem.querySelector('.dot').getBoundingClientRect();
+            
+            const startX = dotRect.left + dotRect.width/2 - rect.left;
+            const startY = dotRect.top + dotRect.height/2 - rect.top;
+
+            tempLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            tempLine.setAttribute('x1', startX);
+            tempLine.setAttribute('y1', startY);
+            tempLine.setAttribute('x2', startX);
+            tempLine.setAttribute('y2', startY);
+            tempLine.setAttribute('stroke', '#94a3b8');
+            tempLine.setAttribute('stroke-width', '4');
+            tempLine.setAttribute('stroke-linecap', 'round');
+            tempLine.setAttribute('stroke-dasharray', '5,5');
+            svg.appendChild(tempLine);
+            
+            dragStartItem.querySelector('.dot').classList.add('active');
+            // Prevent default drag behaviors to avoid text selection or image dragging
+            if (e.pointerType === 'mouse') {
+                e.preventDefault();
+            }
+        }
+
+        window.addEventListener('pointermove', (e) => {
+            if (!isDraggingGame || !tempLine) return;
+            
+            const svg = document.getElementById('game-svg');
+            const rect = svg.getBoundingClientRect();
+            
+            tempLine.setAttribute('x2', e.clientX - rect.left);
+            tempLine.setAttribute('y2', e.clientY - rect.top);
+            
+            const target = document.elementFromPoint(e.clientX, e.clientY);
+            const targetItem = target ? target.closest('.game-item') : null;
+            
+            if (targetItem && targetItem !== dragStartItem && !targetItem.classList.contains('connected')) {
+                if (targetItem.dataset.side !== dragStartItem.dataset.side) {
+                    if (targetItem.dataset.match === dragStartItem.dataset.match) {
+                        tempLine.setAttribute('stroke', '#34d399'); // Green
+                    } else {
+                        tempLine.setAttribute('stroke', '#f87171'); // Red
+                    }
+                } else {
+                    tempLine.setAttribute('stroke', '#94a3b8'); // Gray
+                }
+            } else {
+                tempLine.setAttribute('stroke', '#94a3b8'); // Gray
+            }
+        });
+
+        window.addEventListener('pointerup', (e) => {
+            if (!isDraggingGame) return;
+            isDraggingGame = false;
+            
+            const target = document.elementFromPoint(e.clientX, e.clientY);
+            const targetItem = target ? target.closest('.game-item') : null;
+            
+            if (targetItem && targetItem !== dragStartItem && !targetItem.classList.contains('connected')) {
+                if (targetItem.dataset.side !== dragStartItem.dataset.side) {
+                    if (targetItem.dataset.match === dragStartItem.dataset.match) {
+                        // Success
+                        dragStartItem.classList.add('connected');
+                        targetItem.classList.add('connected');
+                        targetItem.querySelector('.dot').classList.add('active');
+                        
+                        connections.push({from: dragStartItem, to: targetItem});
+                        if (connections.length === currentGameItems) {
+                            document.getElementById('game-feedback').style.display = 'block';
+                        }
+                    } else {
+                        // Failed match - flash red target
+                        dragStartItem.querySelector('.dot').classList.remove('active');
+                        const originalBg = targetItem.style.backgroundColor;
+                        targetItem.style.backgroundColor = 'rgba(248, 113, 113, 0.3)';
+                        setTimeout(() => {
+                            targetItem.style.backgroundColor = originalBg;
+                        }, 400);
+                    }
+                } else {
+                    dragStartItem.querySelector('.dot').classList.remove('active');
+                }
+            } else {
+                dragStartItem.querySelector('.dot').classList.remove('active');
+            }
+            
+            if (tempLine) {
+                tempLine.remove();
+                tempLine = null;
+            }
+            dragStartItem = null;
+            drawGameLines();
+        });
+
+        function drawGameLines() {
+            const svg = document.getElementById('game-svg');
+            const linesToKeep = [];
+            if (tempLine) linesToKeep.push(tempLine);
+            svg.innerHTML = '';
+            if (linesToKeep.length > 0) svg.appendChild(linesToKeep[0]);
+            
+            const rect = svg.getBoundingClientRect();
+            connections.forEach(c => {
+                const r1 = c.from.querySelector('.dot').getBoundingClientRect();
+                const r2 = c.to.querySelector('.dot').getBoundingClientRect();
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', r1.left + r1.width/2 - rect.left);
+                line.setAttribute('y1', r1.top + r1.height/2 - rect.top);
+                line.setAttribute('x2', r2.left + r2.width/2 - rect.left);
+                line.setAttribute('y2', r2.top + r2.height/2 - rect.top);
+                line.setAttribute('stroke', '#34d399');
+                line.setAttribute('stroke-width', '4');
+                line.setAttribute('stroke-linecap', 'round');
+                svg.appendChild(line);
+            });
+        }
+
+        window.addEventListener('resize', drawGameLines);
+    </script>
+</body>
+</html>

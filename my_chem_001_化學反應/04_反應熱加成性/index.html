@@ -1,0 +1,1365 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>赫士定律與反應熱互動教學</title>
+    <!-- MathJax for rendering chemical equations and formulas -->
+    <script>
+        MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true
+            },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        :root {
+            --bg-dark: #0b1120;
+            --bg-panel: rgba(30, 41, 59, 0.7);
+            --text-main: #f8fafc;
+            --accent-blue: #38bdf8;
+            --accent-green: #34d399;
+            --accent-red: #f87171;
+            --accent-yellow: #fbbf24;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none; /* Prevent text selection while drawing */
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            /* Background pattern */
+            background-image: radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px);
+            background-size: 30px 30px;
+        }
+
+        #app {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        /* Start Overlay */
+        #start-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: var(--bg-dark);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-image: radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px);
+            background-size: 30px 30px;
+        }
+
+        /* Presentation Container */
+        #presentation-area {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background: transparent;
+            overflow: hidden;
+        }
+
+        /* Slide Container */
+        #slides-container {
+            position: absolute;
+            top: 5vh; left: 5vw; right: 5vw; bottom: 5vh;
+        }
+
+        .slide {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%;
+            height: 100%;
+            padding: 1.5rem 6rem 1.5rem 2rem; /* Right padding for toolbar */
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+        
+        @media (max-width: 768px) {
+            .slide {
+                padding: 1.5rem 4.5rem 1.5rem 1.5rem;
+            }
+        }
+
+        .slide.active {
+            opacity: 1;
+            pointer-events: auto;
+            z-index: 10;
+        }
+
+        .slide h1 {
+            color: var(--accent-blue);
+            font-size: clamp(2rem, 3vw, 2.8rem);
+            margin-bottom: 1rem;
+            text-align: center;
+            border-bottom: 2px solid rgba(56, 189, 248, 0.3);
+            padding-bottom: 0.6rem;
+            flex-shrink: 0;
+        }
+
+        .slide h2 {
+            color: var(--accent-yellow);
+            font-size: clamp(1.4rem, 2vw, 1.8rem);
+            margin-top: 0.5rem;
+            margin-bottom: 0.8rem;
+        }
+
+        .slide p, .slide li {
+            font-size: clamp(1.1rem, 1.5vw, 1.4rem);
+            line-height: 1.6;
+            margin-bottom: 0.6rem;
+        }
+
+        .slide ul {
+            margin-left: 1.5rem;
+            margin-bottom: 0.6rem;
+        }
+
+        .formula-box {
+            background: rgba(0,0,0,0.3);
+            border-left: 5px solid var(--accent-green);
+            padding: clamp(0.5rem, 1.5vw, 1rem);
+            border-radius: 0 10px 10px 0;
+            margin: 1rem 0;
+            font-size: clamp(1.2rem, 2vw, 1.8rem);
+            text-align: center;
+            overflow-x: auto;
+        }
+        
+        .flex-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+            margin-top: 1rem;
+            flex: 1;
+            min-height: 0;
+        }
+        
+        .flex-col {
+            flex: 1 1 400px;
+            background: rgba(255,255,255,0.03);
+            padding: 1.5rem;
+            border-radius: 10px;
+            overflow-x: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Canvas Layer */
+        #drawing-layer {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            z-index: 20;
+            pointer-events: none;
+            touch-action: none;
+        }
+
+        #drawing-layer.drawing-active {
+            pointer-events: auto;
+            cursor: crosshair;
+        }        #toolbar { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); background: rgba(15, 23, 42, 0.9); padding: 10px 5px; border-radius: 20px; display: flex; flex-direction: column; gap: 8px; align-items: center; z-index: 2000; border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 10px 25px rgba(0,0,0,0.5); backdrop-filter: blur(10px); width: 45px; }
+        .btn-tool { background: transparent; color: rgba(255,255,255,0.6); border: 1px solid rgba(255,255,255,0.2); padding: 6px 10px; border-radius: 15px; cursor: pointer; font-size: 0.8rem; font-weight: normal; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 5px; width: 100%; text-align: center; }
+        .btn-tool:hover { background: rgba(255,255,255,0.1); }
+        .btn-tool.active-tool, .btn-tool.primary { background: var(--accent-blue); border-color: var(--accent-blue); color: #000; }
+        .btn-tool svg { width: 20px; height: 20px; fill: currentColor; }
+        
+        .color-picker { display: none; grid-template-columns: 1fr; width: 100%; padding-top: 5px; gap: 4px; }
+        .color-swatch { width: 20px; height: 20px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; transition: transform 0.2s; margin: 0 auto; }
+        .color-swatch.selected { border-color: white; transform: scale(1.2); }
+        
+        #drag-handle { width: 100%; text-align: center; color: rgba(255,255,255,0.4); cursor: grab; padding: 2px 0; margin-bottom: 5px; margin-top: -5px; user-select: none; font-size: 1.2rem; line-height: 0.5; }
+
+        /* Slide Indicator */
+        #slide-info {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 15;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: rgba(255,255,255,0.6);
+            background: rgba(0,0,0,0.5);
+            padding: 5px 15px;
+            border-radius: 15px;
+        }
+
+        /* Utility classes */
+        .text-red { color: var(--accent-red); }
+        .text-blue { color: var(--accent-blue); }
+        .text-green { color: var(--accent-green); }
+        .text-yellow { color: var(--accent-yellow); }
+
+        @keyframes blink-hint {
+            0%, 100% { opacity: 1; filter: brightness(1) drop-shadow(0 0 0px transparent); }
+            50% { opacity: 0.2; filter: brightness(1.5) drop-shadow(0 0 10px white); }
+        }
+        .blinking {
+            animation: blink-hint 0.4s ease-in-out 4;
+        }
+        .eq-interactive:hover {
+            background: rgba(255,255,255,0.15) !important;
+        }
+
+        .interactive-list li {
+            cursor: pointer;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: background 0.2s;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+        }
+        .interactive-list li:hover {
+            background: rgba(255,255,255,0.1);
+        }
+        .interactive-list .eq {
+            opacity: 0;
+            transition: opacity 0.3s;
+            margin-left: 1rem;
+            color: var(--accent-yellow);
+            font-size: 1.8rem;
+        }
+        .interactive-list li.show-eq .eq {
+            opacity: 1;
+        }
+
+        .draggable-tag:hover {
+            background: rgba(56, 189, 248, 0.2) !important;
+        }
+        .draggable-tag.dragging {
+            opacity: 0.5;
+            border-style: dashed;
+        }
+        .dropzone.drag-over {
+            background: rgba(255,255,255,0.1) !important;
+            border-color: #fff !important;
+        }
+
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- Start Overlay for Fullscreen requirement -->
+        <div id="start-overlay">
+            <h1 style="color: var(--accent-blue); font-size: clamp(2.5rem, 5vw, 4rem); margin-bottom: 1rem; text-align: center;">赫士定律與反應熱</h1>
+            <p style="color: rgba(255,255,255,0.7); font-size: clamp(1.2rem, 3vw, 1.5rem); margin-bottom: 3rem; text-align: center;">互動式全螢幕教學系統</p>
+            <button id="btn-start" class="btn primary" style="font-size: clamp(1.2rem, 2.5vw, 1.5rem); padding: 15px 40px;">▶ 點擊進入全螢幕教學</button>
+        </div>
+
+        <div id="presentation-area">
+            <!-- Slide Contents -->
+            <div id="slides-container">
+                <!-- Slide 1: Cover -->
+                <div class="slide active">
+                    <div style="margin: auto; text-align: center;">
+                        <h1 style="border:none; font-size: clamp(3rem, 6vw, 4.5rem);">赫士定律與反應熱</h1>
+                        <p style="font-size: clamp(1.8rem, 4vw, 2.5rem); color: var(--accent-green); margin-top: 2rem;">基礎化學核心概念</p>
+                        <p style="margin-top: 4rem; color: rgba(255,255,255,0.7);">請使用左右方向鍵或下方按鈕切換投影片</p>
+                        <p style="color: rgba(255,255,255,0.7);">點擊下方「手寫模式」可支援 iPad/Apple Pencil 即時繪圖與註記</p>
+                    </div>
+                </div>
+
+                <!-- Slide 2: Enthalpy -->
+                <div class="slide">
+                    <h1>熱含量 (Enthalpy, $H$)</h1>
+                    <h2>1. 定義與概念</h2>
+                    <ul>
+                        <li>物質在一定溫度與壓力下所蘊含的熱能，稱為<strong>熱含量</strong>或<strong>焓</strong>，符號為 $H$。</li>
+                        <li>我們無法測量物質的「絕對熱含量」，但可以測量反應前後熱含量的「變化量」。</li>
+                    </ul>
+                    <h2>2. 反應熱 ($\Delta H$)</h2>
+                    <ul>
+                        <li>化學反應發生時，系統與外界交換的熱量。</li>
+                    </ul>
+                    <div class="formula-box">
+                        $\Delta H = H_{生成物} - H_{反應物}$
+                    </div>
+                </div>
+
+                <!-- Slide 3: Endo / Exo -->
+                <div class="slide">
+                    <h1>吸熱反應與放熱反應</h1>
+                    <div class="flex-row">
+                        <div class="flex-col">
+                            <h2 class="text-red">吸熱反應 (Endothermic)</h2>
+                            <ul>
+                                <li>系統從外界吸收熱量。</li>
+                                <li>$H_{生成物} > H_{反應物}$</li>
+                                <li><strong>$\Delta H > 0$ (正值)</strong></li>
+                                <li>環境溫度下降。</li>
+                            </ul>
+                            <div style="margin: 2rem auto 0; width: 300px; height: 220px; position: relative; border-left: 3px solid white; border-bottom: 3px solid white;">
+                                <span style="position: absolute; bottom: 15px; left: 30px; font-weight: bold; font-size: 1.6rem;">反應物</span>
+                                <div style="position: absolute; bottom: 50px; left: 20px; border-top: 5px solid #f87171; width: 80px;"></div>
+                                <div style="position: absolute; bottom: 50px; left: 110px; border-left: 4px dashed #f87171; height: 120px;"></div>
+                                <!-- Arrow Up -->
+                                <div style="position: absolute; bottom: 160px; left: 104px; width: 0; height: 0; border-left: 8px solid transparent; border-right: 8px solid transparent; border-bottom: 10px solid #f87171;"></div>
+                                <span style="position: absolute; top: 15px; left: 125px; font-weight: bold; font-size: 1.6rem;">生成物</span>
+                                <div style="position: absolute; bottom: 170px; left: 110px; border-top: 5px solid #f87171; width: 90px;"></div>
+                                <span style="position: absolute; top: 50%; transform: translateY(-50%); left: 135px; color: #f87171; font-weight: bold; font-size: 1.8rem;">$\Delta H > 0$</span>
+                            </div>
+                        </div>
+                        <div class="flex-col">
+                            <h2 class="text-blue">放熱反應 (Exothermic)</h2>
+                            <ul>
+                                <li>系統向外界放出熱量。</li>
+                                <li>$H_{生成物} < H_{反應物}$</li>
+                                <li><strong>$\Delta H < 0$ (負值)</strong></li>
+                                <li>環境溫度上升。(如：燃燒反應)</li>
+                            </ul>
+                            <div style="margin: 2rem auto 0; width: 300px; height: 220px; position: relative; border-left: 3px solid white; border-bottom: 3px solid white;">
+                                <span style="position: absolute; top: 15px; left: 30px; font-weight: bold; font-size: 1.6rem;">反應物</span>
+                                <div style="position: absolute; bottom: 170px; left: 20px; border-top: 5px solid #38bdf8; width: 80px;"></div>
+                                <div style="position: absolute; bottom: 50px; left: 110px; border-left: 4px dashed #38bdf8; height: 120px;"></div>
+                                <!-- Arrow Down -->
+                                <div style="position: absolute; bottom: 50px; left: 104px; width: 0; height: 0; border-left: 8px solid transparent; border-right: 8px solid transparent; border-top: 10px solid #38bdf8;"></div>
+                                <span style="position: absolute; bottom: 15px; left: 125px; font-weight: bold; font-size: 1.6rem;">生成物</span>
+                                <div style="position: absolute; bottom: 50px; left: 110px; border-top: 5px solid #38bdf8; width: 90px;"></div>
+                                <span style="position: absolute; top: 50%; transform: translateY(-50%); left: 135px; color: #38bdf8; font-weight: bold; font-size: 1.8rem;">$\Delta H < 0$</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 4: Thermochemical Equations -->
+                <div class="slide">
+                    <h1>熱化學方程式</h1>
+                    <h2>書寫原則與特徵</h2>
+                    <ul>
+                        <li>必須標明物質的<strong>狀態</strong>：固態(s)、液態(l)、氣態(g)、水溶液(aq)。</li>
+                        <li>$\Delta H$ 寫在方程式右側。</li>
+                        <li>若將熱量寫入方程式中：
+                            <ul>
+                                <li>放熱反應：$A + B \rightarrow C + \text{熱量}$ ($\Delta H < 0$)</li>
+                                <li>吸熱反應：$A + B + \text{熱量} \rightarrow C$ ($\Delta H > 0$)</li>
+                            </ul>
+                        </li>
+                    </ul>
+                    <div class="formula-box">
+                        例： $H_2(g) + \frac{1}{2} O_2(g) \rightarrow H_2O(l) \quad \Delta H = -285.8 \text{ kJ}$
+                    </div>
+                    <ul>
+                        <li>係數代表<strong>莫耳數</strong>。若方程式係數乘上 $n$ 倍，$\Delta H$ 也要乘上 $n$ 倍。</li>
+                        <li>若反應方向逆轉，$\Delta H$ 大小不變，<strong>符號相反</strong>。</li>
+                    </ul>
+                </div>
+
+                <!-- Slide 5: Hess's Law Concept -->
+                <div class="slide">
+                    <h1>赫士定律 (Hess's Law)</h1>
+                    <h2>1. 定義</h2>
+                    <ul>
+                        <li>一個化學反應的反應熱，只與<strong>反應物(始態)</strong>及<strong>生成物(終態)</strong>有關。</li>
+                        <li>與反應發生的<strong>途徑</strong>或步驟多少<strong>無關</strong>。（反應熱具有加成性）</li>
+                    </ul>
+                    <h2>2. 數學表達</h2>
+                    <p>若一個總反應可由數個分步反應相加而得，則總反應的 $\Delta H$ 等於各分步反應 $\Delta H$ 的總和。</p>
+                    <div class="formula-box">
+                        $\Delta H_{總} = \Delta H_1 + \Delta H_2 + \dots + \Delta H_n$
+                    </div>
+                    <p class="text-yellow">※ 解題秘訣：利用代數加減法，將已知的方程式拼湊出目標方程式。</p>
+                </div>
+
+                <!-- Slide 6: Example 1 -->
+                <div class="slide">
+                    <div class="flex-row" style="margin-top: -3rem;">
+                        <!-- Left Column -->
+                        <div class="flex-col" style="flex: 1.2;">
+                            <h2 class="text-blue" style="margin-bottom: 0.5rem;">已知反應方程式</h2>
+                            <div class="formula-box" style="font-size: 1.6rem; text-align: left; padding: 0.5rem 1rem 0.5rem 2rem; margin: 0.5rem 0;">
+                                <div class="eq-interactive" data-target="anim-eq1" style="display: block; padding: 2px 5px; border-radius: 5px; cursor: pointer; transition: background 0.2s;">(1) $C_{(s)} + \frac{1}{2} O_{2(g)} \rightarrow CO_{(g)} \quad \Delta H_1$</div>
+                                <div class="eq-interactive" data-target="anim-eq2" style="display: block; padding: 2px 5px; border-radius: 5px; cursor: pointer; transition: background 0.2s;">(2) $C_{(s)} + O_{2(g)} \rightarrow CO_{2(g)} \quad \Delta H_2$</div>
+                                <div class="eq-interactive" data-target="anim-eq3" style="display: block; padding: 2px 5px; border-radius: 5px; cursor: pointer; transition: background 0.2s;">(3) $CO_{(g)} + \frac{1}{2} O_{2(g)} \rightarrow CO_{2(g)} \quad \Delta H_3$</div>
+                            </div>
+                            <h2 class="text-yellow" style="margin-top: 0.5rem; margin-bottom: 0.5rem;">操作推導過程</h2>
+                            <div style="background: rgba(0,0,0,0.3); padding: 1rem; border-radius: 10px; font-size: 1.5rem; line-height: 1.5;">
+                                觀察目標方程式 (3)，可由 <strong class="text-yellow">式(2) - 式(1)</strong> 得到：<br>
+                                <table style="font-family: monospace; font-size: 1.6rem; margin: 0.5rem 0 0.5rem 2rem; border-collapse: collapse;">
+                                    <tr>
+                                        <td style="width: 2.5rem;"></td>
+                                        <td>$C_{(s)} + O_{2(g)} \rightarrow CO_{2(g)}$</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="text-align: right; padding-right: 0.5rem;">－)</td>
+                                        <td>$C_{(s)} + \frac{1}{2} O_{2(g)} \rightarrow CO_{(g)}$</td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="2"><hr style="border-color: rgba(255,255,255,0.2); margin: 0.3rem 0;"></td>
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td>$\frac{1}{2} O_{2(g)} \rightarrow CO_{2(g)} - CO_{(g)}$</td>
+                                    </tr>
+                                </table>
+                                移項整理後即為：<br>
+                                <div style="text-align: center; margin: 0.5rem 0;">
+                                    <strong class="text-green" style="font-size: 1.8rem;">$ CO_{(g)} + \frac{1}{2} O_{2(g)} \rightarrow CO_{2(g)} $</strong>
+                                </div>
+                                因此可證得：<strong class="text-yellow" style="font-size: 1.6rem;">$\Delta H_3 = \Delta H_2 - \Delta H_1$</strong>
+                            </div>
+                        </div>
+
+                        <!-- Right Column (Energy Diagram) -->
+                        <div class="flex-col" style="flex: 1;">
+                            <h2 class="text-green" style="margin-bottom: 0.5rem;">位能圖分析</h2>
+                            <div style="margin-top: 5rem; position: relative; width: 100%; height: 450px; border-left: 3px solid white; margin-left: 20px;">
+                                <!-- Y-axis label -->
+                                <div style="position: absolute; top: -35px; left: -20px; font-size: 1.5rem; font-weight: bold;">H (熱含量)</div>
+                                <!-- Top Level -->
+                                <div class="anim-eq1 anim-eq2" style="position: absolute; top: 40px; left: 20px; width: 220px; border-top: 4px solid white; transition: all 0.3s;"></div>
+                                <div class="anim-eq1 anim-eq2" style="position: absolute; top: 0px; left: 40px; font-size: 1.8rem; white-space: nowrap; transition: all 0.3s;">$C_{(s)} + O_{2(g)}$</div>
+                                
+                                <!-- Middle Level -->
+                                <div class="anim-eq1 anim-eq3" style="position: absolute; top: 220px; left: 180px; width: 220px; border-top: 4px solid var(--accent-yellow); transition: all 0.3s;"></div>
+                                <div class="anim-eq1 anim-eq3" style="position: absolute; top: 180px; left: 200px; font-size: 1.8rem; color: var(--accent-yellow); white-space: nowrap; transition: all 0.3s;"> $CO_{(g)} + \frac{1}{2}O_{2(g)}$ </div>
+                                
+                                <!-- Bottom Level -->
+                                <div class="anim-eq2 anim-eq3" style="position: absolute; top: 400px; left: 20px; width: 380px; border-top: 4px solid var(--accent-green); transition: all 0.3s;"></div>
+                                <div class="anim-eq2 anim-eq3" style="position: absolute; top: 360px; left: 180px; font-size: 1.8rem; color: var(--accent-green); white-space: nowrap; transition: all 0.3s;">$CO_{2(g)}$</div>
+
+                                <!-- Arrow Top to Middle (Delta H1) -->
+                                <div class="anim-eq1" style="position: absolute; top: 40px; left: 190px; width: 0; height: 170px; border-left: 3px dashed rgba(255,255,255,0.7); transition: all 0.3s;"></div>
+                                <div class="anim-eq1" style="position: absolute; top: 40px; left: 182.5px; width: 0; height: 0; border-left: 9px solid transparent; border-right: 9px solid transparent; border-bottom: 15px solid rgba(255,255,255,0.7); transition: all 0.3s;"></div>
+                                <div class="anim-eq1" style="position: absolute; top: 205px; left: 182.5px; width: 0; height: 0; border-left: 9px solid transparent; border-right: 9px solid transparent; border-top: 15px solid rgba(255,255,255,0.7); transition: all 0.3s;"></div>
+                                <div class="anim-eq1" style="position: absolute; top: 110px; left: 145px; font-size: 1.6rem; transition: all 0.3s;">$\Delta H_1$</div>
+
+                                <!-- Arrow Middle to Bottom (Delta H3) -->
+                                <div class="anim-eq3" style="position: absolute; top: 220px; left: 370px; width: 0; height: 170px; border-left: 3px dashed var(--accent-yellow); transition: all 0.3s;"></div>
+                                <div class="anim-eq3" style="position: absolute; top: 220px; left: 362.5px; width: 0; height: 0; border-left: 9px solid transparent; border-right: 9px solid transparent; border-bottom: 15px solid var(--accent-yellow); transition: all 0.3s;"></div>
+                                <div class="anim-eq3" style="position: absolute; top: 385px; left: 362.5px; width: 0; height: 0; border-left: 9px solid transparent; border-right: 9px solid transparent; border-top: 15px solid var(--accent-yellow); transition: all 0.3s;"></div>
+                                <div class="anim-eq3" style="position: absolute; top: 290px; left: 385px; font-size: 1.6rem; color: var(--accent-yellow); transition: all 0.3s;">$\Delta H_3$</div>
+
+                                <!-- Arrow Top to Bottom (Delta H2) -->
+                                <div class="anim-eq2" style="position: absolute; top: 40px; left: 100px; width: 0; height: 350px; border-left: 4px solid var(--accent-blue); transition: all 0.3s;"></div>
+                                <div class="anim-eq2" style="position: absolute; top: 40px; left: 89px; width: 0; height: 0; border-left: 13px solid transparent; border-right: 13px solid transparent; border-bottom: 15px solid var(--accent-blue); transition: all 0.3s;"></div>
+                                <div class="anim-eq2" style="position: absolute; top: 385px; left: 89px; width: 0; height: 0; border-left: 13px solid transparent; border-right: 13px solid transparent; border-top: 15px solid var(--accent-blue); transition: all 0.3s;"></div>
+                                <div class="anim-eq2" style="position: absolute; top: 200px; left: 20px; font-size: 1.8rem; color: var(--accent-blue); font-weight:bold; transition: all 0.3s;">$\Delta H_2$</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 7: Heat of Formation -->
+                <div class="slide" style="padding-top: 2rem;">
+                    <h1 style="margin-bottom: 0.5rem;">標準生成熱 ($\Delta H_f^\circ$)</h1>
+                    <div class="flex-row" style="margin-top: 0;">
+                        <div class="flex-col" style="flex: 1;">
+                            <h2 style="margin-bottom: 0.5rem; font-size: 2rem;">定義</h2>
+                            <ul style="font-size: 1.4rem;">
+                                <li>在標準狀態下（25°C, 1 atm），由<strong>最穩定的元素</strong>化合生成 <strong>1 莫耳</strong>化合物時的熱量變化。</li>
+                                <li>約定：最穩定元素的標準生成熱為 <strong>零</strong>。
+                                    <ul style="font-size: 1.3rem;">
+                                        <li>例如：$O_2(g), H_2(g), C(\text{石墨}), Fe(s)$ 的 $\Delta H_f^\circ = 0$。</li>
+                                        <li>注意：$O_3(g)$ 不是最穩定狀態，所以 $\Delta H_f^\circ \neq 0$。$C(\text{金剛石}) \neq 0$。</li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="flex-col" style="flex: 1.2;">
+                            <h2 style="margin-bottom: 0.5rem; font-size: 2rem;">常見物質的生成熱反應</h2>
+                            <ul class="interactive-list" style="list-style: none; margin-left: 0; font-size: clamp(1rem, 1.2vw, 1.2rem);">
+                                <li onclick="this.classList.toggle('show-eq')" style="padding: 0.3rem 1rem;">
+                                    <span style="min-width: 150px; display: inline-block;">水的莫耳生成熱：</span>
+                                    <span class="eq" style="font-size: clamp(1rem, 1.2vw, 1.2rem);">$H_{2(g)} + \frac{1}{2}O_{2(g)} \rightarrow H_2O_{(l)} \quad \Delta H = -285.8 \text{ kJ}$</span>
+                                </li>
+                                <li onclick="this.classList.toggle('show-eq')" style="padding: 0.3rem 1rem;">
+                                    <span style="min-width: 150px; display: inline-block;">甲烷的莫耳生成熱：</span>
+                                    <span class="eq" style="font-size: clamp(1rem, 1.2vw, 1.2rem);">$C_{(s, \text{石墨})} + 2H_{2(g)} \rightarrow CH_{4(g)} \quad \Delta H = -74.8 \text{ kJ}$</span>
+                                </li>
+                                <li onclick="this.classList.toggle('show-eq')" style="padding: 0.3rem 1rem;">
+                                    <span style="min-width: 150px; display: inline-block;">乙烯的莫耳生成熱：</span>
+                                    <span class="eq" style="font-size: clamp(1rem, 1.2vw, 1.2rem);">$2C_{(s, \text{石墨})} + 2H_{2(g)} \rightarrow C_2H_{4(g)} \quad \Delta H = +52.4 \text{ kJ}$</span>
+                                </li>
+                                <li onclick="this.classList.toggle('show-eq')" style="padding: 0.3rem 1rem;">
+                                    <span style="min-width: 150px; display: inline-block;">丙烷的莫耳生成熱：</span>
+                                    <span class="eq" style="font-size: clamp(1rem, 1.2vw, 1.2rem);">$3C_{(s, \text{石墨})} + 4H_{2(g)} \rightarrow C_3H_{8(g)} \quad \Delta H = -103.8 \text{ kJ}$</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div style="margin-top: 0.5rem;">
+                        <h2 style="font-size: 2rem; margin-bottom: 0.5rem;">利用生成熱求反應熱</h2>
+                        <div class="formula-box" style="margin: 0.5rem 0; font-size: 1.8rem; padding: 0.5rem;">
+                            $\Delta H = \Sigma (\text{生成物的生成熱}) - \Sigma (\text{反應物的生成熱})$
+                        </div>
+                        <p style="text-align: center; font-size: 1.6rem; margin-bottom: 0;">口訣：<strong class="text-green">生生 - 反生</strong></p>
+                    </div>
+                </div>
+
+                <!-- Slide 8: Example (Drag and Drop) -->
+                <div class="slide" style="padding-top: 2rem;">
+                    <h1 style="margin-bottom: 0.5rem;">範例：利用生成熱求反應熱</h1>
+                    <h2 style="font-size: 1.8rem; color: var(--accent-yellow); margin-bottom: 1rem; line-height: 1.4;">
+                        例：已知 $C_2H_2$、$CH_4$、$C_4H_{10}$ 的莫耳生成熱分別為 $\Delta H_1$、$\Delta H_2$、$\Delta H_3$，<br>求反應 $C_2H_2 + 2CH_4 \rightarrow C_4H_{10}$ 的 $\Delta H = ?$
+                    </h2>
+                    
+                    <div class="flex-row" style="margin-top: 0;">
+                        <!-- Left Column (Calculation Area) -->
+                        <div class="flex-col" style="flex: 1.8; display: flex; flex-direction: column;">
+                            <h2 style="margin-bottom: 0.5rem; font-size: 2rem; color: var(--accent-blue);">用生成熱進行方程式相加減</h2>
+                            
+                            <!-- Addition Zone -->
+                            <div style="display: flex; align-items: flex-start; margin-bottom: 0.5rem;">
+                                <div style="font-size: 2.5rem; font-weight: bold; color: var(--accent-green); margin-right: 1rem; width: 30px; text-align: center;">+</div>
+                                <div style="font-size: 2.5rem; color: rgba(255,255,255,0.7); margin-right: 1rem;">(</div>
+                                <div id="dropzone-add" class="dropzone" style="flex: 1; min-height: 50px; border: 2px dashed rgba(52, 211, 153, 0.5); border-radius: 10px; padding: 10px; background: rgba(52, 211, 153, 0.05); display: flex; flex-direction: column; gap: 5px;">
+                                    <!-- Dropped equations appear here -->
+                                </div>
+                                <div style="font-size: 2.5rem; color: rgba(255,255,255,0.7); margin-left: 1rem;">)</div>
+                            </div>
+
+                            <!-- Subtraction Zone -->
+                            <div style="display: flex; align-items: flex-start; margin-bottom: 0.5rem;">
+                                <div style="font-size: 2.5rem; font-weight: bold; color: var(--accent-red); margin-right: 1rem; width: 30px; text-align: center;">-</div>
+                                <div style="font-size: 2.5rem; color: rgba(255,255,255,0.7); margin-right: 1rem;">(</div>
+                                <div id="dropzone-sub" class="dropzone" style="flex: 1; min-height: 50px; border: 2px dashed rgba(248, 113, 113, 0.5); border-radius: 10px; padding: 10px; background: rgba(248, 113, 113, 0.05); display: flex; flex-direction: column; gap: 5px;">
+                                    <!-- Dropped equations appear here -->
+                                </div>
+                                <div style="font-size: 2.5rem; color: rgba(255,255,255,0.7); margin-left: 1rem;">)</div>
+                            </div>
+                            
+                            <hr style="border-color: rgba(255,255,255,0.3); margin: 0.5rem 0; border-width: 2px;">
+                            
+                            <!-- Result Zone -->
+                            <div id="calc-result" style="font-size: 1.8rem; color: var(--accent-yellow); min-height: 80px; display: flex; flex-direction: column; justify-content: center; align-items: center; background: rgba(0,0,0,0.3); border-radius: 10px; padding: 10px;">
+                                <div id="calc-result-eq" style="opacity: 0.5; font-size: 1.4rem;">(拖曳右方標籤至計算區即可自動加總。欲刪除方程式，將其拖曳出區塊外即可)</div>
+                                <div id="calc-result-dh" style="margin-top: 10px; color: #fff; font-size: 1.6rem;"></div>
+                            </div>
+                            <div style="text-align: right; margin-top: 10px;">
+                                <button id="btn-reset-calc" class="btn" style="padding: 5px 15px; font-size: 1.2rem; display: inline-flex; border-color: rgba(255,255,255,0.5);">⟲ 重新計算</button>
+                            </div>
+                        </div>
+
+                        <!-- Right Column (Draggable Items) -->
+                        <div class="flex-col" style="flex: 1; padding-left: 2rem;">
+                            <h2 style="margin-bottom: 0.5rem; font-size: 2rem;">可用生成熱方程式</h2>
+                            <p style="font-size: 1.2rem; color: rgba(255,255,255,0.6); margin-bottom: 2rem;">(滑鼠按住標籤，拖曳至左側 + 或 - 區塊)</p>
+                            
+                            <div class="draggable-tag" draggable="true" data-id="c2h2" style="background: rgba(255,255,255,0.1); border: 1px solid var(--accent-blue); padding: 10px; margin-bottom: 15px; border-radius: 10px; cursor: grab; text-align: center; transition: background 0.2s;">
+                                <div style="font-size: 1.5rem; margin-bottom: 5px;">$C_2H_2$ 的莫耳生成熱</div>
+                                <div style="font-size: 1.3rem; color: var(--accent-yellow);">$2C_{(s)} + H_{2(g)} \rightarrow C_2H_{2(g)} \quad \Delta H_1$</div>
+                            </div>
+                            
+                            <div class="draggable-tag" draggable="true" data-id="ch4" style="background: rgba(255,255,255,0.1); border: 1px solid var(--accent-blue); padding: 10px; margin-bottom: 15px; border-radius: 10px; cursor: grab; text-align: center; transition: background 0.2s;">
+                                <div style="font-size: 1.5rem; margin-bottom: 5px;">$CH_4$ 的莫耳生成熱</div>
+                                <div style="font-size: 1.3rem; color: var(--accent-yellow);">$C_{(s)} + 2H_{2(g)} \rightarrow CH_{4(g)} \quad \Delta H_2$</div>
+                            </div>
+                            
+                            <div class="draggable-tag" draggable="true" data-id="c4h10" style="background: rgba(255,255,255,0.1); border: 1px solid var(--accent-blue); padding: 10px; margin-bottom: 15px; border-radius: 10px; cursor: grab; text-align: center; transition: background 0.2s;">
+                                <div style="font-size: 1.5rem; margin-bottom: 5px;">$C_4H_{10}$ 的莫耳生成熱</div>
+                                <div style="font-size: 1.3rem; color: var(--accent-yellow);">$4C_{(s)} + 5H_{2(g)} \rightarrow C_4H_{10(g)} \quad \Delta H_3$</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 9: Heat of Combustion -->
+                <div class="slide" style="padding-top: 2rem;">
+                    <h1 style="margin-bottom: 0.5rem;">標準燃燒熱 ($\Delta H_c^\circ$)</h1>
+                    <div class="flex-row" style="margin-top: 0;">
+                        <div class="flex-col" style="flex: 1;">
+                            <h2 style="margin-bottom: 0.5rem; font-size: 2rem;">定義</h2>
+                            <ul style="font-size: 1.4rem;">
+                                <li>在標準狀態下，<strong>1 莫耳</strong>純物質完全燃燒時所放出的熱量。</li>
+                                <li>燃燒必為放熱反應，因此 $\Delta H_c < 0$。</li>
+                                <li>完全燃燒的產物：
+                                    <ul style="font-size: 1.3rem;">
+                                        <li>$C \rightarrow CO_2(g)$</li>
+                                        <li>$H \rightarrow H_2O(l)$</li>
+                                    </ul>
+                                </li>
+                                <li>本身無法燃燒的物質（如 $O_2, CO_2, H_2O$），其燃燒熱為 <strong>零</strong>。</li>
+                            </ul>
+                        </div>
+                        <div class="flex-col" style="flex: 1.2;">
+                            <h2 style="margin-bottom: 0.5rem; font-size: 2rem;">常見物質的燃燒熱反應</h2>
+                            <ul class="interactive-list" style="list-style: none; margin-left: 0; font-size: clamp(1rem, 1.2vw, 1.2rem);">
+                                <li onclick="this.classList.toggle('show-eq')" style="padding: 0.3rem 1rem;">
+                                    <span style="min-width: 150px; display: inline-block;">氫的莫耳燃燒熱：</span>
+                                    <span class="eq" style="font-size: clamp(1rem, 1.2vw, 1.2rem);">$H_{2(g)} + \frac{1}{2}O_{2(g)} \rightarrow H_2O_{(l)} \quad \Delta H = -285.8 \text{ kJ}$</span>
+                                </li>
+                                <li onclick="this.classList.toggle('show-eq')" style="padding: 0.3rem 1rem;">
+                                    <span style="min-width: 150px; display: inline-block;">甲烷的莫耳燃燒熱：</span>
+                                    <span class="eq" style="font-size: clamp(1rem, 1.2vw, 1.2rem);">$CH_{4(g)} + 2O_{2(g)} \rightarrow CO_{2(g)} + 2H_2O_{(l)} \quad \Delta H = -890.4 \text{ kJ}$</span>
+                                </li>
+                                <li onclick="this.classList.toggle('show-eq')" style="padding: 0.3rem 1rem;">
+                                    <span style="min-width: 150px; display: inline-block;">乙烯的莫耳燃燒熱：</span>
+                                    <span class="eq" style="font-size: clamp(1rem, 1.2vw, 1.2rem);">$C_2H_{4(g)} + 3O_{2(g)} \rightarrow 2CO_{2(g)} + 2H_2O_{(l)} \quad \Delta H = -1411 \text{ kJ}$</span>
+                                </li>
+                                <li onclick="this.classList.toggle('show-eq')" style="padding: 0.3rem 1rem;">
+                                    <span style="min-width: 150px; display: inline-block;">丙烷的莫耳燃燒熱：</span>
+                                    <span class="eq" style="font-size: clamp(1rem, 1.2vw, 1.2rem);">$C_3H_{8(g)} + 5O_{2(g)} \rightarrow 3CO_{2(g)} + 4H_2O_{(l)} \quad \Delta H = -2220 \text{ kJ}$</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div style="margin-top: 0.5rem;">
+                        <h2 style="font-size: 2rem; margin-bottom: 0.5rem;">利用燃燒熱求反應熱</h2>
+                        <div class="formula-box" style="margin: 0.5rem 0; font-size: 1.8rem; padding: 0.5rem;">
+                            $\Delta H = \Sigma (\text{反應物的燃燒熱}) - \Sigma (\text{生成物的燃燒熱})$
+                        </div>
+                        <p style="text-align: center; font-size: 1.6rem; margin-bottom: 0;">口訣：<strong class="text-red">反燃 - 生燃</strong></p>
+                    </div>
+                </div>
+
+                <!-- Slide 10: Example (Drag and Drop for Combustion) -->
+                <div class="slide" style="padding-top: 2rem;">
+                    <h1 style="margin-bottom: 0.5rem;">範例：利用燃燒熱求反應熱</h1>
+                    <h2 style="font-size: 1.8rem; color: var(--accent-yellow); margin-bottom: 1rem; line-height: 1.4;">
+                        例：已知 $C_2H_2$、$CH_4$、$C_4H_{10}$ 的莫耳燃燒熱分別為 $\Delta H_4$、$\Delta H_5$、$\Delta H_6$，<br>求反應 $C_2H_2 + 2CH_4 \rightarrow C_4H_{10}$ 的 $\Delta H = ?$
+                    </h2>
+                    
+                    <div class="flex-row" style="margin-top: 0;">
+                        <!-- Left Column (Calculation Area) -->
+                        <div class="flex-col" style="flex: 1.8; display: flex; flex-direction: column;">
+                            <h2 style="margin-bottom: 0.5rem; font-size: 2rem; color: var(--accent-blue);">用燃燒熱進行方程式相加減</h2>
+                            
+                            <!-- Addition Zone -->
+                            <div style="display: flex; align-items: flex-start; margin-bottom: 0.5rem;">
+                                <div style="font-size: 2.5rem; font-weight: bold; color: var(--accent-green); margin-right: 1rem; width: 30px; text-align: center;">+</div>
+                                <div style="font-size: 2.5rem; color: rgba(255,255,255,0.7); margin-right: 1rem;">(</div>
+                                <div id="dropzone-add-comb" class="dropzone dropzone-comb" style="flex: 1; min-height: 50px; border: 2px dashed rgba(52, 211, 153, 0.5); border-radius: 10px; padding: 10px; background: rgba(52, 211, 153, 0.05); display: flex; flex-direction: column; gap: 5px;">
+                                    <!-- Dropped equations appear here -->
+                                </div>
+                                <div style="font-size: 2.5rem; color: rgba(255,255,255,0.7); margin-left: 1rem;">)</div>
+                            </div>
+
+                            <!-- Subtraction Zone -->
+                            <div style="display: flex; align-items: flex-start; margin-bottom: 0.5rem;">
+                                <div style="font-size: 2.5rem; font-weight: bold; color: var(--accent-red); margin-right: 1rem; width: 30px; text-align: center;">-</div>
+                                <div style="font-size: 2.5rem; color: rgba(255,255,255,0.7); margin-right: 1rem;">(</div>
+                                <div id="dropzone-sub-comb" class="dropzone dropzone-comb" style="flex: 1; min-height: 50px; border: 2px dashed rgba(248, 113, 113, 0.5); border-radius: 10px; padding: 10px; background: rgba(248, 113, 113, 0.05); display: flex; flex-direction: column; gap: 5px;">
+                                    <!-- Dropped equations appear here -->
+                                </div>
+                                <div style="font-size: 2.5rem; color: rgba(255,255,255,0.7); margin-left: 1rem;">)</div>
+                            </div>
+                            
+                            <hr style="border-color: rgba(255,255,255,0.3); margin: 0.5rem 0; border-width: 2px;">
+                            
+                            <!-- Result Zone -->
+                            <div id="calc-result-comb" style="font-size: 1.8rem; color: var(--accent-yellow); min-height: 80px; display: flex; flex-direction: column; justify-content: center; align-items: center; background: rgba(0,0,0,0.3); border-radius: 10px; padding: 10px;">
+                                <div id="calc-result-eq-comb" style="opacity: 0.5; font-size: 1.4rem;">(拖曳右方標籤至計算區即可自動加總。欲刪除方程式，將其拖曳出區塊外即可)</div>
+                                <div id="calc-result-dh-comb" style="margin-top: 10px; color: #fff; font-size: 1.6rem;"></div>
+                            </div>
+                            <div style="text-align: right; margin-top: 10px;">
+                                <button id="btn-reset-calc-comb" class="btn" style="padding: 5px 15px; font-size: 1.2rem; display: inline-flex; border-color: rgba(255,255,255,0.5);">⟲ 重新計算</button>
+                            </div>
+                        </div>
+
+                        <!-- Right Column (Draggable Items) -->
+                        <div class="flex-col" style="flex: 1; padding-left: 2rem;">
+                            <h2 style="margin-bottom: 0.5rem; font-size: 2rem;">可用燃燒熱方程式</h2>
+                            <p style="font-size: 1.2rem; color: rgba(255,255,255,0.6); margin-bottom: 2rem;">(滑鼠按住標籤，拖曳至左側 + 或 - 區塊)</p>
+                            
+                            <div class="draggable-tag draggable-tag-comb" draggable="true" data-id="c2h2" style="background: rgba(255,255,255,0.1); border: 1px solid var(--accent-red); padding: 10px; margin-bottom: 15px; border-radius: 10px; cursor: grab; text-align: center; transition: background 0.2s;">
+                                <div style="font-size: 1.5rem; margin-bottom: 5px;">$C_2H_2$ 的莫耳燃燒熱</div>
+                                <div style="font-size: 1.3rem; color: var(--accent-yellow);">$C_2H_{2(g)} + \frac{5}{2}O_{2(g)} \rightarrow 2CO_{2(g)} + H_2O_{(l)} \quad \Delta H_4$</div>
+                            </div>
+                            
+                            <div class="draggable-tag draggable-tag-comb" draggable="true" data-id="ch4" style="background: rgba(255,255,255,0.1); border: 1px solid var(--accent-red); padding: 10px; margin-bottom: 15px; border-radius: 10px; cursor: grab; text-align: center; transition: background 0.2s;">
+                                <div style="font-size: 1.5rem; margin-bottom: 5px;">$CH_4$ 的莫耳燃燒熱</div>
+                                <div style="font-size: 1.3rem; color: var(--accent-yellow);">$CH_{4(g)} + 2O_{2(g)} \rightarrow CO_{2(g)} + 2H_2O_{(l)} \quad \Delta H_5$</div>
+                            </div>
+                            
+                            <div class="draggable-tag draggable-tag-comb" draggable="true" data-id="c4h10" style="background: rgba(255,255,255,0.1); border: 1px solid var(--accent-red); padding: 10px; margin-bottom: 15px; border-radius: 10px; cursor: grab; text-align: center; transition: background 0.2s;">
+                                <div style="font-size: 1.5rem; margin-bottom: 5px;">$C_4H_{10}$ 的莫耳燃燒熱</div>
+                                <div style="font-size: 1.3rem; color: var(--accent-yellow);">$C_4H_{10(g)} + \frac{13}{2}O_{2(g)} \rightarrow 4CO_{2(g)} + 5H_2O_{(l)} \quad \Delta H_6$</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 11: Bond Energy -->
+                <div class="slide">
+                    <h1>鍵能 (Bond Energy)</h1>
+                    <h2>定義</h2>
+                    <ul>
+                        <li>在氣態下，打斷 1 莫耳化學鍵所需要的能量。（必為正值，吸熱）</li>
+                        <li>形成化學鍵時則放出等量的能量。</li>
+                    </ul>
+                    <h2>利用鍵能求反應熱</h2>
+                    <p>化學反應的本質是：打斷反應物的舊鍵（吸熱），形成生成物的新鍵（放熱）。</p>
+                    <div class="formula-box">
+                        $\Delta H = \Sigma (\text{反應物的鍵能}) - \Sigma (\text{生成物的鍵能})$
+                    </div>
+                    <p class="text-red">口訣：<strong>左邊鍵能總和 － 右邊鍵能總和</strong></p>
+                </div>
+
+                <!-- Slide 9: Summary & Practice -->
+                <div class="slide">
+                    <h1>反應熱計算總結整理</h1>
+                    <div style="background: rgba(30, 41, 59, 0.9); padding: 2rem; border-radius: 15px; border: 1px solid rgba(255,255,255,0.1);">
+                        <h2 style="margin-top: 0;">計算公式口訣</h2>
+                        <table style="width:100%; text-align: left; border-collapse: collapse; font-size: 1.7rem;">
+                            <tr style="border-bottom: 2px solid white;">
+                                <th style="padding: 1rem;">已知數據</th>
+                                <th style="padding: 1rem;">計算公式 ($\Delta H = $)</th>
+                            </tr>
+                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.2);">
+                                <td style="padding: 1rem;" class="text-green">生成熱</td>
+                                <td style="padding: 1rem;">(生成物 $\Sigma$) - (反應物 $\Sigma$) <strong style="color:var(--accent-blue)">【生生 - 反生】</strong></td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.2);">
+                                <td style="padding: 1rem;" class="text-red">燃燒熱</td>
+                                <td style="padding: 1rem;">(反應物 $\Sigma$) - (生成物 $\Sigma$) <strong style="color:var(--accent-red)">【反燃 - 生燃】</strong></td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 1rem;" class="text-yellow">鍵能</td>
+                                <td style="padding: 1rem;">(反應物 $\Sigma$) - (生成物 $\Sigma$) <strong style="color:var(--accent-red)">【左 - 右】</strong></td>
+                            </tr>
+                        </table>
+                    </div>
+                    <h2 style="margin-top: 2rem;">手寫練習區</h2>
+                    <p>請開啟下方「手寫模式」，在此空白區域進行計算練習。</p>
+                </div>
+            </div>
+
+            <!-- Canvas Layer for Drawing -->
+            <canvas id="drawing-layer"></canvas>
+        </div>
+
+        <!-- Slide Indicator -->
+        <div id="slide-info">1 / 10</div>
+
+        <div id="toolbar">
+            <div id="drag-handle" title="拖曳移動工具列">≡</div>
+            <button class="btn-tool" id="btn-prev" title="上一頁">▲</button>
+            <button class="btn-tool" id="btn-next" title="下一頁">▼</button>
+            <div style="height: 1px; width: 25px; background: rgba(255,255,255,0.3); margin: 6px 0;"></div>
+            
+            <button class="btn-tool" id="btn-draw" title="手寫模式">✎</button>
+            
+            <div class="color-picker" id="color-picker">
+                <div class="color-swatch selected" style="background: #f8fafc;" data-color="#f8fafc"></div>
+                <div class="color-swatch" style="background: #f87171;" data-color="#f87171"></div>
+                <div class="color-swatch" style="background: #38bdf8;" data-color="#38bdf8"></div>
+                <div class="color-swatch" style="background: #fbbf24;" data-color="#fbbf24"></div>
+                <div class="color-swatch" style="background: #34d399;" data-color="#34d399"></div>
+            </div>
+
+            <div id="size-picker" style="display: none; flex-direction: column; align-items: center; gap: 2px; margin: 2px 0; width: 100%; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 5px;">
+                <input type="range" id="pen-size" min="1" max="20" value="3" style="width: 100%; height: 4px; cursor: pointer;">
+            </div>
+
+            <div id="eraser-tools" style="display: none; width: 100%; flex-direction: column; gap: 4px; align-items: center;">
+                <button class="btn-tool" id="btn-eraser" title="橡皮擦">
+                    <svg viewBox="0 0 24 24"><path d="M16.24,3.56L21.19,8.51C21.97,9.29 21.97,10.55 21.19,11.33L12.01,20.5H22V22.5H10.12L2.81,15.19C2.03,14.41 2.03,13.15 2.81,12.37L12,3.19C12.78,2.41 14.05,2.41 14.83,3.19L16.24,3.56M4.22,13.78L10.83,20.39L14.83,16.39L8.22,9.78L4.22,13.78Z"/></svg>
+                </button>
+                <button class="btn-tool" id="btn-clear" title="全清">🗑</button>
+            </div>
+            <div style="height: 1px; width: 25px; background: rgba(255,255,255,0.3); margin: 6px 0;"></div>
+            <button class="btn-tool" id="btn-exit-fs" title="回到目錄">🏠</button>
+        </div>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        let isDrawingMode = false;
+        let drawMode = 'pen';
+        let penColor = '#f8fafc';
+        let penSize = 3;
+        let slideDrawings = {}; 
+        let lastX = 0;
+        let lastY = 0;
+
+        function toggleOverlay(id) {
+            const overlay = document.getElementById(id);
+            if (overlay) overlay.style.display = (overlay.style.display === 'none' || overlay.style.display === '') ? 'flex' : 'none';
+        }
+
+        const slides = document.querySelectorAll('.slide');
+        const slideInfo = document.getElementById('slide-info');
+        const canvas = document.getElementById('drawing-layer');
+        const ctx = canvas.getContext('2d');
+        let isDrawing = false;
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            restoreDrawing();
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        function getCoords(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            return [clientX - rect.left, clientY - rect.top];
+        }
+
+        function startDrawing(e) {
+            if (!isDrawingMode) return;
+            isDrawing = true;
+            [lastX, lastY] = getCoords(e);
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            const [x, y] = getCoords(e);
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(x, y);
+            ctx.strokeStyle = drawMode === 'eraser' ? '#0b1120' : penColor;
+            ctx.lineWidth = drawMode === 'eraser' ? penSize * 10 : penSize;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+            [lastX, lastY] = [x, y];
+        }
+
+        function stopDrawing() {
+            if (isDrawing) {
+                isDrawing = false;
+                slideDrawings[currentSlide] = canvas.toDataURL();
+            }
+        }
+
+        function restoreDrawing() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if (slideDrawings[currentSlide]) {
+                const img = new Image();
+                img.onload = () => ctx.drawImage(img, 0, 0);
+                img.src = slideDrawings[currentSlide];
+            }
+        }
+
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDrawing(e); }, {passive: false});
+        canvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e); }, {passive: false});
+        canvas.addEventListener('touchend', stopDrawing);
+
+        function updateSlides() {
+            slides.forEach((s, i) => s.classList.toggle('active', i === currentSlide));
+            slideInfo.textContent = `${currentSlide + 1} / ${slides.length}`;
+            restoreDrawing();
+        }
+
+        document.getElementById('btn-next').addEventListener('click', () => { if (currentSlide < slides.length - 1) { currentSlide++; updateSlides(); } });
+        document.getElementById('btn-prev').addEventListener('click', () => { if (currentSlide > 0) { currentSlide--; updateSlides(); } });
+
+        document.getElementById('btn-draw').addEventListener('click', (e) => {
+            isDrawingMode = !isDrawingMode;
+            if (isDrawingMode) drawMode = 'pen';
+            e.currentTarget.classList.toggle('active-tool', isDrawingMode);
+            canvas.classList.toggle('drawing-active', isDrawingMode);
+            document.getElementById('color-picker').style.display = isDrawingMode ? 'grid' : 'none';
+            document.getElementById('size-picker').style.display = isDrawingMode ? 'flex' : 'none';
+            document.getElementById('eraser-tools').style.display = isDrawingMode ? 'flex' : 'none';
+        });
+
+        document.getElementById('btn-eraser').addEventListener('click', (e) => {
+            drawMode = (drawMode === 'eraser' ? 'pen' : 'eraser');
+            e.currentTarget.classList.toggle('active-tool', drawMode === 'eraser');
+        });
+
+        document.querySelectorAll('.color-swatch').forEach(sw => {
+            sw.addEventListener('click', () => {
+                document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
+                sw.classList.add('selected');
+                penColor = sw.dataset.color;
+                drawMode = 'pen';
+                document.getElementById('btn-draw').classList.add('active-tool');
+                document.getElementById('btn-eraser').classList.remove('active-tool');
+            });
+        });
+
+        document.getElementById('pen-size').addEventListener('input', (e) => { penSize = parseInt(e.target.value); });
+        document.getElementById('btn-clear').addEventListener('click', () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            slideDrawings[currentSlide] = null;
+        });
+
+        document.getElementById('btn-start').addEventListener('click', () => {
+            document.getElementById('start-overlay').style.display = 'none';
+            if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen();
+            updateSlides();
+        });
+
+        document.getElementById('btn-exit-fs').addEventListener('click', () => {
+            window.location.href = '../../index.html';
+        });
+
+        const toolbar = document.getElementById('toolbar'), dragHandle = document.getElementById('drag-handle');
+        let isDraggingToolbar = false, dragOffY = 0;
+        const startDrag = (y) => { isDraggingToolbar = true; dragOffY = y - toolbar.offsetTop; };
+        const moveDrag = (y) => { if (isDraggingToolbar) { toolbar.style.top = (y - dragOffY) + 'px'; toolbar.style.bottom = 'auto'; toolbar.style.transform = 'none'; } };
+        dragHandle.addEventListener('mousedown', (e) => startDrag(e.clientY)); window.addEventListener('mousemove', (e) => moveDrag(e.clientY)); window.addEventListener('mouseup', () => isDraggingToolbar = false);
+        dragHandle.addEventListener('touchstart', (e) => startDrag(e.touches[0].clientY)); window.addEventListener('touchmove', (e) => moveDrag(e.touches[0].clientY)); window.addEventListener('touchend', () => isDraggingToolbar = false);
+
+        // Interactive Energy Diagram
+        document.querySelectorAll('.eq-interactive').forEach(el => {
+            el.addEventListener('click', function() {
+                const targetClass = this.getAttribute('data-target');
+                const targets = document.querySelectorAll('.' + targetClass);
+                
+                // Remove class to reset animation if clicked multiple times
+                targets.forEach(t => t.classList.remove('blinking'));
+                
+                // Force reflow
+                void this.offsetWidth;
+                
+                // Add class
+                targets.forEach(t => t.classList.add('blinking'));
+            });
+        });
+
+        // Drag and Drop Logic for Example Slide
+        const eqData = {
+            c2h2: {
+                latex: "2C_{(s)} + H_{2(g)} \\rightarrow C_2H_{2(g)} \\quad \\Delta H_1",
+                c: 2, h2: 1, c2h2: 1, ch4: 0, c4h10: 0, dh: "\\Delta H_1"
+            },
+            ch4: {
+                latex: "C_{(s)} + 2H_{2(g)} \\rightarrow CH_{4(g)} \\quad \\Delta H_2",
+                c: 1, h2: 2, c2h2: 0, ch4: 1, c4h10: 0, dh: "\\Delta H_2"
+            },
+            c4h10: {
+                latex: "4C_{(s)} + 5H_{2(g)} \\rightarrow C_4H_{10(g)} \\quad \\Delta H_3",
+                c: 4, h2: 5, c2h2: 0, ch4: 0, c4h10: 1, dh: "\\Delta H_3"
+            }
+        };
+
+        let stateCalc = {
+            add: { c2h2: 0, ch4: 0, c4h10: 0 },
+            sub: { c2h2: 0, ch4: 0, c4h10: 0 }
+        };
+
+        const draggables = document.querySelectorAll('.draggable-tag');
+        const dropzones = document.querySelectorAll('.dropzone');
+        
+        draggables.forEach(draggable => {
+            draggable.addEventListener('dragstart', (e) => {
+                draggable.classList.add('dragging');
+                e.dataTransfer.setData('text/plain', draggable.getAttribute('data-id'));
+            });
+
+            draggable.addEventListener('dragend', () => {
+                draggable.classList.remove('dragging');
+            });
+        });
+
+        function addEquationToZone(zone, id, zoneType) {
+            const eqDiv = document.createElement('div');
+            eqDiv.style.fontSize = '1.3rem';
+            eqDiv.style.textAlign = 'center';
+            eqDiv.style.cursor = 'grab';
+            eqDiv.title = '拖曳至區塊外即可刪除，或拖曳至另一區塊';
+            eqDiv.draggable = true;
+            eqDiv.innerHTML = `\\( ${eqData[id].latex} \\)`;
+            
+            eqDiv.addEventListener('dragstart', (ev) => {
+                eqDiv.style.opacity = '0.5';
+                ev.dataTransfer.effectAllowed = 'move';
+                eqDiv.dataset.uniqueId = Date.now() + Math.random().toString();
+                ev.dataTransfer.setData('text/plain', `move:${id}:${zoneType}:${eqDiv.dataset.uniqueId}`);
+            });
+
+            eqDiv.addEventListener('dragend', (ev) => {
+                eqDiv.style.opacity = '1';
+                if (ev.dataTransfer.dropEffect === 'none') {
+                    stateCalc[zoneType][id]--;
+                    eqDiv.remove();
+                    updateCalculation();
+                }
+            });
+
+            zone.appendChild(eqDiv);
+            MathJax.typesetPromise([eqDiv]).then(() => {
+                updateCalculation();
+            });
+        }
+
+        dropzones.forEach(zone => {
+            zone.addEventListener('dragover', e => {
+                e.preventDefault();
+                zone.classList.add('drag-over');
+            });
+
+            zone.addEventListener('dragleave', () => {
+                zone.classList.remove('drag-over');
+            });
+
+            zone.addEventListener('drop', e => {
+                e.preventDefault();
+                zone.classList.remove('drag-over');
+                const data = e.dataTransfer.getData('text/plain');
+                if (!data) return;
+
+                const zoneType = zone.id === 'dropzone-add' ? 'add' : 'sub';
+
+                if (data.startsWith('move:')) {
+                    const parts = data.split(':');
+                    const id = parts[1];
+                    const fromZone = parts[2];
+                    const uniqueId = parts[3];
+                    
+                    if (fromZone === zoneType) {
+                        return; // Dropped in same zone, do nothing
+                    } else {
+                        const oldElement = document.querySelector(`div[data-unique-id="${uniqueId}"]`);
+                        if (oldElement) {
+                            oldElement.remove();
+                            stateCalc[fromZone][id]--;
+                        }
+                        stateCalc[zoneType][id]++;
+                        addEquationToZone(zone, id, zoneType);
+                        return;
+                    }
+                }
+
+                if (data.startsWith('movecomb:') || data.startsWith('comb:')) return;
+
+                const id = data;
+                stateCalc[zoneType][id]++;
+                addEquationToZone(zone, id, zoneType);
+            });
+        });
+
+        function updateCalculation() {
+            let rC = 0, rH2 = 0, rC2H2 = 0, rCH4 = 0, rC4H10 = 0;
+            let pC = 0, pH2 = 0, pC2H2 = 0, pCH4 = 0, pC4H10 = 0;
+            let dhParts = [];
+
+            for (let id in stateCalc.add) {
+                let c = stateCalc.add[id];
+                if (c > 0) {
+                    rC += c * eqData[id].c;
+                    rH2 += c * eqData[id].h2;
+                    if(id==='c2h2') pC2H2 += c;
+                    if(id==='ch4') pCH4 += c;
+                    if(id==='c4h10') pC4H10 += c;
+                    dhParts.push(c === 1 ? `+\\Delta H_${id==='c2h2'?1:id==='ch4'?2:3}` : `+${c}\\Delta H_${id==='c2h2'?1:id==='ch4'?2:3}`);
+                }
+            }
+
+            for (let id in stateCalc.sub) {
+                let c = stateCalc.sub[id];
+                if (c > 0) {
+                    pC += c * eqData[id].c;
+                    pH2 += c * eqData[id].h2;
+                    if(id==='c2h2') rC2H2 += c;
+                    if(id==='ch4') rCH4 += c;
+                    if(id==='c4h10') rC4H10 += c;
+                    dhParts.push(c === 1 ? `-\\Delta H_${id==='c2h2'?1:id==='ch4'?2:3}` : `-${c}\\Delta H_${id==='c2h2'?1:id==='ch4'?2:3}`);
+                }
+            }
+
+            let isEmpty = true;
+            for (let id in stateCalc.add) if (stateCalc.add[id] > 0) isEmpty = false;
+            for (let id in stateCalc.sub) if (stateCalc.sub[id] > 0) isEmpty = false;
+
+            if (isEmpty) {
+                document.getElementById('calc-result-eq').innerHTML = "(拖曳右方標籤至計算區即可自動加總。欲刪除方程式，將其拖曳出區塊外即可)";
+                document.getElementById('calc-result-eq').style.opacity = '0.5';
+                document.getElementById('calc-result-eq').style.fontSize = '1.4rem';
+                document.getElementById('calc-result-dh').innerHTML = "";
+                return;
+            }
+
+            let net_C = pC - rC;
+            if (net_C > 0) { pC = net_C; rC = 0; } else { rC = -net_C; pC = 0; }
+            
+            let net_H2 = pH2 - rH2;
+            if (net_H2 > 0) { pH2 = net_H2; rH2 = 0; } else { rH2 = -net_H2; pH2 = 0; }
+
+            let net_C2H2 = pC2H2 - rC2H2;
+            if (net_C2H2 > 0) { pC2H2 = net_C2H2; rC2H2 = 0; } else { rC2H2 = -net_C2H2; pC2H2 = 0; }
+
+            let net_CH4 = pCH4 - rCH4;
+            if (net_CH4 > 0) { pCH4 = net_CH4; rCH4 = 0; } else { rCH4 = -net_CH4; pCH4 = 0; }
+
+            let net_C4H10 = pC4H10 - rC4H10;
+            if (net_C4H10 > 0) { pC4H10 = net_C4H10; rC4H10 = 0; } else { rC4H10 = -net_C4H10; pC4H10 = 0; }
+
+            let rStr = [];
+            if(rC > 0) rStr.push(rC === 1 ? `C_{(s)}` : `${rC}C_{(s)}`);
+            if(rH2 > 0) rStr.push(rH2 === 1 ? `H_{2(g)}` : `${rH2}H_{2(g)}`);
+            if(rC2H2 > 0) rStr.push(rC2H2 === 1 ? `C_2H_{2(g)}` : `${rC2H2}C_2H_{2(g)}`);
+            if(rCH4 > 0) rStr.push(rCH4 === 1 ? `CH_{4(g)}` : `${rCH4}CH_{4(g)}`);
+            if(rC4H10 > 0) rStr.push(rC4H10 === 1 ? `C_4H_{10(g)}` : `${rC4H10}C_4H_{10(g)}`);
+
+            let pStr = [];
+            if(pC > 0) pStr.push(pC === 1 ? `C_{(s)}` : `${pC}C_{(s)}`);
+            if(pH2 > 0) pStr.push(pH2 === 1 ? `H_{2(g)}` : `${pH2}H_{2(g)}`);
+            if(pC2H2 > 0) pStr.push(pC2H2 === 1 ? `C_2H_{2(g)}` : `${pC2H2}C_2H_{2(g)}`);
+            if(pCH4 > 0) pStr.push(pCH4 === 1 ? `CH_{4(g)}` : `${pCH4}CH_{4(g)}`);
+            if(pC4H10 > 0) pStr.push(pC4H10 === 1 ? `C_4H_{10(g)}` : `${pC4H10}C_4H_{10(g)}`);
+
+            let rFinal = rStr.length > 0 ? rStr.join(" + ") : "0";
+            let pFinal = pStr.length > 0 ? pStr.join(" + ") : "0";
+
+            let eqStr = `\\[ ${rFinal} \\rightarrow ${pFinal} \\]`;
+
+            let dhString = dhParts.join(" ");
+            if (dhString.startsWith("+")) dhString = dhString.substring(1);
+            if (dhString === "") dhString = "0";
+
+            document.getElementById('calc-result-eq').innerHTML = eqStr;
+            document.getElementById('calc-result-eq').style.opacity = '1';
+            document.getElementById('calc-result-eq').style.fontSize = '1.8rem';
+            document.getElementById('calc-result-dh').innerHTML = `\\[ \\Delta H = ${dhString} \\]`;
+
+            MathJax.typesetPromise([document.getElementById('calc-result')]);
+        }
+
+        document.getElementById('btn-reset-calc').addEventListener('click', () => {
+            stateCalc.add = { c2h2: 0, ch4: 0, c4h10: 0 };
+            stateCalc.sub = { c2h2: 0, ch4: 0, c4h10: 0 };
+            document.getElementById('dropzone-add').innerHTML = '';
+            document.getElementById('dropzone-sub').innerHTML = '';
+            updateCalculation();
+        });
+
+        // Drag and Drop Logic for Combustion Example Slide
+        const eqDataComb = {
+            c2h2: {
+                latex: "C_2H_{2(g)} + \\frac{5}{2}O_{2(g)} \\rightarrow 2CO_{2(g)} + H_2O_{(l)} \\quad \\Delta H_4",
+                r: { c2h2: 1, o2: 2.5 },
+                p: { co2: 2, h2o: 1 },
+                dh: "\\Delta H_4"
+            },
+            ch4: {
+                latex: "CH_{4(g)} + 2O_{2(g)} \\rightarrow CO_{2(g)} + 2H_2O_{(l)} \\quad \\Delta H_5",
+                r: { ch4: 1, o2: 2 },
+                p: { co2: 1, h2o: 2 },
+                dh: "\\Delta H_5"
+            },
+            c4h10: {
+                latex: "C_4H_{10(g)} + \\frac{13}{2}O_{2(g)} \\rightarrow 4CO_{2(g)} + 5H_2O_{(l)} \\quad \\Delta H_6",
+                r: { c4h10: 1, o2: 6.5 },
+                p: { co2: 4, h2o: 5 },
+                dh: "\\Delta H_6"
+            }
+        };
+
+        let stateCalcComb = {
+            add: { c2h2: 0, ch4: 0, c4h10: 0 },
+            sub: { c2h2: 0, ch4: 0, c4h10: 0 }
+        };
+
+        const draggablesComb = document.querySelectorAll('.draggable-tag-comb');
+        const dropzonesComb = document.querySelectorAll('.dropzone-comb');
+        
+        draggablesComb.forEach(draggable => {
+            draggable.addEventListener('dragstart', (e) => {
+                draggable.classList.add('dragging');
+                e.dataTransfer.setData('text/plain', 'comb:' + draggable.getAttribute('data-id'));
+            });
+
+            draggable.addEventListener('dragend', () => {
+                draggable.classList.remove('dragging');
+            });
+        });
+
+        function addEquationToZoneComb(zone, id, zoneType) {
+            const eqDiv = document.createElement('div');
+            eqDiv.style.fontSize = '1.3rem';
+            eqDiv.style.textAlign = 'center';
+            eqDiv.style.cursor = 'grab';
+            eqDiv.title = '拖曳至區塊外即可刪除，或拖曳至另一區塊';
+            eqDiv.draggable = true;
+            eqDiv.innerHTML = `\\( ${eqDataComb[id].latex} \\)`;
+            
+            eqDiv.addEventListener('dragstart', (ev) => {
+                eqDiv.style.opacity = '0.5';
+                ev.dataTransfer.effectAllowed = 'move';
+                eqDiv.dataset.uniqueId = Date.now() + Math.random().toString();
+                ev.dataTransfer.setData('text/plain', `movecomb:${id}:${zoneType}:${eqDiv.dataset.uniqueId}`);
+            });
+
+            eqDiv.addEventListener('dragend', (ev) => {
+                eqDiv.style.opacity = '1';
+                if (ev.dataTransfer.dropEffect === 'none') {
+                    stateCalcComb[zoneType][id]--;
+                    eqDiv.remove();
+                    updateCalculationComb();
+                }
+            });
+
+            zone.appendChild(eqDiv);
+            MathJax.typesetPromise([eqDiv]).then(() => {
+                updateCalculationComb();
+            });
+        }
+
+        dropzonesComb.forEach(zone => {
+            zone.addEventListener('dragover', e => {
+                e.preventDefault();
+                zone.classList.add('drag-over');
+            });
+
+            zone.addEventListener('dragleave', () => {
+                zone.classList.remove('drag-over');
+            });
+
+            zone.addEventListener('drop', e => {
+                e.preventDefault();
+                zone.classList.remove('drag-over');
+                const data = e.dataTransfer.getData('text/plain');
+                if (!data) return;
+
+                const zoneType = zone.id === 'dropzone-add-comb' ? 'add' : 'sub';
+
+                if (data.startsWith('movecomb:')) {
+                    const parts = data.split(':');
+                    const id = parts[1];
+                    const fromZone = parts[2];
+                    const uniqueId = parts[3];
+                    
+                    if (fromZone === zoneType) {
+                        return; // Dropped in same zone, do nothing
+                    } else {
+                        const oldElement = document.querySelector(`div[data-unique-id="${uniqueId}"]`);
+                        if (oldElement) {
+                            oldElement.remove();
+                            stateCalcComb[fromZone][id]--;
+                        }
+                        stateCalcComb[zoneType][id]++;
+                        addEquationToZoneComb(zone, id, zoneType);
+                        return;
+                    }
+                }
+                
+                if (data.startsWith('comb:')) {
+                    const id = data.split(':')[1];
+                    stateCalcComb[zoneType][id]++;
+                    addEquationToZoneComb(zone, id, zoneType);
+                }
+            });
+        });
+
+        function formatCoefficientComb(c, species) {
+            if (c === 0) return null;
+            let cStr = "";
+            if (c === 1) cStr = "";
+            else if (c === 2.5) cStr = "\\frac{5}{2}";
+            else if (c === 6.5) cStr = "\\frac{13}{2}";
+            else cStr = c.toString();
+            
+            let spStr = "";
+            if (species === 'c2h2') spStr = "C_2H_{2(g)}";
+            if (species === 'ch4') spStr = "CH_{4(g)}";
+            if (species === 'c4h10') spStr = "C_4H_{10(g)}";
+            if (species === 'o2') spStr = "O_{2(g)}";
+            if (species === 'co2') spStr = "CO_{2(g)}";
+            if (species === 'h2o') spStr = "H_2O_{(l)}";
+            
+            return `${cStr}${spStr}`;
+        }
+
+        function updateCalculationComb() {
+            let totalR = { c2h2: 0, ch4: 0, c4h10: 0, o2: 0, co2: 0, h2o: 0 };
+            let totalP = { c2h2: 0, ch4: 0, c4h10: 0, o2: 0, co2: 0, h2o: 0 };
+            let dhParts = [];
+
+            for (let id in stateCalcComb.add) {
+                let c = stateCalcComb.add[id];
+                if (c > 0) {
+                    for(let sp in eqDataComb[id].r) totalR[sp] += c * eqDataComb[id].r[sp];
+                    for(let sp in eqDataComb[id].p) totalP[sp] += c * eqDataComb[id].p[sp];
+                    dhParts.push(c === 1 ? `+\\Delta H_${id==='c2h2'?4:id==='ch4'?5:6}` : `+${c}\\Delta H_${id==='c2h2'?4:id==='ch4'?5:6}`);
+                }
+            }
+
+            for (let id in stateCalcComb.sub) {
+                let c = stateCalcComb.sub[id];
+                if (c > 0) {
+                    for(let sp in eqDataComb[id].r) totalP[sp] += c * eqDataComb[id].r[sp];
+                    for(let sp in eqDataComb[id].p) totalR[sp] += c * eqDataComb[id].p[sp];
+                    dhParts.push(c === 1 ? `-\\Delta H_${id==='c2h2'?4:id==='ch4'?5:6}` : `-${c}\\Delta H_${id==='c2h2'?4:id==='ch4'?5:6}`);
+                }
+            }
+
+            let isEmpty = true;
+            for (let id in stateCalcComb.add) if (stateCalcComb.add[id] > 0) isEmpty = false;
+            for (let id in stateCalcComb.sub) if (stateCalcComb.sub[id] > 0) isEmpty = false;
+
+            if (isEmpty) {
+                document.getElementById('calc-result-eq-comb').innerHTML = "(拖曳右方標籤至計算區即可自動加總。欲刪除方程式，將其拖曳出區塊外即可)";
+                document.getElementById('calc-result-eq-comb').style.opacity = '0.5';
+                document.getElementById('calc-result-eq-comb').style.fontSize = '1.4rem';
+                document.getElementById('calc-result-dh-comb').innerHTML = "";
+                return;
+            }
+
+            for(let sp in totalR) {
+                let rC = totalR[sp];
+                let pC = totalP[sp];
+                if (rC > pC) {
+                    totalR[sp] = rC - pC;
+                    totalP[sp] = 0;
+                } else {
+                    totalP[sp] = pC - rC;
+                    totalR[sp] = 0;
+                }
+            }
+
+            let rStr = [];
+            for (let sp of ['c2h2', 'ch4', 'c4h10', 'o2', 'co2', 'h2o']) {
+                if (totalR[sp] > 0) rStr.push(formatCoefficientComb(totalR[sp], sp));
+            }
+
+            let pStr = [];
+            for (let sp of ['c2h2', 'ch4', 'c4h10', 'o2', 'co2', 'h2o']) {
+                if (totalP[sp] > 0) pStr.push(formatCoefficientComb(totalP[sp], sp));
+            }
+
+            let rFinal = rStr.length > 0 ? rStr.join(" + ") : "0";
+            let pFinal = pStr.length > 0 ? pStr.join(" + ") : "0";
+
+            let eqStr = `\\[ ${rFinal} \\rightarrow ${pFinal} \\]`;
+
+            let dhString = dhParts.join(" ");
+            if (dhString.startsWith("+")) dhString = dhString.substring(1);
+            if (dhString === "") dhString = "0";
+
+            document.getElementById('calc-result-eq-comb').innerHTML = eqStr;
+            document.getElementById('calc-result-eq-comb').style.opacity = '1';
+            document.getElementById('calc-result-eq-comb').style.fontSize = '1.8rem';
+            document.getElementById('calc-result-dh-comb').innerHTML = `\\[ \\Delta H = ${dhString} \\]`;
+
+            MathJax.typesetPromise([document.getElementById('calc-result-comb')]);
+        }
+
+        document.getElementById('btn-reset-calc-comb').addEventListener('click', () => {
+            stateCalcComb.add = { c2h2: 0, ch4: 0, c4h10: 0 };
+            stateCalcComb.sub = { c2h2: 0, ch4: 0, c4h10: 0 };
+            document.getElementById('dropzone-add-comb').innerHTML = '';
+            document.getElementById('dropzone-sub-comb').innerHTML = '';
+            updateCalculationComb();
+        });
+
+        // Initialize first slide
+        updateSlides();
+    </script>
+</body>
+</html>

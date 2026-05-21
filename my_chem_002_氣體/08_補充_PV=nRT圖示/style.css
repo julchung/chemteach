@@ -1,0 +1,227 @@
+:root {
+    --bg-color: #0b0e14;
+    --panel-bg: rgba(255, 255, 255, 0.05);
+    --accent-color: #00d2ff;
+    --text-color: #e0e0e0;
+    --label-color: #a0a0a0;
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --isotherm-color: #ff4b2b;
+    --isobar-color: #3a7bd5;
+    --isochore-color: #00d2ff;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.tabs {
+    display: flex;
+    gap: 10px;
+    padding: 10px 20px;
+    background: rgba(255, 255, 255, 0.02);
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.tab-btn {
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--label-color);
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.3s;
+}
+
+.tab-btn:hover {
+    color: var(--text-color);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.tab-btn.active {
+    color: var(--accent-color);
+    background: rgba(0, 210, 255, 0.1);
+    border-color: rgba(0, 210, 255, 0.3);
+}
+
+.app-container {
+    display: flex;
+    width: 100%;
+    height: 100vh;
+}
+
+.panel {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+.left-panel {
+    flex: 1.2;
+    border-right: 1px solid var(--glass-border);
+    position: relative;
+}
+
+.right-panel {
+    flex: 1;
+    overflow-y: auto;
+}
+
+header {
+    margin-bottom: 20px;
+}
+
+h1 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 5px;
+    background: linear-gradient(90deg, #00d2ff, #3a7bd5);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.nav-link {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--accent-color);
+    text-decoration: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    border: 1px solid var(--glass-border);
+    transition: all 0.3s;
+    font-weight: 500;
+}
+
+.nav-link:hover {
+    background: rgba(0, 210, 255, 0.1);
+    border-color: var(--accent-color);
+    transform: translateY(-2px);
+}
+
+h2 {
+    font-size: 1.2rem;
+    font-weight: 500;
+    color: var(--label-color);
+}
+
+p {
+    font-size: 0.9rem;
+    color: var(--label-color);
+}
+
+.chart-container {
+    flex: 1;
+    width: 100%;
+    min-height: 0;
+}
+
+.chart-container-small {
+    height: 220px;
+    width: 100%;
+}
+
+.sub-panel {
+    background: var(--panel-bg);
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 15px;
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(10px);
+}
+
+.chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.control-group {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.control-group label {
+    font-size: 1.1rem;
+    margin-bottom: 5px;
+    color: var(--text-color);
+    font-weight: 500;
+}
+
+input[type=range] {
+    width: 150px;
+    cursor: pointer;
+}
+
+.info-overlay {
+    position: absolute;
+    bottom: 30px;
+    right: 30px;
+    background: rgba(0, 0, 0, 0.6);
+    padding: 10px 15px;
+    border-radius: 8px;
+    border: 1px solid var(--glass-border);
+    display: flex;
+    gap: 20px;
+    pointer-events: none;
+}
+
+.info-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.info-item .label {
+    font-size: 0.7rem;
+    color: var(--label-color);
+    text-transform: uppercase;
+}
+
+.info-item .value {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: var(--accent-color);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 6px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: var(--glass-border);
+    border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+@media (max-width: 1000px) {
+    .app-container {
+        flex-direction: column;
+        overflow-y: auto;
+    }
+    .left-panel {
+        height: 60vh;
+        border-right: none;
+        border-bottom: 1px solid var(--glass-border);
+    }
+    .right-panel {
+        height: auto;
+    }
+}

@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>亞佛加厥定律 - 互動教學</title>
+    <script>
+        MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']], processEscapes: true },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        :root {
+            --bg-dark: #0b1120;
+            --bg-panel: rgba(30, 41, 59, 0.7);
+            --text-main: #f8fafc;
+            --accent-blue: #38bdf8;
+            --accent-green: #34d399;
+            --accent-red: #f87171;
+            --accent-yellow: #fbbf24;
+            --accent-purple: #a855f7;
+            --accent-cyan: #22d3ee;
+        }
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+        body, html { width: 100%; height: 100%; background-color: var(--bg-dark); color: var(--text-main); font-family: 'Segoe UI', 'Microsoft JhengHei', Tahoma, Geneva, Verdana, sans-serif; overflow: hidden; background-image: radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px); background-size: 30px 30px; }
+        #app { position: relative; width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: center; overflow: hidden; }
+        #start-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--bg-dark); z-index: 100; display: flex; flex-direction: column; justify-content: center; align-items: center; background-image: radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px); background-size: 30px 30px; }
+        #presentation-area { position: relative; width: 100vw; height: 100vh; background: transparent; overflow: hidden; }
+        #slides-container { position: absolute; top: 2vh; left: 5vw; right: 5vw; bottom: 5vh; }
+        
+        .slide { position: absolute; top: 0; left: 0; width: 100%; height: 100%; padding: 0.5rem 6rem 1rem 2rem; opacity: 0; pointer-events: none; transition: opacity 0.5s ease; display: flex; flex-direction: column; overflow-y: auto; overflow-x: hidden; }
+        @media (max-width: 768px) { .slide { padding: 0.5rem 4.5rem 1rem 1.5rem; } }
+        .slide.active { opacity: 1; pointer-events: auto; z-index: 10; }
+        
+        .slide h1 { color: var(--accent-blue); font-size: clamp(1.8rem, 2.5vw, 2.4rem); margin-bottom: 0.5rem; text-align: center; border-bottom: 2px solid rgba(56, 189, 248, 0.3); padding-bottom: 0.4rem; flex-shrink: 0; }
+        .slide h2 { color: var(--accent-yellow); font-size: clamp(1.4rem, 2vw, 1.8rem); margin-top: 0.5rem; margin-bottom: 0.8rem; }
+        .slide p, .slide li { font-size: clamp(1.1rem, 1.5vw, 1.4rem); line-height: 1.6; margin-bottom: 0.6rem; }
+        .slide ul { margin-left: 1.5rem; margin-bottom: 0.6rem; }
+        
+        .formula-box { background: rgba(0,0,0,0.3); border-left: 5px solid var(--accent-green); padding: clamp(0.5rem, 1.5vw, 1rem); border-radius: 0 10px 10px 0; margin: 1rem 0; font-size: clamp(1.2rem, 2vw, 1.8rem); text-align: center; overflow-x: auto; }
+        .flex-row { display: flex; flex-wrap: wrap; gap: 2rem; margin-top: 1rem; flex: 1; min-height: 0; }
+        .flex-col { flex: 1 1 400px; background: rgba(255,255,255,0.03); padding: 1.5rem; border-radius: 10px; overflow-x: auto; display: flex; flex-direction: column; }
+        .rule-card { background: rgba(56, 189, 248, 0.1); border: 1px solid var(--accent-blue); padding: 1rem; border-radius: 10px; margin-bottom: 1rem; }
+        
+        #drawing-layer { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 20; pointer-events: none; touch-action: none; }
+        #drawing-layer.drawing-active { pointer-events: auto; }
+        
+        #toolbar { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); background: rgba(15, 23, 42, 0.9); padding: 10px 5px; border-radius: 20px; display: flex; flex-direction: column; gap: 8px; align-items: center; z-index: 2000; border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 10px 25px rgba(0,0,0,0.5); backdrop-filter: blur(10px); width: 45px; }
+        .btn-tool { background: transparent; color: rgba(255,255,255,0.6); border: 1px solid rgba(255,255,255,0.2); padding: 6px 10px; border-radius: 15px; cursor: pointer; font-size: 0.8rem; font-weight: normal; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 5px; width: 100%; text-align: center; }
+        .btn-tool:hover { background: rgba(255,255,255,0.1); }
+        .btn-tool.active-tool, .btn-tool.primary { background: var(--accent-blue); border-color: var(--accent-blue); color: #000; }
+        .btn-tool svg { width: 20px; height: 20px; fill: currentColor; }
+        
+        .color-picker { display: none; grid-template-columns: 1fr; width: 100%; padding-top: 5px; gap: 4px; }
+        .color-swatch { width: 20px; height: 20px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; transition: transform 0.2s; margin: 0 auto; }
+        .color-swatch.selected { border-color: white; transform: scale(1.2); }
+        
+        #drag-handle { width: 100%; text-align: center; color: rgba(255,255,255,0.4); cursor: grab; padding: 2px 0; margin-bottom: 5px; margin-top: -5px; user-select: none; font-size: 1.2rem; line-height: 0.5; }
+        
+        #slide-info { position: absolute; bottom: 20px; left: 20px; z-index: 15; font-size: 1.2rem; font-weight: bold; color: rgba(255,255,255,0.4); background: rgba(0,0,0,0.3); padding: 5px 12px; border-radius: 10px; backdrop-filter: blur(5px); border: 1px solid rgba(255,255,255,0.1); }
+        
+        .text-red { color: var(--accent-red); }
+        .text-blue { color: var(--accent-blue); }
+        .text-green { color: var(--accent-green); }
+        .text-yellow { color: var(--accent-yellow); }
+        
+        .table-chem { width: 100%; border-collapse: collapse; margin: 1rem 0; background: rgba(30, 41, 59, 0.5); border-radius: 10px; overflow: hidden; }
+        .table-chem th, .table-chem td { padding: 0.8rem; border: 1px solid rgba(255,255,255,0.1); text-align: center; }
+        .table-chem th { background: rgba(56, 189, 248, 0.2); color: var(--accent-blue); }
+        
+        .game-item { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 0.8rem 1.2rem; border-radius: 12px; display: flex; align-items: center; position: relative; cursor: pointer; transition: all 0.3s; min-height: 55px; width: 100%; font-size: 1.2rem; }
+        .game-item:hover { background: rgba(255,255,255,0.1); border-color: var(--accent-blue); }
+        .game-item.connected { border-color: var(--accent-green); background: rgba(52, 211, 153, 0.1); cursor: default; }
+        .game-item span { flex: 1; pointer-events: none; }
+        #left-column .game-item { text-align: left; }
+        #right-column .game-item { text-align: right; }
+        
+        .dot { width: 18px; height: 18px; background: white; border-radius: 50%; position: absolute; top: 50%; transform: translateY(-50%); box-shadow: 0 0 10px rgba(255,255,255,0.5); transition: all 0.3s; z-index: 5; pointer-events: none; }
+        .dot.active { background: var(--accent-green); box-shadow: 0 0 20px var(--accent-green); transform: translateY(-50%) scale(1.3); }
+        .left-dot { right: -9px; }
+        .right-dot { left: -9px; }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div id="start-overlay">
+            <h1 style="color: var(--accent-blue); font-size: clamp(2.5rem, 5vw, 4rem); margin-bottom: 1rem; text-align: center;">亞佛加厥定律</h1>
+            <p style="color: rgba(255,255,255,0.7); font-size: clamp(1.2rem, 3vw, 1.5rem); margin-bottom: 3rem; text-align: center;">氣體體積與莫耳數的關係</p>
+            <button id="btn-start" class="btn primary" style="font-size: clamp(1.2rem, 2.5vw, 1.5rem); padding: 15px 40px;">▶ 點擊進入全螢幕教學</button>
+        </div>
+
+        <div id="presentation-area">
+            <div id="slides-container">
+                <!-- Slide 1: Definition -->
+                <div class="slide active">
+                    <h1>亞佛加厥定律的定義</h1>
+                    <div class="flex-row">
+                        <div class="flex-col">
+                            <h2 class="text-yellow">亞佛加厥定律 (Avogadro's Law)</h2>
+                            <p>在 <strong class="text-red">同溫 (T)</strong> 與 <strong class="text-red">同壓 (P)</strong> 的條件下：</p>
+                            <div class="rule-card">
+                                同體積的任何氣體含有相同的 <strong class="text-cyan">分子數 (n)</strong>。
+                            </div>
+                            <div class="formula-box">
+                                $V \propto n \implies \frac{V}{n} = k \implies \frac{V_1}{n_1} = \frac{V_2}{n_2}$
+                            </div>
+                            <p style="font-size: 1.1rem; margin-top: 1rem;">
+                                亞佛加厥常數 ($N_A$) = <strong class="text-yellow">$6.02 \times 10^{23} \text{ mol}^{-1}$</strong>
+                            </p>
+                        </div>
+                        <div class="flex-col" style="justify-content: center; align-items: center; background: rgba(255,255,255,0.02);">
+                             <h2 class="text-green">視覺演示</h2>
+                             <div style="display: flex; gap: 20px; align-items: flex-end;">
+                                <div style="text-align: center;">
+                                    <div style="width: 80px; height: 80px; border: 2px solid white; position: relative;">
+                                        <div style="position: absolute; top: 10px; left: 10px; width: 10px; height: 10px; background: var(--accent-blue); border-radius: 50%;"></div>
+                                        <div style="position: absolute; top: 40px; left: 50px; width: 10px; height: 10px; background: var(--accent-blue); border-radius: 50%;"></div>
+                                        <div style="position: absolute; top: 60px; left: 20px; width: 10px; height: 10px; background: var(--accent-blue); border-radius: 50%;"></div>
+                                    </div>
+                                    <p style="font-size: 0.9rem; margin-top: 5px;">$n = 3$</p>
+                                    <p style="font-size: 0.9rem;">$V = V_0$</p>
+                                </div>
+                                <div style="text-align: center;">
+                                    <div style="width: 160px; height: 80px; border: 2px solid white; position: relative;">
+                                        <div style="position: absolute; top: 10px; left: 10px; width: 10px; height: 10px; background: var(--accent-blue); border-radius: 50%;"></div>
+                                        <div style="position: absolute; top: 40px; left: 50px; width: 10px; height: 10px; background: var(--accent-blue); border-radius: 50%;"></div>
+                                        <div style="position: absolute; top: 60px; left: 20px; width: 10px; height: 10px; background: var(--accent-blue); border-radius: 50%;"></div>
+                                        <div style="position: absolute; top: 20px; left: 90px; width: 10px; height: 10px; background: var(--accent-blue); border-radius: 50%;"></div>
+                                        <div style="position: absolute; top: 50px; left: 120px; width: 10px; height: 10px; background: var(--accent-blue); border-radius: 50%;"></div>
+                                        <div style="position: absolute; top: 15px; left: 140px; width: 10px; height: 10px; background: var(--accent-blue); border-radius: 50%;"></div>
+                                    </div>
+                                    <p style="font-size: 0.9rem; margin-top: 5px;">$n = 6$</p>
+                                    <p style="font-size: 0.9rem;">$V = 2V_0$</p>
+                                </div>
+                             </div>
+                             <p style="margin-top: 1.5rem; color: var(--accent-cyan);">$n$ 加倍 $\implies V$ 加倍</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 2: Molar Volume -->
+                <div class="slide">
+                    <h1>氣體的莫耳體積 ($V_m$)</h1>
+                    <div class="flex-row">
+                        <div class="flex-col">
+                            <h2 class="text-yellow">不同狀態下的 $V_m$</h2>
+                            <p>1 莫耳氣體在特定溫壓下的體積：</p>
+                            <table class="table-chem">
+                                <thead>
+                                    <tr><th>狀態</th><th>溫壓條件</th><th>莫耳體積 ($V_m$)</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td>STP</td><td>$0^\circ C, 1 \text{ atm}$</td><td><strong class="text-red">22.4 L</strong></td></tr>
+                                    <tr><td>NTP</td><td>$25^\circ C, 1 \text{ atm}$</td><td><strong class="text-red">24.5 L</strong></td></tr>
+                                    <tr><td>-</td><td>$27^\circ C, 1 \text{ atm}$</td><td><strong class="text-red">24.6 L</strong></td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="flex-col">
+                            <h2 class="text-green">密度與分子量</h2>
+                            <p>氣體密度 ($d$) 與其分子量 ($M$) 的關係：</p>
+                            <div class="formula-box">
+                                $d = \frac{\text{Mass}}{\text{Volume}} = \frac{M}{V_m}$
+                            </div>
+                            <div class="rule-card" style="margin-top: 1rem;">
+                                <p>在同溫同壓下：</p>
+                                <div style="text-align: center; font-size: 1.3rem;">$\frac{d_1}{d_2} = \frac{M_1}{M_2}$</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 3: Practice -->
+                <div class="slide">
+                    <h1>單元練習</h1>
+                    <div class="flex-row">
+                        <div class="flex-col" style="position: relative;">
+                            <div id="overlay-ans-1" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 50; flex-direction: column; align-items: center; justify-content: center; border-radius: 10px; text-align: left; border: 3px solid var(--accent-red);">
+                                <div style="color: var(--accent-red); font-size: 3rem; font-weight: 900; width: 100%; text-align: center; margin-bottom: 10px;">解答：44.8 L</div>
+                                <div style="color: white; font-size: 1.2rem; margin-top: 15px; padding: 0 40px; width: 100%;">
+                                    $n = 2 \text{ mol}$<br>
+                                    STP 下，$V_m = 22.4 \text{ L/mol}$<br>
+                                    $V = 2 \times 22.4 = 44.8 \text{ L}$
+                                </div>
+                                <button class="btn" style="margin-top: 20px; width: auto; background: var(--accent-red);" onclick="toggleOverlay('overlay-ans-1')">關閉</button>
+                            </div>
+                            <h2 class="text-yellow">例題 1</h2>
+                            <p>在 STP 下，$2.0 \text{ 莫耳}$ 的氧氣所佔體積為多少公升？</p>
+                            <button class="btn" style="margin-top: 2rem;" onclick="toggleOverlay('overlay-ans-1')">顯示解答</button>
+                        </div>
+                        <div class="flex-col" style="position: relative;">
+                            <div id="overlay-ans-2" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 50; flex-direction: column; align-items: center; justify-content: center; border-radius: 10px; text-align: left; border: 3px solid var(--accent-red);">
+                                <div style="color: var(--accent-red); font-size: 3rem; font-weight: 900; width: 100%; text-align: center; margin-bottom: 10px;">解答：1 : 16</div>
+                                <div style="color: white; font-size: 1.2rem; margin-top: 15px; padding: 0 40px; width: 100%;">
+                                    同溫壓下，$d_1/d_2 = M_1/M_2$<br>
+                                    $M(H_2) = 2, M(O_2) = 32$<br>
+                                    比例 = $2 : 32 = 1 : 16$
+                                </div>
+                                <button class="btn" style="margin-top: 20px; width: auto; background: var(--accent-red);" onclick="toggleOverlay('overlay-ans-2')">關閉</button>
+                            </div>
+                            <h2 class="text-yellow">例題 2</h2>
+                            <p>同溫同壓下，氫氣 ($H_2$) 與氧氣 ($O_2$) 的密度比為何？</p>
+                            <button class="btn" style="margin-top: 2rem;" onclick="toggleOverlay('overlay-ans-2')">顯示解答</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 4: Advanced Practice -->
+                <div class="slide">
+                    <h1>進階練習</h1>
+                    <div class="flex-row">
+                        <div class="flex-col" style="position: relative;">
+                            <div id="overlay-ans-3" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 50; flex-direction: column; align-items: center; justify-content: center; border-radius: 10px; text-align: left; border: 3px solid var(--accent-red);">
+                                <div style="color: var(--accent-red); font-size: 3rem; font-weight: 900; width: 100%; text-align: center; margin-bottom: 10px;">解答：(C) 4 : 3</div>
+                                <div style="color: white; font-size: 1.2rem; margin-top: 15px; padding: 0 40px; width: 100%;">
+                                    $CO_2$ 分子含 3 個原子，$NH_3$ 分子含 4 個原子。<br>
+                                    原子總數相等 $\implies 3 \times n(CO_2) = 4 \times n(NH_3)$<br>
+                                    莫耳數比 $n(CO_2) : n(NH_3) = 4 : 3$<br>
+                                    同溫壓下，$V \propto n$，故體積比為 $4 : 3$。
+                                </div>
+                                <button class="btn" style="margin-top: 20px; width: auto; background: var(--accent-red);" onclick="toggleOverlay('overlay-ans-3')">關閉</button>
+                            </div>
+                            <h2 class="text-yellow">例題 3</h2>
+                            <p>甲、乙兩容器中分別盛同溫、同壓下之 $CO_{2(g)}$ 與 $NH_{3(g)}$，已知兩容器中之原子總數相等，則甲、乙兩容器體積的比為：</p>
+                            <p>(A) 2 : 3 (B) 4 : 5 (C) 4 : 3 (D) 3 : 4</p>
+                            <button class="btn" style="margin-top: 2rem;" onclick="toggleOverlay('overlay-ans-3')">顯示解答</button>
+                        </div>
+                        <div class="flex-col" style="position: relative;">
+                            <div id="overlay-ans-4" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 50; flex-direction: column; align-items: center; justify-content: center; border-radius: 10px; text-align: left; border: 3px solid var(--accent-red);">
+                                <div style="color: var(--accent-red); font-size: 3rem; font-weight: 900; width: 100%; text-align: center; margin-bottom: 10px;">解答：(A) $NO_2$</div>
+                                <div style="color: white; font-size: 1.2rem; margin-top: 15px; padding: 0 40px; width: 100%;">
+                                    同溫壓下，$V_1 = 2V_2 \implies n_1 = 2n_2$<br>
+                                    $m_1/M_1 = 2 \times (m_2/M_2)$<br>
+                                    $1.64/M_1 = 2 \times (0.5/28) \implies M_1 \approx 46$<br>
+                                    $NO_2$ 的分子量為 $14 + 16 \times 2 = 46$。
+                                </div>
+                                <button class="btn" style="margin-top: 20px; width: auto; background: var(--accent-red);" onclick="toggleOverlay('overlay-ans-4')">關閉</button>
+                            </div>
+                            <h2 class="text-yellow">例題 4</h2>
+                            <p>有甲、乙二種氣體，各重 1.64 克及 0.5 克。在同溫、同壓時甲氣體之體積為乙氣體之二倍，若知乙氣體之分子量為 28，則下列分子何者可能為甲氣體？ (原子量：N = 14, O = 16)</p>
+                            <p>(A) $NO_2$ (B) $N_2O$ (C) $N_2O_4$ (D) $N_2O_5$</p>
+                            <button class="btn" style="margin-top: 2rem;" onclick="toggleOverlay('overlay-ans-4')">顯示解答</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 5: Game -->
+                <div class="slide" id="slide-game">
+                    <h1>單元挑戰：亞佛加厥定律連連看</h1>
+                    <p style="text-align: center; color: var(--accent-green); margin-top: -10px;">請連接正確的描述與數值。</p>
+                    <div id="game-container" style="position: relative; flex: 1; display: flex; justify-content: space-between; padding: 20px 40px; background: rgba(0,0,0,0.2); border-radius: 20px; overflow: hidden;">
+                        <svg id="game-svg" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5;"></svg>
+                        <div id="left-column" style="display: flex; flex-direction: column; justify-content: space-around; gap: 8px; z-index: 10; width: 40%;"></div>
+                        <div id="right-column" style="display: flex; flex-direction: column; justify-content: space-around; gap: 8px; z-index: 10; width: 40%;"></div>
+                        <div id="game-feedback" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(16, 185, 129, 0.95); padding: 2rem 4rem; border-radius: 20px; font-size: 2.5rem; color: white; font-weight: bold; box-shadow: 0 0 50px rgba(16, 185, 129, 0.5); z-index: 100; text-align: center;">🎉 太棒了！</div>
+                    </div>
+                    <div style="text-align: center; margin-top: 10px;">
+                        <button class="btn" style="width: auto; display: inline-block;" onclick="resetGame()">再玩一次</button>
+                    </div>
+                </div>
+            </div>
+
+            <canvas id="drawing-layer"></canvas>
+        </div>
+
+        <div id="slide-info">1 / 5</div>
+
+        <!-- Controls Toolbar -->
+        <div id="toolbar">
+            <div id="drag-handle" title="拖曳移動工具列">≡</div>
+            <button class="btn-tool" id="btn-prev" title="上一頁">▲</button>
+            <button class="btn-tool" id="btn-next" title="下一頁">▼</button>
+            <div style="height: 1px; width: 25px; background: rgba(255,255,255,0.3); margin: 6px 0;"></div>
+            
+            <button class="btn-tool" id="btn-draw" title="手寫模式">✎</button>
+            
+            <div class="color-picker" id="color-picker">
+                <div class="color-swatch selected" style="background: #f8fafc;" data-color="#f8fafc"></div>
+                <div class="color-swatch" style="background: #f87171;" data-color="#f87171"></div>
+                <div class="color-swatch" style="background: #38bdf8;" data-color="#38bdf8"></div>
+                <div class="color-swatch" style="background: #fbbf24;" data-color="#fbbf24"></div>
+                <div class="color-swatch" style="background: #34d399;" data-color="#34d399"></div>
+            </div>
+
+            <div id="size-picker" style="display: none; flex-direction: column; align-items: center; gap: 2px; margin: 2px 0; width: 100%; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 5px;">
+                <input type="range" id="pen-size" min="1" max="20" value="3" style="width: 100%; height: 4px; cursor: pointer;">
+            </div>
+
+            <div id="eraser-tools" style="display: none; width: 100%; flex-direction: column; gap: 4px; align-items: center;">
+                <button class="btn-tool" id="btn-eraser" title="橡皮擦">
+                    <svg viewBox="0 0 24 24"><path d="M16.24,3.56L21.19,8.51C21.97,9.29 21.97,10.55 21.19,11.33L12.01,20.5H22V22.5H10.12L2.81,15.19C2.03,14.41 2.03,13.15 2.81,12.37L12,3.19C12.78,2.41 14.05,2.41 14.83,3.19L16.24,3.56M4.22,13.78L10.83,20.39L14.83,16.39L8.22,9.78L4.22,13.78Z"/></svg>
+                </button>
+                <button class="btn-tool" id="btn-clear" title="全清">🗑</button>
+            </div>
+            <div style="height: 1px; width: 25px; background: rgba(255,255,255,0.3); margin: 6px 0;"></div>
+            <button class="btn-tool" id="btn-exit-fs" title="回到目錄">🏠</button>
+        </div>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        let isDrawingMode = false;
+        let drawMode = 'pen';
+        let penColor = '#f8fafc';
+        let penSize = 3;
+        let slideDrawings = {}; 
+        let lastX = 0;
+        let lastY = 0;
+
+        function toggleOverlay(id) {
+            const overlay = document.getElementById(id);
+            if (overlay) overlay.style.display = (overlay.style.display === 'none' || overlay.style.display === '') ? 'flex' : 'none';
+        }
+
+        const slides = document.querySelectorAll('.slide');
+        const slideInfo = document.getElementById('slide-info');
+        const canvas = document.getElementById('drawing-layer');
+        const ctx = canvas.getContext('2d');
+        let isDrawing = false;
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            restoreDrawing();
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        function getCoords(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            return [clientX - rect.left, clientY - rect.top];
+        }
+
+        function startDrawing(e) {
+            if (!isDrawingMode) return;
+            isDrawing = true;
+            [lastX, lastY] = getCoords(e);
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            const [x, y] = getCoords(e);
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(x, y);
+            ctx.strokeStyle = drawMode === 'eraser' ? '#0b1120' : penColor;
+            ctx.lineWidth = drawMode === 'eraser' ? penSize * 10 : penSize;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+            [lastX, lastY] = [x, y];
+        }
+
+        function stopDrawing() {
+            if (isDrawing) {
+                isDrawing = false;
+                slideDrawings[currentSlide] = canvas.toDataURL();
+            }
+        }
+
+        function restoreDrawing() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if (slideDrawings[currentSlide]) {
+                const img = new Image();
+                img.onload = () => ctx.drawImage(img, 0, 0);
+                img.src = slideDrawings[currentSlide];
+            }
+        }
+
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDrawing(e); }, {passive: false});
+        canvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e); }, {passive: false});
+        canvas.addEventListener('touchend', stopDrawing);
+
+        function updateSlides() {
+            slides.forEach((s, i) => s.classList.toggle('active', i === currentSlide));
+            slideInfo.textContent = `${currentSlide + 1} / ${slides.length}`;
+            restoreDrawing();
+            if (slides[currentSlide].id === 'slide-game') initGame();
+        }
+
+        document.getElementById('btn-next').addEventListener('click', () => { if (currentSlide < slides.length - 1) { currentSlide++; updateSlides(); } });
+        document.getElementById('btn-prev').addEventListener('click', () => { if (currentSlide > 0) { currentSlide--; updateSlides(); } });
+
+        document.getElementById('btn-draw').addEventListener('click', (e) => {
+            isDrawingMode = !isDrawingMode;
+            if (isDrawingMode) drawMode = 'pen';
+            e.currentTarget.classList.toggle('active-tool', isDrawingMode);
+            canvas.classList.toggle('drawing-active', isDrawingMode);
+            document.getElementById('color-picker').style.display = isDrawingMode ? 'grid' : 'none';
+            document.getElementById('size-picker').style.display = isDrawingMode ? 'flex' : 'none';
+            document.getElementById('eraser-tools').style.display = isDrawingMode ? 'flex' : 'none';
+        });
+
+        document.getElementById('btn-eraser').addEventListener('click', (e) => {
+            drawMode = (drawMode === 'eraser' ? 'pen' : 'eraser');
+            e.currentTarget.classList.toggle('active-tool', drawMode === 'eraser');
+        });
+
+        document.querySelectorAll('.color-swatch').forEach(sw => {
+            sw.addEventListener('click', () => {
+                document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
+                sw.classList.add('selected');
+                penColor = sw.dataset.color;
+                drawMode = 'pen';
+                document.getElementById('btn-draw').classList.add('active-tool');
+                document.getElementById('btn-eraser').classList.remove('active-tool');
+            });
+        });
+
+        document.getElementById('pen-size').addEventListener('input', (e) => { penSize = parseInt(e.target.value); });
+        document.getElementById('btn-clear').addEventListener('click', () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            slideDrawings[currentSlide] = null;
+        });
+
+        document.getElementById('btn-start').addEventListener('click', () => {
+            document.getElementById('start-overlay').style.display = 'none';
+            if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen();
+            updateSlides();
+        });
+
+        document.getElementById('btn-exit-fs').addEventListener('click', () => {
+            window.location.href = '../../index.html';
+        });
+
+        const gameDataPool = [
+            { left: '亞佛加厥定律', right: '$V \\propto n$', match: 0 },
+            { left: 'STP 條件', right: '$0^\\circ C, 1 \\text{ atm}$', match: 1 },
+            { left: 'STP 莫耳體積 ($V_m$)', right: '22.4 L', match: 2 },
+            { left: 'NTP 莫耳體積 ($V_m$)', right: '24.5 L', match: 3 },
+            { left: '同溫同壓下密度比', right: '等於分子量比 ($M_1/M_2$)', match: 4 },
+            { left: '1 莫耳分子數', right: '$6.02 \\times 10^{23}$', match: 5 },
+            { left: '亞佛加厥常數 ($N_A$)', right: '$6.02 \\times 10^{23} \\text{ mol}^{-1}$', match: 6 },
+            { left: '同溫同壓同體積', right: '含有相同分子數', match: 7 },
+            { left: '氣體密度 ($d$)', right: '$M / V_m$', match: 8 },
+            { left: '273 K, 1 atm', right: 'STP 狀態', match: 9 },
+            { left: '298 K, 1 atm', right: 'NTP 狀態', match: 10 },
+            { left: '亞佛加厥定律數學式', right: '$V_1/n_1 = V_2/n_2$', match: 11 },
+            { left: '莫耳體積單位', right: 'L/mol (公升/莫耳)', match: 12 },
+            { left: '阿佛加厥 (Avogadro)', right: '1811年提出假說', match: 13 }
+        ];
+
+        let connections = [], isDraggingGame = false, dragStartItem = null, tempLine = null;
+        const currentGameItems = 5;
+
+        function initGame() {
+            const leftCol = document.getElementById('left-column'), rightCol = document.getElementById('right-column');
+            const svg = document.getElementById('game-svg');
+            leftCol.innerHTML = ''; rightCol.innerHTML = ''; svg.innerHTML = '';
+            connections = []; document.getElementById('game-feedback').style.display = 'none';
+
+            const selectedData = [...gameDataPool].sort(() => Math.random() - 0.5).slice(0, currentGameItems);
+            const shuffledLeft = [...selectedData].sort(() => Math.random() - 0.5);
+            const shuffledRight = [...selectedData].sort(() => Math.random() - 0.5);
+
+            shuffledLeft.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'game-item';
+                div.dataset.match = item.match;
+                div.dataset.side = 'left';
+                div.style.touchAction = 'none';
+                div.innerHTML = `<span>${item.left}</span><div class="dot left-dot"></div>`;
+                div.addEventListener('pointerdown', handleGameDragStart);
+                leftCol.appendChild(div);
+            });
+
+            shuffledRight.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'game-item';
+                div.dataset.match = item.match;
+                div.dataset.side = 'right';
+                div.style.touchAction = 'none';
+                div.innerHTML = `<div class="dot right-dot"></div><span>${item.right}</span>`;
+                div.addEventListener('pointerdown', handleGameDragStart);
+                rightCol.appendChild(div);
+            });
+
+            MathJax.typesetPromise();
+        }
+
+        function handleGameDragStart(e) {
+            const item = e.currentTarget;
+            if (item.classList.contains('connected')) return;
+            isDraggingGame = true; dragStartItem = item;
+            
+            const svg = document.getElementById('game-svg');
+            const rect = svg.getBoundingClientRect();
+            const dotRect = dragStartItem.querySelector('.dot').getBoundingClientRect();
+            const startX = dotRect.left + dotRect.width/2 - rect.left;
+            const startY = dotRect.top + dotRect.height/2 - rect.top;
+
+            tempLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            tempLine.setAttribute('x1', startX); tempLine.setAttribute('y1', startY);
+            tempLine.setAttribute('x2', startX); tempLine.setAttribute('y2', startY);
+            tempLine.setAttribute('stroke', '#94a3b8'); tempLine.setAttribute('stroke-width', '4');
+            tempLine.setAttribute('stroke-linecap', 'round'); tempLine.setAttribute('stroke-dasharray', '5,5');
+            svg.appendChild(tempLine);
+            
+            dragStartItem.querySelector('.dot').classList.add('active');
+            if (e.pointerType === 'mouse') e.preventDefault();
+        }
+
+        window.addEventListener('pointermove', (e) => {
+            if (!isDraggingGame || !tempLine) return;
+            const svg = document.getElementById('game-svg');
+            const rect = svg.getBoundingClientRect();
+            tempLine.setAttribute('x2', e.clientX - rect.left);
+            tempLine.setAttribute('y2', e.clientY - rect.top);
+            
+            const target = document.elementFromPoint(e.clientX, e.clientY);
+            const targetItem = target ? target.closest('.game-item') : null;
+            if (targetItem && targetItem !== dragStartItem && !targetItem.classList.contains('connected')) {
+                if (targetItem.dataset.side !== dragStartItem.dataset.side) {
+                    tempLine.setAttribute('stroke', targetItem.dataset.match === dragStartItem.dataset.match ? '#34d399' : '#f87171');
+                } else tempLine.setAttribute('stroke', '#94a3b8');
+            } else tempLine.setAttribute('stroke', '#94a3b8');
+        });
+
+        window.addEventListener('pointerup', (e) => {
+            if (!isDraggingGame) return;
+            isDraggingGame = false;
+            const target = document.elementFromPoint(e.clientX, e.clientY);
+            const targetItem = target ? target.closest('.game-item') : null;
+            
+            if (targetItem && targetItem !== dragStartItem && !targetItem.classList.contains('connected') && targetItem.dataset.side !== dragStartItem.dataset.side) {
+                if (targetItem.dataset.match === dragStartItem.dataset.match) {
+                    dragStartItem.classList.add('connected'); targetItem.classList.add('connected');
+                    targetItem.querySelector('.dot').classList.add('active');
+                    connections.push({from: dragStartItem, to: targetItem});
+                    if (connections.length === currentGameItems) document.getElementById('game-feedback').style.display = 'block';
+                } else {
+                    dragStartItem.querySelector('.dot').classList.remove('active');
+                    targetItem.style.backgroundColor = 'rgba(248, 113, 113, 0.3)';
+                    setTimeout(() => { targetItem.style.backgroundColor = ''; }, 400);
+                }
+            } else if (dragStartItem) dragStartItem.querySelector('.dot').classList.remove('active');
+            
+            if (tempLine) { tempLine.remove(); tempLine = null; }
+            dragStartItem = null; drawGameLines();
+        });
+
+        function drawGameLines() {
+            const svg = document.getElementById('game-svg');
+            svg.innerHTML = ''; if (tempLine) svg.appendChild(tempLine);
+            const rect = svg.getBoundingClientRect();
+            connections.forEach(c => {
+                const r1 = c.from.querySelector('.dot').getBoundingClientRect(), r2 = c.to.querySelector('.dot').getBoundingClientRect();
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', r1.left + r1.width/2 - rect.left); line.setAttribute('y1', r1.top + r1.height/2 - rect.top);
+                line.setAttribute('x2', r2.left + r2.width/2 - rect.left); line.setAttribute('y2', r2.top + r2.height/2 - rect.top);
+                line.setAttribute('stroke', '#34d399'); line.setAttribute('stroke-width', '4'); line.setAttribute('stroke-linecap', 'round');
+                svg.appendChild(line);
+            });
+        }
+        function resetGame() { initGame(); }
+        window.addEventListener('resize', drawGameLines);
+
+        const toolbar = document.getElementById('toolbar'), dragHandle = document.getElementById('drag-handle');
+        let isDraggingToolbar = false, dragOffY = 0;
+        const startDrag = (y) => { isDraggingToolbar = true; dragOffY = y - toolbar.offsetTop; };
+        const moveDrag = (y) => { if (isDraggingToolbar) { toolbar.style.top = (y - dragOffY) + 'px'; toolbar.style.bottom = 'auto'; toolbar.style.transform = 'none'; } };
+        dragHandle.addEventListener('mousedown', (e) => startDrag(e.clientY)); window.addEventListener('mousemove', (e) => moveDrag(e.clientY)); window.addEventListener('mouseup', () => isDraggingToolbar = false);
+        dragHandle.addEventListener('touchstart', (e) => startDrag(e.touches[0].clientY)); window.addEventListener('touchmove', (e) => moveDrag(e.touches[0].clientY)); window.addEventListener('touchend', () => isDraggingToolbar = false);
+    </script>
+</body>
+</html>

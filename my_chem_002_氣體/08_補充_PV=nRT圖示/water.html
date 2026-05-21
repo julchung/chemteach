@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>水的相圖互動演示 - 1 莫耳</title>
+    <style>
+        :root {
+            --bg-color: #0b0e14;
+            --panel-bg: rgba(255, 255, 255, 0.05);
+            --accent-color: #ff4b2b;
+            --text-color: #e0e0e0;
+            --label-color: #a0a0a0;
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 10px;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            margin-bottom: 10px;
+            flex-shrink: 0;
+        }
+
+        h1 {
+            font-size: 1.4rem;
+            margin: 0;
+            background: linear-gradient(90deg, #ff4b2b, #ff416c);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 10px;
+            flex-grow: 1;
+            width: 100%;
+            min-height: 0;
+        }
+
+        .card.main-ref {
+            /* Removed span 3 for 2x2 grid */
+        }
+
+        .card {
+            background: var(--panel-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 10px;
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        .card h2 {
+            font-size: 1rem;
+            margin: 0 0 5px 0;
+            flex-shrink: 0;
+        }
+
+        .chart-container {
+            flex-grow: 1;
+            min-width: 0;
+            min-height: 0;
+        }
+
+        .card-body {
+            display: flex;
+            flex-direction: row;
+            flex-grow: 1;
+            gap: 10px;
+            min-height: 0;
+        }
+
+        .side-info {
+            width: 140px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            flex-shrink: 0;
+            padding-top: 10px;
+        }
+
+        .side-info h2 {
+            font-size: 1.2rem;
+            margin: 0 0 10px 0;
+            color: #fff;
+            line-height: 1.2;
+        }
+
+        .side-info .description {
+            font-size: 0.95rem;
+            color: var(--label-color);
+            margin-bottom: 15px;
+            line-height: 1.4;
+        }
+
+        .slider-wrapper {
+            width: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        input[type=range].vertical-slider {
+            writing-mode: bt-lr; /* IE */
+            appearance: slider-vertical;
+            width: 15px;
+            height: 90%;
+            padding: 0 10px;
+        }
+
+        .controls {
+            display: none; /* Old controls removed */
+        }
+
+        .val-display {
+            font-weight: 600;
+            color: var(--accent-color);
+            font-size: 0.95rem;
+        }
+
+        .description {
+            font-size: 0.75rem;
+            color: var(--label-color);
+            margin-bottom: 5px;
+            line-height: 1.2;
+            flex-shrink: 0;
+        }
+
+        .nav-link {
+            background: rgba(255, 255, 255, 0.1);
+            color: #00d2ff;
+            text-decoration: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+
+        @media (max-width: 1000px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+    <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+</head>
+<body>
+    <header>
+        <div>
+            <h1>水的相圖互動演示 (Water Phase Diagram)</h1>
+            <p style="color: var(--label-color); margin: 5px 0 0 0;">模擬 1 莫耳水分子在不同熱力學路徑下的狀態變化</p>
+        </div>
+        <a href="index.html" class="nav-link">← 返回：理想氣體 PV=nRT</a>
+    </header>
+
+    <div class="main-grid">
+        <!-- 1. Standard P-T Diagram (Static Reference) -->
+        <div class="card main-ref">
+            <div class="card-body">
+                <div class="side-info">
+                    <h2>1. 水的三相圖<br>(P-T相圖)</h2>
+                </div>
+                <div id="plot-pt-static" class="chart-container"></div>
+            </div>
+        </div>
+
+        <!-- 2. P-V Diagram (Isotherms) -->
+        <div class="card">
+            <div class="card-body">
+                <div class="side-info">
+                    <h2>2. P-V圖<br>(等溫線)</h2>
+                    <div style="font-size: 0.9rem; color: var(--label-color);">溫度 (T):</div>
+                    <div id="pv-t-val" class="val-display" style="font-size: 1.4rem;">100</div>
+                    <div style="font-size: 0.8rem; color: var(--label-color);">°C</div>
+                </div>
+                <div id="plot-pv" class="chart-container"></div>
+                <div class="slider-wrapper">
+                    <input type="range" id="pv-t-slider" class="vertical-slider" min="-273" max="374" value="100" step="1">
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. P-T Diagram (Isochores) -->
+        <div class="card">
+            <div class="card-body">
+                <div class="side-info">
+                    <h2>3. P-T圖<br>(等容線)</h2>
+                    <div style="font-size: 0.9rem; color: var(--label-color);">體積 (V):</div>
+                    <div id="pt-v-val" class="val-display" style="font-size: 1.4rem;">30</div>
+                    <div style="font-size: 0.8rem; color: var(--label-color);">L</div>
+                </div>
+                <div id="plot-pt" class="chart-container"></div>
+                <div class="slider-wrapper">
+                    <input type="range" id="pt-v-slider" class="vertical-slider" min="0.02" max="100" value="30" step="0.1">
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. V-T Diagram (Isobars) -->
+        <div class="card">
+            <div class="card-body">
+                <div class="side-info">
+                    <h2>4. V-T圖<br>(等壓線)</h2>
+                    <div style="font-size: 0.9rem; color: var(--label-color);">壓力 (P):</div>
+                    <div id="vt-p-val" class="val-display" style="font-size: 1.4rem;">1.0</div>
+                    <div style="font-size: 0.8rem; color: var(--label-color);">atm</div>
+                </div>
+                <div id="plot-vt" class="chart-container"></div>
+                <div class="slider-wrapper">
+                    <input type="range" id="vt-p-slider" class="vertical-slider" min="0.01" max="218" value="1.0" step="0.1">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const R = 0.08206;
+
+        function getPsat(Tc) {
+            if (Tc < 0.01) {
+                const Tk = Math.max(0.1, Tc + 273.15);
+                return 0.006 * Math.exp(22.5 * (1 - 273.16/Tk));
+            }
+            return Math.pow(10, 8.07131 - (1730.63 / (Tc + 233.426))) / 760;
+        }
+
+        const commonLayout = {
+            paper_bgcolor: 'rgba(0,0,0,0)',
+            plot_bgcolor: 'rgba(0,0,0,0)',
+            font: { color: '#a0a0a0', family: 'Inter, sans-serif', size: 11 },
+            margin: { t: 30, b: 50, l: 60, r: 20 },
+            xaxis: { gridcolor: '#333', zeroline: false, title: { font: { size: 13, color: '#fff' } } },
+            yaxis: { gridcolor: '#333', zeroline: false, title: { font: { size: 13, color: '#fff' } } }
+        };
+
+        // --- Plot 1: Static P-T Diagram ---
+        function updateStaticPT() {
+            const tRange = [], pVap = [], fusionT = [], fusionP = [], tSub = [], pSub = [];
+            for (let t = 0.01; t <= 374; t += 2) { tRange.push(t); pVap.push(getPsat(t)); }
+            for (let p = 0.006; p <= 250; p += 10) { fusionP.push(p); fusionT.push(0.01 - (p-0.006)/130); }
+            for (let t = -50; t <= 0.01; t += 1) { tSub.push(t); pSub.push(getPsat(t)); }
+
+            const traces = [
+                { x: tSub, y: pSub, mode: 'lines', line: { color: '#888', width: 2 }, name: '昇華線' },
+                { x: tRange, y: pVap, mode: 'lines', line: { color: '#888', width: 2 }, name: '汽化線' },
+                { x: fusionT, y: fusionP, mode: 'lines', line: { color: '#888', width: 2 }, name: '熔化線' },
+                // Markers
+                { x: [0.01], y: [0.006], mode: 'markers+text', text: '三相點', textposition: 'bottom center', marker: { size: 8, color: '#00d2ff' } },
+                { x: [0], y: [1.0], mode: 'markers+text', text: '正常熔點', textposition: 'top left', marker: { size: 8, color: '#fff' } },
+                { x: [100], y: [1.0], mode: 'markers+text', text: '正常沸點', textposition: 'bottom right', marker: { size: 8, color: '#fff' } }
+            ];
+            const layout = {
+                ...commonLayout,
+                xaxis: { ...commonLayout.xaxis, title: '溫度 T (°C)', range: [-50, 400] },
+                yaxis: { ...commonLayout.yaxis, title: '壓力 P (atm)', type: 'log', range: [-2.5, 2.5] },
+                showlegend: false,
+                annotations: [
+                    { x: 200, y: 0.1, text: '氣態', showarrow: false, font: { color: 'rgba(255,255,255,0.2)', size: 16 } },
+                    { x: 100, y: 50, text: '液態', showarrow: false, font: { color: 'rgba(255,255,255,0.2)', size: 16 } },
+                    { x: -30, y: 10, text: '固態', showarrow: false, font: { color: 'rgba(255,255,255,0.2)', size: 16 } }
+                ]
+            };
+            Plotly.react('plot-pt-static', traces, layout);
+        }
+
+        // --- Plot 2: P-V ---
+        function updatePV() {
+            const T = parseFloat(document.getElementById('pv-t-slider').value);
+            document.getElementById('pv-t-val').textContent = T;
+            const Tk = Math.max(0.1, T + 273.15);
+            const Psat = getPsat(T);
+            const Vg = (R * Tk) / Psat;
+            const Vl = 0.018;
+
+            const vData = [], pData = [];
+            for (let v = Vg; v <= 100; v *= 1.1) { vData.push(v); pData.push((R * Tk) / v); }
+            vData.push(Vg, Vl); pData.push(Psat, Psat);
+            vData.push(Vl * 0.9); pData.push(Psat + 50);
+
+            const sorted = vData.map((v, i) => [v, pData[i]]).sort((a,b) => a[0] - b[0]);
+            const trace = { x: sorted.map(d => d[0]), y: sorted.map(d => d[1]), type: 'scatter', mode: 'lines', line: { color: '#ff4b2b', width: 3 } };
+            const layout = {
+                ...commonLayout,
+                xaxis: { ...commonLayout.xaxis, title: '體積 V (L)', type: 'log', range: [-2, 2] },
+                yaxis: { ...commonLayout.yaxis, title: '壓力 P (atm)', range: [0, Math.min(250, Psat * 2)] }
+            };
+            Plotly.react('plot-pv', [trace], layout);
+        }
+
+        // --- Plot 3: P-T (Isochores) ---
+        function updatePT() {
+            const V = parseFloat(document.getElementById('pt-v-slider').value);
+            document.getElementById('pt-v-val').textContent = V;
+            const tRange = [], pVap = [], fusionT = [], fusionP = [], tSub = [], pSub = [];
+            for (let t = 0.01; t <= 374; t += 5) { tRange.push(t); pVap.push(getPsat(t)); }
+            for (let p = 0.006; p <= 250; p += 10) { fusionP.push(p); fusionT.push(0.01 - (p-0.006)/130); }
+            for (let t = -273; t <= 0.01; t += 1) { let tk = Math.max(0.1, t + 273.15); tSub.push(t); pSub.push(0.006 * Math.exp(22.5 * (1 - 273.16/tk))); }
+
+            const tIso = [], pIso = [];
+            for (let t = -273; t <= 400; t += 5) {
+                const Tk = Math.max(0.1, t + 273.15);
+                const Psat = getPsat(t);
+                const Vg = (R * Tk) / Psat;
+                const Vl = 0.018;
+                let p;
+                if (V > Vg) p = (R * Tk) / V;
+                else if (V > Vl) p = Psat;
+                else p = Psat + (Vl - V) * 5000;
+                tIso.push(t); pIso.push(p);
+            }
+
+            const traces = [
+                { x: tRange, y: pVap, mode: 'lines', line: { color: '#666', width: 1 }, name: '汽化線' },
+                { x: fusionT, y: fusionP, mode: 'lines', line: { color: '#666', width: 1 }, name: '熔化線' },
+                { x: tSub, y: pSub, mode: 'lines', line: { color: '#666', width: 1 }, name: '昇華線' },
+                { x: tIso, y: pIso, mode: 'lines', line: { color: '#ff4b2b', width: 4 }, name: '等容線' }
+            ];
+            const layout = {
+                ...commonLayout,
+                xaxis: { ...commonLayout.xaxis, title: '溫度 T (°C)', range: [-273, 400] },
+                yaxis: { ...commonLayout.yaxis, title: '壓力 P (atm)', type: 'log', range: [-2.5, 2.5] },
+                showlegend: false
+            };
+            Plotly.react('plot-pt', traces, layout);
+        }
+
+        // --- Plot 4: V-T (Isobars) ---
+        function updateVT() {
+            const P = parseFloat(document.getElementById('vt-p-slider').value);
+            document.getElementById('vt-p-val').textContent = P;
+            const tData = [], vData = [];
+            for (let t = -273; t <= 400; t += 2) {
+                const Tk = Math.max(0.1, t + 273.15);
+                const Psat = getPsat(t);
+                const Vg = (R * Tk) / Psat;
+                const Vl = 0.018;
+                let v;
+                if (P < Psat) v = (R * Tk) / P;
+                else if (P === Psat) v = Vg;
+                else v = Vl;
+                tData.push(t); vData.push(v);
+            }
+            const trace = { x: tData, y: vData, type: 'scatter', mode: 'lines', line: { color: '#ff4b2b', width: 3 } };
+            const layout = {
+                ...commonLayout,
+                xaxis: { ...commonLayout.xaxis, title: '溫度 T (°C)', range: [-273, 400] },
+                yaxis: { ...commonLayout.yaxis, title: '體積 V (L)', type: 'log', range: [-2, 2] }
+            };
+            Plotly.react('plot-vt', [trace], layout);
+        }
+
+        function init() {
+            updateStaticPT(); updatePV(); updatePT(); updateVT();
+        }
+
+        document.getElementById('pv-t-slider').oninput = updatePV;
+        document.getElementById('pt-v-slider').oninput = updatePT;
+        document.getElementById('vt-p-slider').oninput = updateVT;
+
+        window.onload = init;
+        window.onresize = () => { Plotly.Plots.resize('plot-pt-static'); Plotly.Plots.resize('plot-pv'); Plotly.Plots.resize('plot-pt'); Plotly.Plots.resize('plot-vt'); };
+    </script>
+    <script>
+        document.body.addEventListener('click', function() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.log(`Error attempting to enable fullscreen: ${err.message}`);
+                });
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>高中化學學習網</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0b0f1a;
+    --card-bg: #131929;
+    --card-border: #1e2d4d;
+    --accent1: #4f8fff;
+    --accent2: #00d4b4;
+    --accent3: #ff6b8a;
+    --text: #e2e8f0;
+    --muted: #8899bb;
+    --tag: #1a2c50;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Sans TC', sans-serif;
+    min-height: 100vh;
+    padding-bottom: 60px;
+  }
+
+  /* Hero */
+  header {
+    background: linear-gradient(135deg, #0d1b3e 0%, #0a2a4a 50%, #0d1b3e 100%);
+    padding: 16px 20px 12px;
+    text-align: center;
+    border-bottom: 1px solid var(--card-border);
+    position: relative;
+    overflow: hidden;
+  }
+  header::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 50% 0%, rgba(79,143,255,0.15) 0%, transparent 70%);
+  }
+  .logo-symbol {
+    font-size: 3rem;
+    display: block;
+    margin-bottom: 12px;
+    filter: drop-shadow(0 0 20px rgba(79,143,255,0.6));
+  }
+  header h1 {
+    font-size: clamp(1.2rem, 2.5vw, 1.8rem);
+    font-weight: 700;
+    background: linear-gradient(90deg, var(--accent1), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0;
+  }
+  header p {
+    color: var(--muted);
+    font-size: 1rem;
+    letter-spacing: 0.05em;
+  }
+
+  /* Nav pills */
+  .nav-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    padding: 24px 20px 0;
+  }
+  .nav-pill {
+    background: var(--tag);
+    color: var(--accent1);
+    border: 1px solid var(--card-border);
+    border-radius: 20px;
+    padding: 5px 14px;
+    font-size: 0.8rem;
+    text-decoration: none;
+    transition: all 0.2s;
+  }
+  .nav-pill:hover {
+    background: var(--accent1);
+    color: #fff;
+    transform: translateY(-2px);
+  }
+
+  /* Grid */
+  main { max-width: 1200px; margin: 40px auto; padding: 0 20px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px; }
+
+  /* Chapter card */
+  .chapter {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    overflow: hidden;
+    transition: transform 0.25s, box-shadow 0.25s;
+  }
+  .chapter:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+  }
+  .chapter-header {
+    padding: 20px 22px 16px;
+    border-bottom: 1px solid var(--card-border);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .ch-icon {
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem;
+    flex-shrink: 0;
+  }
+  .chapter-header h2 {
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.3;
+  }
+  .chapter-num {
+    font-size: 0.72rem;
+    color: var(--muted);
+    margin-bottom: 2px;
+    letter-spacing: 0.1em;
+  }
+  .topics { padding: 16px 22px 20px; list-style: none; }
+  .topics li { margin-bottom: 8px; }
+  .topics a {
+    display: flex; align-items: center; gap: 10px;
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 0.88rem;
+    padding: 7px 10px;
+    border-radius: 8px;
+    transition: all 0.18s;
+  }
+  .topics a::before {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--card-border);
+    flex-shrink: 0;
+    transition: background 0.18s;
+  }
+  .topics a:hover {
+    color: var(--text);
+    background: rgba(255,255,255,0.04);
+  }
+  .topics a:hover::before { background: var(--accent2); }
+
+  /* colour themes per chapter */
+  .c1 .ch-icon { background: rgba(79,143,255,0.15); }
+  .c1 .chapter-header h2 { color: #7aabff; }
+  .c2 .ch-icon { background: rgba(0,212,180,0.15); }
+  .c2 .chapter-header h2 { color: #00d4b4; }
+  .c3 .ch-icon { background: rgba(168,85,247,0.15); }
+  .c3 .chapter-header h2 { color: #c084fc; }
+  .c4 .ch-icon { background: rgba(251,146,60,0.15); }
+  .c4 .chapter-header h2 { color: #fb923c; }
+  .c5 .ch-icon { background: rgba(34,197,94,0.15); }
+  .c5 .chapter-header h2 { color: #4ade80; }
+  .c6 .ch-icon { background: rgba(239,68,68,0.15); }
+  .c6 .chapter-header h2 { color: #f87171; }
+  .c7 .ch-icon { background: rgba(234,179,8,0.15); }
+  .c7 .chapter-header h2 { color: #facc15; }
+  .c8 .ch-icon { background: rgba(20,184,166,0.15); }
+  .c8 .chapter-header h2 { color: #2dd4bf; }
+  .c9 .ch-icon { background: rgba(249,115,22,0.15); }
+  .c9 .chapter-header h2 { color: #fb923c; }
+  .c10 .ch-icon { background: rgba(99,102,241,0.15); }
+  .c10 .chapter-header h2 { color: #a5b4fc; }
+  .c11 .ch-icon { background: rgba(236,72,153,0.15); }
+  .c11 .chapter-header h2 { color: #f472b6; }
+  .c12 .ch-icon { background: rgba(6,182,212,0.15); }
+  .c12 .chapter-header h2 { color: #22d3ee; }
+
+  footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.78rem;
+    margin-top: 60px;
+    padding: 20px;
+    border-top: 1px solid var(--card-border);
+  }
+
+  /* Search Container */
+  .search-section {
+    max-width: 600px;
+    margin: 30px auto 10px;
+    padding: 0 20px;
+    position: sticky;
+    top: 20px;
+    z-index: 100;
+  }
+  .search-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  .search-wrapper input {
+    width: 100%;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 14px 20px 14px 45px;
+    color: var(--text);
+    font-size: 1rem;
+    outline: none;
+    transition: all 0.3s;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  }
+  .search-wrapper input:focus {
+    border-color: var(--accent1);
+    box-shadow: 0 0 15px rgba(79,143,255,0.3), 0 10px 30px rgba(0,0,0,0.3);
+  }
+  .search-icon {
+    position: absolute;
+    left: 18px;
+    color: var(--muted);
+    font-size: 1.1rem;
+  }
+
+  /* Coming Soon Style */
+  .topics a.missing {
+    opacity: 0.5;
+    cursor: default;
+    pointer-events: none;
+    position: relative;
+  }
+  .topics a.missing::after {
+    content: '開發中';
+    font-size: 0.65rem;
+    background: var(--tag);
+    color: var(--muted);
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: auto;
+  }
+  .topics a.missing:hover {
+    background: transparent;
+  }
+  
+  /* Stats Badge */
+  .ch-stats {
+    font-size: 0.7rem;
+    background: rgba(255,255,255,0.05);
+    padding: 2px 8px;
+    border-radius: 10px;
+    color: var(--muted);
+    margin-top: 4px;
+    display: inline-block;
+  }
+
+  .hidden { display: none !important; }
+
+  @media (max-width: 600px) {
+    .grid { grid-template-columns: 1fr; }
+    .search-section { top: 10px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>高中化學學習網</h1>
+</header>
+
+<div class="search-section">
+  <div class="search-wrapper">
+    <span class="search-icon">🔍</span>
+    <input type="text" id="topicSearch" placeholder="搜尋章節或單元主題..." onkeyup="filterTopics()">
+  </div>
+</div>
+
+<nav class="nav-pills">
+  <a class="nav-pill" href="#ch1">化學反應</a>
+  <a class="nav-pill" href="#ch2">氣體</a>
+  <a class="nav-pill" href="#ch3">溶液</a>
+  <a class="nav-pill" href="#ch4">原子結構</a>
+  <a class="nav-pill" href="#ch5">化學鍵</a>
+  <a class="nav-pill" href="#ch6">反應速率</a>
+  <a class="nav-pill" href="#ch7">平衡常數</a>
+  <a class="nav-pill" href="#ch8">酸鹼鹽</a>
+  <a class="nav-pill" href="#ch9">氧化還原</a>
+  <a class="nav-pill" href="#ch10">無機化合物</a>
+  <a class="nav-pill" href="#ch11">有機化合物</a>
+  <a class="nav-pill" href="#ch12">生活中的化學</a>
+</nav>
+
+<main>
+<div class="grid">
+
+  <!-- Ch1 -->
+  <div class="chapter c1" id="ch1">
+    <div class="chapter-header">
+      <div class="ch-icon">🔥</div>
+      <div>
+        <div class="chapter-num">CHAPTER 01</div>
+        <h2>化學反應與能量</h2>
+        <div class="ch-stats">2 / 4 單元已完成</div>
+      </div>
+    </div>
+    <ul class="topics">
+      <li><a href="my_chem_001_化學反應/01_化學類型及概述/index.html" class="missing">化學類型及概述</a></li>
+      <li>
+        <div style="display: flex; align-items: flex-start; gap: 10px; color: var(--muted); font-size: 0.88rem; padding: 7px 10px;">
+          <div style="width: 6px; height: 6px; border-radius: 50%; background: var(--card-border); flex-shrink: 0; margin-top: 6px;"></div>
+          <div style="display: flex; flex-direction: column; gap: 4px;">
+            <span>氧化數及平衡方程式</span>
+            <span style="font-size: 0.85em; opacity: 0.7;">(參閱氧化還原章節)</span>
+          </div>
+        </div>
+      </li>
+      <li><a href="my_chem_001_化學反應/03_限量試劑/index.html">限量試劑</a></li>
+      <li><a href="my_chem_001_化學反應/04_反應熱加成性/index.html">反應熱加成性（赫士定律）</a></li>
+    </ul>
+  </div>
+
+  <!-- Ch2 -->
+  <div class="chapter c2" id="ch2">
+    <div class="chapter-header">
+      <div class="ch-icon">💨</div>
+      <div>
+        <div class="chapter-num">CHAPTER 02</div>
+        <h2>氣體</h2>
+        <div class="ch-stats">9 / 9 單元已完成</div>
+      </div>
+    </div>
+    <ul class="topics">
+      <li><a href="my_chem_002_氣體/01_氣體通性與水銀壓力計/index.html">氣體通性與水銀壓力計</a></li>
+      <li><a href="my_chem_002_氣體/02_波以耳定律/index.html">波以耳定律</a></li>
+      <li><a href="my_chem_002_氣體/03_查理給呂薩克定律/index.html">查理–給呂薩克定律</a></li>
+      <li><a href="my_chem_002_氣體/04_亞佛加厥定律/index.html">亞佛加厥定律</a></li>
+      <li><a href="my_chem_002_氣體/05_理想氣體方程式/index.html">理想氣體方程式</a></li>
+      <li><a href="my_chem_002_氣體/06_道耳吞分壓定律/index.html">道耳吞分壓定律</a></li>
+      <li><a href="my_chem_002_氣體/07_擴散與逸散/index.html">擴散與逸散</a></li>
+      <li><a href="my_chem_002_氣體/08_補充_PV=nRT圖示/index.html">補充：PV=nRT 圖示</a></li>
+      <li><a href="my_chem_002_氣體/09_補充_凡得瓦方程式/index.html">補充：凡得瓦方程式</a></li>
+    </ul>
+  </div>
+
+  <!-- Ch3 -->
+  <div class="chapter c3" id="ch3">
+    <div class="chapter-header">
+      <div class="ch-icon">🧪</div>
+      <div>
+        <div class="chapter-num">CHAPTER 03</div>
+        <h2>溶液</h2>
+        <div class="ch-stats">5 / 5 單元已完成</div>
+      </div>
+    </div>
+    <ul class="topics">
+      <li><a href="my_chem_003_溶液/01_物質的狀態與三相圖/index.html">物質的狀態與三相圖</a></li>
+      <li><a href="my_chem_003_溶液/02_溶解度與濃度表示法/index.html">溶解度與濃度表示法</a></li>
+      <li><a href="my_chem_003_溶液/03_拉午耳定律/index.html">拉午耳定律</a></li>
+      <li><a href="my_chem_003_溶液/04_依數性質/index.html">依數性質</a></li>
+      <li><a href="my_chem_003_溶液/05_補充_沉澱表規則/index.html">補充：沉澱表規則</a></li>
+    </ul>
+  </div>
+
+  <!-- Ch4 -->
+  <div class="chapter c4" id="ch4">
+    <div class="chapter-header">
+      <div class="ch-icon">⚛️</div>
+      <div>
+        <div class="chapter-num">CHAPTER 04</div>
+        <h2>原子結構</h2>
+        <div class="ch-stats">8 / 8 單元已完成</div>
+      </div>
+    </div>
+    <ul class="topics">
+      <li><a href="my_chem_004_原子結構/01_原子結構發展近代史/index.html">原子結構發展近代史</a></li>
+      <li><a href="my_chem_004_原子結構/02_氫原子光譜與波耳模型/index.html">氫原子光譜與波耳模型</a></li>
+      <li><a href="my_chem_004_原子結構/03_原子軌域/index.html">原子軌域</a></li>
+      <li><a href="my_chem_004_原子結構/04_電子組態/index.html">電子組態</a></li>
+      <li><a href="my_chem_004_原子結構/05_元素週期性_原子半徑/index.html">元素週期性：原子半徑</a></li>
+      <li><a href="my_chem_004_原子結構/06_元素週期性_游離能/index.html">元素週期性：游離能</a></li>
+      <li><a href="my_chem_004_原子結構/07_元素週期性_電子親和力/index.html">元素週期性：電子親和力</a></li>
+      <li><a href="my_chem_004_原子結構/08_元素週期性_電負度/index.html">元素週期性：電負度</a></li>
+    </ul>
+  </div>
+
+  <!-- Ch5 -->
+  <div class="chapter c5" id="ch5">
+    <div class="chapter-header">
+      <div class="ch-icon">🔗</div>
+      <div>
+        <div class="chapter-num">CHAPTER 05</div>
+        <h2>物質的結構與化學鍵</h2>
+        <div class="ch-stats">0 / 5 單元已完成</div>
+      </div>
+    </div>
+    <ul class="topics">
+      <li><a href="my_chem_005_化學鍵/01_化學鍵與晶體結構/index.html" class="missing">化學鍵與晶體結構</a></li>
+      <li><a href="my_chem_005_化學鍵/02_共價鍵與混成軌域/index.html" class="missing">共價鍵與混成軌域</a></li>
+      <li><a href="my_chem_005_化學鍵/03_VSEPR及分子形狀/index.html" class="missing">VSEPR 及分子形狀</a></li>
+      <li><a href="my_chem_005_化學鍵/04_分子間作用力/index.html" class="missing">分子間作用力</a></li>
+      <li><a href="my_chem_005_化學鍵/05_氫鍵/index.html" class="missing">氫鍵</a></li>
+    </ul>
+  </div>
+
+  <!-- Ch6 -->
+  <div class="chapter c6" id="ch6">
+    <div class="chapter-header">
+      <div class="ch-icon">⏱️</div>
+      <div>
+        <div class="chapter-num">CHAPTER 06</div>
+        <h2>化學反應速率</h2>
+        <div class="ch-stats">1 / 5 單元已完成</div>
+      </div>
+    </div>
+    <ul class="topics">
+      <li><a href="my_chem_006_反應速率/01_反應速率定律式/index.html" class="missing">反應速率定律式</a></li>
+      <li><a href="my_chem_006_反應速率/02_碰撞學說/index.html" class="missing">碰撞學說</a></li>
+      <li><a href="my_chem_006_反應速率/03_影響反應速率的因素/index.html" class="missing">影響反應速率的因素</a></li>
+      <li><a href="my_chem_006_反應速率/04_反應機構/index.html" class="missing">反應機構</a></li>
+      <li><a href="my_chem_006_反應速率/05_秒錶反應/index.html">秒錶反應</a></li>
+    </ul>
+  </div>
+
+  <!-- Ch7 -->
+  <div class="chapter c7" id="ch7">
+    <div class="chapter-header">
+      <div class="ch-icon">⚖️</div>
+      <div>
+        <div class="chapter-num">CHAPTER 07</div>
+        <h2>平衡常數</h2>
+        <div class="ch-stats">1 / 4 單元已完成</div>
+      </div>
+    </div>
+    <ul class="topics">
+      <li><a href="my_chem_007_平衡常數/01_平衡常數的表示法/index.html" class="missing">平衡常數的表示法</a></li>
+      <li><a href="my_chem_007_平衡常數/02_平衡常數的計算與應用/index.html" class="missing">平衡常數的計算與應用</a></li>
+      <li><a href="my_chem_007_平衡常數/03_影響平衡常數的因子/index.html" class="missing">影響平衡常數的因子</a></li>
+      <li><a href="my_chem_007_平衡常數/04_比色法測平衡常數/index.html">比色法測平衡常數</a></li>
+    </ul>
+  </div>
+
+  <!-- Ch8 -->
+  <div class="chapter c8" id="ch8">
+    <div class="chapter-header">
+      <div class="ch-icon">🧫</div>
+      <div>
+        <div class="chapter-num">CHAPTER 08</div>
+        <h2>酸鹼鹽</h2>
+        <div class="ch-stats">3 / 6 單元已完成</div>
+      </div>
+    </div>
+    <ul class="topics">
+      <li><a href="my_chem_008_酸鹼鹽/01_酸鹼的通性與命名/index.html">酸鹼的通性與命名</a></li>
+      <li><a href="my_chem_008_酸鹼鹽/02_酸鹼理論/index.html">酸鹼理論</a></li>
+      <li><a href="my_chem_008_酸鹼鹽/03_酸鹼的解離與水解/index.html">酸鹼的解離與水解</a></li>
+      <li><a href="my_chem_008_酸鹼鹽/04_酸鹼中和/index.html" class="missing">酸鹼中和</a></li>
+      <li><a href="my_chem_008_酸鹼鹽/05_酸鹼滴定與滴定曲線/index.html" class="missing">酸鹼滴定與滴定曲線</a></li>
+      <li><a href="my_chem_008_酸鹼鹽/06_緩衝溶液/index.html" class="missing">緩衝溶液</a></li>
+    </ul>
+  </div>
+
+  <!-- Ch9 -->
+  <div class="chapter c9" id="ch9">
+    <div class="chapter-header">
+      <div class="ch-icon">⚡</div>
+      <div>
+        <div class="chapter-num">CHAPTER 09</div>
+        <h2>氧化還原反應</h2>
+        <div class="ch-stats">4 / 5 單元已完成</div>
+      </div>
+    </div>
+    <ul class="topics">
+      <li><a href="my_chem_009_氧化還原/01_氧化數/index.html">氧化數</a></li>
+      <li><a href="my_chem_009_氧化還原/02_氧化劑與還原劑/index.html">氧化劑與還原劑</a></li>
+      <li><a href="my_chem_009_氧化還原/03_氧化還原方程式平衡/index.html">氧化還原方程式平衡</a></li>
+      <li><a href="my_chem_009_氧化還原/04_標準還原電位/index.html">標準還原電位</a></li>
+      <li><a href="my_chem_009_氧化還原/05_電池電解電鍍/index.html" class="missing">電池・電解・電鍍</a></li>
+    </ul>
+  </div>
+
+  <!-- Ch10 -->
+  <div class="chapter c10" id="ch10">
+    <div class="chapter-header">
+      <div class="ch-icon">🧱</div>
+      <div>
+        <div class="chapter-num">CHAPTER 10</div>
+        <h2>無機化合物</h2>
+        <div class="ch-stats">1 / 11 單元已完成</div>
+      </div>
+    </div>
+    <ul class="topics">
+      <li><a href="my_chem_010_無機化合物/000_週期表/index.html">週期表</a></li>
+      <li><a href="my_chem_010_無機化合物/001_氫/index.html" class="missing">氫</a></li>
+      <li><a href="my_chem_010_無機化合物/002_鈍氣/index.html" class="missing">鈍氣</a></li>
+      <li><a href="my_chem_010_無機化合物/003_氟氯溴碘/index.html" class="missing">氟・氯・溴・碘（鹵素）</a></li>
+      <li><a href="my_chem_010_無機化合物/004_氧硫/index.html" class="missing">氧・硫</a></li>
+      <li><a href="my_chem_010_無機化合物/005_氮磷/index.html" class="missing">氮・磷</a></li>
+      <li><a href="my_chem_010_無機化合物/006_碳矽/index.html" class="missing">碳・矽</a></li>
+      <li><a href="my_chem_010_無機化合物/007_1A族/index.html" class="missing">1A 族</a></li>
+      <li><a href="my_chem_010_無機化合物/008_2A族/index.html" class="missing">2A 族</a></li>
+      <li><a href="my_chem_010_無機化合物/009_Al與第一列過渡元素/index.html" class="missing">Al 與第一列過渡元素</a></li>
+      <li><a href="my_chem_010_無機化合物/010_錯合物/index.html" class="missing">錯合物</a></li>
+    </ul>
+  </div>
+
+  <!-- Ch11 -->
+  <div class="chapter c11" id="ch11">
+    <div class="chapter-header">
+      <div class="ch-icon">🌿</div>
+      <div>
+        <div class="chapter-num">CHAPTER 11</div>
+        <h2>有機化合物</h2>
+        <div class="ch-stats">0 / 8 單元已完成</div>
+      </div>
+    </div>
+    <ul class="topics">
+      <li><a href="my_chem_011_有機化合物/01_有機結構與異構物/index.html" class="missing">有機結構與異構物</a></li>
+      <li><a href="my_chem_011_有機化合物/02_取代基與官能基/index.html" class="missing">取代基與官能基</a></li>
+      <li><a href="my_chem_011_有機化合物/03_烴類/index.html" class="missing">烴類</a></li>
+      <li><a href="my_chem_011_有機化合物/04_醇酚醚/index.html" class="missing">醇・酚・醚</a></li>
+      <li><a href="my_chem_011_有機化合物/05_醛酮/index.html" class="missing">醛・酮</a></li>
+      <li><a href="my_chem_011_有機化合物/06_酸酯/index.html" class="missing">酸・酯</a></li>
+      <li><a href="my_chem_011_有機化合物/07_胺與醯胺/index.html" class="missing">胺與醯胺</a></li>
+      <li><a href="my_chem_011_有機化合物/08_聚合物/index.html" class="missing">聚合物</a></li>
+    </ul>
+  </div>
+
+  <!-- Ch12 -->
+  <div class="chapter c12" id="ch12">
+    <div class="chapter-header">
+      <div class="ch-icon">🌍</div>
+      <div>
+        <div class="chapter-num">CHAPTER 12</div>
+        <h2>生活中的化學</h2>
+        <div class="ch-stats">2 / 8 單元已完成</div>
+      </div>
+    </div>
+    <ul class="topics">
+      <li><a href="my_chem_012_生活中的化學及補充/01_光觸媒/index.html" class="missing">光觸媒</a></li>
+      <li><a href="my_chem_012_生活中的化學及補充/02_導電塑膠/index.html" class="missing">導電塑膠</a></li>
+      <li><a href="my_chem_012_生活中的化學及補充/03_離子交換樹脂/index.html" class="missing">離子交換樹脂</a></li>
+      <li><a href="my_chem_012_生活中的化學及補充/04_界面活性劑/index.html" class="missing">界面活性劑</a></li>
+      <li><a href="my_chem_012_生活中的化學及補充/05_稀土元素/index.html" class="missing">稀土元素</a></li>
+      <li><a href="my_chem_012_生活中的化學及補充/06_液晶/index.html" class="missing">液晶</a></li>
+      <li><a href="my_chem_012_生活中的化學及補充/07_沉澱表遊戲/index.html">沉澱表遊戲</a></li>
+      <li><a href="my_chem_012_生活中的化學及補充/08_離子堆積與配位數/packing.html">離子堆積與配位數</a></li>
+    </ul>
+  </div>
+
+</div>
+</main>
+
+<footer>
+  <p>© 2026 高中化學學習網 · 內容持續更新中</p>
+</footer>
+
+<script>
+function filterTopics() {
+  const input = document.getElementById('topicSearch');
+  const filter = input.value.toLowerCase();
+  const chapters = document.querySelectorAll('.chapter');
+  
+  chapters.forEach(chapter => {
+    const title = chapter.querySelector('h2').textContent.toLowerCase();
+    const topics = chapter.querySelectorAll('.topics li');
+    let hasVisibleTopic = false;
+    
+    topics.forEach(topic => {
+      const text = topic.textContent.toLowerCase();
+      if (text.includes(filter) || title.includes(filter)) {
+        topic.classList.remove('hidden');
+        hasVisibleTopic = true;
+      } else {
+        topic.classList.add('hidden');
+      }
+    });
+    
+    if (hasVisibleTopic || title.includes(filter)) {
+      chapter.classList.remove('hidden');
+    } else {
+      chapter.classList.add('hidden');
+    }
+  });
+}
+</script>
+</body>
+</html>

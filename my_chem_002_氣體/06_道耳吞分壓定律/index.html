@@ -1,0 +1,1574 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>道耳吞分壓定律 - 互動教學</title>
+    <script>
+        MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']], processEscapes: true },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        :root {
+            --bg-dark: #0b1120;
+            --bg-panel: rgba(30, 41, 59, 0.7);
+            --text-main: #f8fafc;
+            --accent-blue: #38bdf8;
+            --accent-green: #34d399;
+            --accent-red: #f87171;
+            --accent-yellow: #fbbf24;
+            --accent-purple: #a855f7;
+            --accent-cyan: #22d3ee;
+        }
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+        body, html { width: 100%; height: 100%; background-color: var(--bg-dark); color: var(--text-main); font-family: 'Segoe UI', 'Microsoft JhengHei', Tahoma, Geneva, Verdana, sans-serif; overflow: hidden; background-image: radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px); background-size: 30px 30px; }
+        #app { position: relative; width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: center; overflow: hidden; }
+        #start-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--bg-dark); z-index: 100; display: flex; flex-direction: column; justify-content: center; align-items: center; background-image: radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px); background-size: 30px 30px; }
+        #presentation-area { position: relative; width: 100vw; height: 100vh; background: transparent; overflow: hidden; }
+        #slides-container { position: absolute; top: 2vh; left: 5vw; right: 5vw; bottom: 5vh; }
+        
+        .slide { position: absolute; top: 0; left: 0; width: 100%; height: 100%; padding: 0.5rem 6rem 1rem 2rem; opacity: 0; pointer-events: none; transition: opacity 0.5s ease; display: flex; flex-direction: column; overflow-y: auto; overflow-x: hidden; }
+        @media (max-width: 768px) { .slide { padding: 0.5rem 4.5rem 1rem 1.5rem; } }
+        .slide.active { opacity: 1; pointer-events: auto; z-index: 10; }
+        
+        .slide h1 { color: var(--accent-blue); font-size: clamp(1.8rem, 2.5vw, 2.4rem); margin-bottom: 0.5rem; text-align: center; border-bottom: 2px solid rgba(56, 189, 248, 0.3); padding-bottom: 0.4rem; flex-shrink: 0; }
+        .slide h2 { color: var(--accent-yellow); font-size: clamp(1.4rem, 2vw, 1.8rem); margin-top: 0.5rem; margin-bottom: 0.8rem; }
+        .slide p, .slide li { font-size: clamp(1.1rem, 1.5vw, 1.4rem); line-height: 1.6; margin-bottom: 0.6rem; }
+        
+        .formula-box { background: rgba(0,0,0,0.3); border-left: 5px solid var(--accent-green); padding: clamp(0.5rem, 1.5vw, 1rem); border-radius: 0 10px 10px 0; margin: 1rem 0; font-size: clamp(1.2rem, 2vw, 1.8rem); text-align: center; overflow-x: auto; }
+        .flex-row { display: flex; flex-wrap: wrap; gap: 2rem; margin-top: 1rem; flex: 1; min-height: 0; }
+        .flex-col { flex: 1 1 400px; background: rgba(255,255,255,0.03); padding: 1.5rem; border-radius: 10px; overflow-x: auto; display: flex; flex-direction: column; }
+        .rule-card { background: rgba(56, 189, 248, 0.1); border: 1px solid var(--accent-blue); padding: 1rem; border-radius: 10px; margin-bottom: 1rem; }
+        
+        #drawing-layer { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 20; pointer-events: none; touch-action: none; }
+        #drawing-layer.drawing-active { pointer-events: auto; }
+        
+        #toolbar { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); background: rgba(15, 23, 42, 0.9); padding: 10px 5px; border-radius: 20px; display: flex; flex-direction: column; gap: 8px; align-items: center; z-index: 2000; border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 10px 25px rgba(0,0,0,0.5); backdrop-filter: blur(10px); width: 45px; }
+        .btn-tool { background: transparent; color: rgba(255,255,255,0.6); border: 1px solid rgba(255,255,255,0.2); padding: 6px 10px; border-radius: 15px; cursor: pointer; font-size: 0.8rem; font-weight: normal; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 5px; width: 100%; text-align: center; }
+        .btn-tool:hover { background: rgba(255,255,255,0.1); }
+        .btn-tool.active-tool, .btn-tool.primary { background: var(--accent-blue); border-color: var(--accent-blue); color: #000; }
+        .btn-tool svg { width: 20px; height: 20px; fill: currentColor; }
+        
+        .color-picker { display: none; grid-template-columns: 1fr; width: 100%; padding-top: 5px; gap: 4px; }
+        .color-swatch { width: 20px; height: 20px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; transition: transform 0.2s; margin: 0 auto; }
+        .color-swatch.selected { border-color: white; transform: scale(1.2); }
+        
+        #drag-handle { width: 100%; text-align: center; color: rgba(255,255,255,0.4); cursor: grab; padding: 2px 0; margin-bottom: 5px; margin-top: -5px; user-select: none; font-size: 1.2rem; line-height: 0.5; }
+        
+        #slide-info { position: absolute; bottom: 20px; left: 20px; z-index: 15; font-size: 1.2rem; font-weight: bold; color: rgba(255,255,255,0.4); background: rgba(0,0,0,0.3); padding: 5px 12px; border-radius: 10px; backdrop-filter: blur(5px); border: 1px solid rgba(255,255,255,0.1); }
+        
+        .game-item { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 8px 20px; border-radius: 12px; display: flex; align-items: center; width: 100%; min-height: 45px; height: 9vh; max-height: 80px; transition: transform 0.2s, background 0.2s, border-color 0.2s, box-shadow 0.2s; position: relative; font-size: 1.2rem; }
+        #left-column .game-item { justify-content: flex-start; text-align: left; }
+        #right-column .game-item { justify-content: flex-end; text-align: right; }
+        .dot { width: 16px; height: 16px; background: #fff; border-radius: 50%; cursor: pointer; box-shadow: 0 0 10px rgba(255,255,255,0.5); transition: transform 0.2s, background 0.2s; flex-shrink: 0; z-index: 5; }
+        .left-dot { margin-left: auto; }
+        .right-dot { margin-right: auto; }
+        .dot:hover { transform: translateY(-50%) scale(1.3); background: var(--accent-blue); }
+        .dot.active { background: var(--accent-green); box-shadow: 0 0 15px var(--accent-green); }
+        .text-red { color: var(--accent-red); }
+        .text-cyan { color: var(--accent-cyan); }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div id="start-overlay">
+            <h1 style="color: var(--accent-blue); font-size: clamp(2.5rem, 5vw, 4rem); margin-bottom: 1rem; text-align: center;">道耳吞分壓定律</h1>
+            <p style="color: rgba(255,255,255,0.7); font-size: clamp(1.2rem, 3vw, 1.5rem); margin-bottom: 3rem; text-align: center;">混合氣體中各成分的壓力分配</p>
+            <button id="btn-start" class="btn primary" style="font-size: clamp(1.2rem, 2.5vw, 1.5rem); padding: 15px 40px;">▶ 點擊進入全螢幕教學</button>
+        </div>
+
+        <div id="presentation-area">
+            <div id="slides-container">
+                <!-- Slide 1: Definition -->
+                <div class="slide active">
+                    <h1>道耳吞分壓定律</h1>
+                    <div class="flex-row">
+                        <div class="flex-col">
+                            <h2 class="text-yellow">基本定義</h2>
+                            <p>在 <strong class="text-red">不發生化學反應</strong> 的前提下，混合氣體的總壓力等於各成分氣體 <strong class="text-cyan">分壓</strong> 之總和。</p>
+                            <div class="formula-box">
+                                $P_{total} = P_1 + P_2 + P_3 + \dots$
+                            </div>
+                            <p>分壓係指：該成分氣體 <strong class="text-yellow">單獨佔有</strong> 該容器體積時所表現的壓力。</p>
+                        </div>
+                        <div class="flex-col" style="justify-content: center; align-items: center; background: rgba(255,255,255,0.02);">
+                             <div style="display: flex; flex-direction: column; gap: 5px; align-items: center; margin-top: 1rem;">
+                                <div style="display: flex; gap: 15px; align-items: center;">
+                                    <canvas id="canvas-gas1" width="100" height="100" style="border: 2px solid white; border-radius: 10px; background: rgba(0,0,0,0.3); box-shadow: 0 0 15px rgba(56, 189, 248, 0.2);"></canvas>
+                                    <span style="font-size: 2rem;">+</span>
+                                    <canvas id="canvas-gas2" width="100" height="100" style="border: 2px solid white; border-radius: 10px; background: rgba(0,0,0,0.3); box-shadow: 0 0 15px rgba(248, 113, 113, 0.2);"></canvas>
+                                </div>
+                                <span style="font-size: 2rem; color: var(--accent-yellow);">⬇</span>
+                                <canvas id="canvas-gas3" width="100" height="100" style="border: 2px solid white; border-radius: 10px; background: rgba(0,0,0,0.3); box-shadow: 0 0 15px rgba(168, 85, 247, 0.2);"></canvas>
+                             </div>
+                             <p style="margin-top: 1rem;">$P_A + P_B = P_{total}$</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 2: Mole Fraction -->
+                <div class="slide">
+                    <h1>分壓與莫耳分率</h1>
+                    <div class="flex-row">
+                        <div class="flex-col">
+                            <h2 class="text-yellow">莫耳分率 (Mole Fraction, $X_i$)</h2>
+                            <p>成分氣體的莫耳數佔總莫耳數的比例：</p>
+                            <div class="formula-box">
+                                $X_i = \frac{n_i}{n_{total}}$
+                            </div>
+                            <p>所有莫耳分率之和必等於 <strong class="text-cyan">1</strong>。</p>
+                        </div>
+                        <div class="flex-col">
+                            <h2 class="text-green">分壓計算公式</h2>
+                            <p>分壓與總壓的關係：</p>
+                            <div class="formula-box" style="border-left-color: var(--accent-cyan);">
+                                $P_i = X_i \cdot P_{total}$
+                            </div>
+                            <div class="rule-card">
+                                <p>在同溫、同體積下：</p>
+                                <div style="text-align: center; font-size: 1.3rem;">$P_1 : P_2 : \dots = n_1 : n_2 : \dots$</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- NEW Slide 3: Saturated Vapor Pressure Interactive -->
+                <div class="slide" id="slide-sat-vp">
+                    <h1>飽和蒸氣壓 (Saturated Vapor Pressure)</h1>
+                    <div class="flex-row" style="gap: 1.5rem;">
+                        <!-- Left: Text -->
+                        <div class="flex-col" style="flex: 1.1; min-width: 0;">
+                            <h2 class="text-yellow" style="font-size: 1.1rem; margin-bottom: 0.3rem;">液氣平衡與飽和蒸氣壓</h2>
+                            <p style="font-size: 0.9rem; margin-bottom: 0.3rem;">在<strong class="text-cyan">密閉容器</strong>中，液體蒸發的速率與蒸氣凝結的速率相等時，達到<strong class="text-green">動態平衡</strong>。</p>
+                            <div class="formula-box" style="border-left-color: var(--accent-cyan); font-size: 0.9rem; padding: 0.3rem 0.7rem; margin: 0.3rem 0;">
+                                液體蒸發速率 $=$ 蒸氣凝結速率
+                            </div>
+                            <p style="font-size: 0.9rem; margin-bottom: 0.3rem;">此時蒸氣對液面產生的壓力，稱為<strong class="text-red">飽和蒸氣壓</strong>。</p>
+                            <div class="rule-card" style="margin-top: 0.3rem; padding: 0.4rem 0.7rem;">
+                                <p style="font-size: 0.85rem; margin-bottom: 0.2rem;"><strong class="text-yellow">📌 P-V 圖特性：</strong></p>
+                                <p style="font-size: 0.85rem; margin-bottom: 0.15rem;">① 液氣共存（左側）：壓力不變 $= P_{sat}$，粒子隨空間增大而增多。</p>
+                                <p style="font-size: 0.85rem;">② 全部汽化後（右側）：壓力隨體積增大而減小，符合波以耳定律。</p>
+                            </div>
+                            <div class="rule-card" style="margin-top: 0.3rem; padding: 0.35rem 0.7rem; border-color: var(--accent-red);">
+                                <p style="font-size: 0.85rem; margin-bottom: 0.15rem;"><strong class="text-red">⚠ 飽和蒸氣壓特性：</strong></p>
+                                <p style="font-size: 0.85rem;">只與<strong class="text-yellow">溫度</strong>有關，與液體多寡及體積<strong>無關</strong>。</p>
+                            </div>
+                        </div>
+                        <!-- Right: Interactive canvases -->
+                        <div class="flex-col" style="flex: 1; min-width: 0; gap: 5px; align-items: center; padding: 0.5rem; background: rgba(0,0,0,0.2);">
+                            <p style="font-size: 0.8rem; color: rgba(255,255,255,0.5); margin: 0; text-align: center;">↑ P-V 圖 （拖曳下方活塞改變體積）</p>
+                            <canvas id="canvas-pv" style="width: 100%; height: 180px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); cursor: default; display: block;"></canvas>
+                            <p style="font-size: 0.8rem; color: rgba(255,255,255,0.5); margin: 0; text-align: center;">↓ 活塞容器（左右拖曳調整體積）</p>
+                            <canvas id="canvas-piston" style="width: 100%; height: 130px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.3); cursor: ew-resize; display: block;"></canvas>
+                            <p id="sat-vp-label" style="font-size: 0.85rem; color: var(--accent-cyan); margin: 0;">狀態：液氣共存 ｜ 壓力 = $P_{sat}$ (飽和蒸氣壓)</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 4: Measurement of Saturated Vapor Pressure (9.png) -->
+                <div class="slide">
+                    <h1>飽和蒸氣壓的測量</h1>
+                    <div class="flex-row" style="gap: 1.5rem; align-items: stretch;">
+
+                        <!-- Left: 9.png barometer image (left half only) -->
+                        <div class="flex-col" style="flex: 1; min-width: 0; align-items: center; justify-content: center;">
+                            <h2 class="text-yellow" style="font-size: 1.05rem; text-align:center; margin-bottom: 0.4rem;">托里切利氣壓計法</h2>
+                            <!-- CSS-clip the left ~48% of 9.png which contains the barometer -->
+                            <div style="overflow: hidden; width: 100%; max-width: 340px; flex: 1; border-radius: 10px; background: rgba(255,255,255,0.04);">
+                                <img src="9.png" style="display: block; width: 200%; max-width: none; height: auto; object-position: left center;" alt="托里切利氣壓計法圖"/>
+                            </div>
+                            <div class="formula-box" style="border-left-color: var(--accent-red); font-size: 0.9rem; padding: 0.35rem 0.8rem; margin-top: 0.5rem; width: 100%;">
+                                (A)未加水前：水銀柱體現大氣壓、(B)加水後水銀柱下降 $h$ mm $= P_{sat}(H_2O)$
+                            </div>
+                        </div>
+
+                        <!-- Right: Vapor pressure vs Temperature chart -->
+                        <div class="flex-col" style="flex: 1.3; min-width: 0; align-items: center; justify-content: center;">
+                            <h2 class="text-yellow" style="font-size: 1.05rem; text-align:center; margin-bottom: 0.4rem;">飽和蒸氣壓 — 溫度關係</h2>
+                            <svg viewBox="0 0 340 230" style="width: 100%; flex: 1; max-height: 260px;">
+                                <!-- Chart background -->
+                                <rect x="44" y="8" width="284" height="185" fill="rgba(0,0,0,0.35)" rx="4"/>
+                                <!-- Grid -->
+                                <g stroke="rgba(255,255,255,0.07)" stroke-width="1">
+                                    <line x1="44" y1="55" x2="328" y2="55"/>
+                                    <line x1="44" y1="101" x2="328" y2="101"/>
+                                    <line x1="44" y1="147" x2="328" y2="147"/>
+                                    <line x1="100" y1="8" x2="100" y2="193"/>
+                                    <line x1="156" y1="8" x2="156" y2="193"/>
+                                    <line x1="212" y1="8" x2="212" y2="193"/>
+                                    <line x1="268" y1="8" x2="268" y2="193"/>
+                                </g>
+                                <!-- 760 mmHg reference line -->
+                                <line x1="44" y1="55" x2="328" y2="55" stroke="rgba(255,100,100,0.45)" stroke-width="1.2" stroke-dasharray="5,3"/>
+                                <text x="40" y="58" text-anchor="end" fill="rgba(255,130,130,0.85)" font-size="8.5">760</text>
+                                <!-- Axes -->
+                                <line x1="44" y1="8" x2="44" y2="193" stroke="rgba(255,255,255,0.7)" stroke-width="1.5"/>
+                                <line x1="44" y1="193" x2="328" y2="193" stroke="rgba(255,255,255,0.7)" stroke-width="1.5"/>
+                                <!-- X labels -->
+                                <text x="44"  y="205" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="8.5">0</text>
+                                <text x="100" y="205" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="8.5">20</text>
+                                <text x="156" y="205" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="8.5">40</text>
+                                <text x="212" y="205" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="8.5">60</text>
+                                <text x="268" y="205" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="8.5">80</text>
+                                <text x="322" y="205" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="8.5">100</text>
+                                <text x="186" y="222" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-size="9.5">溫度 / °C</text>
+                                <!-- Y labels -->
+                                <text x="40" y="196" text-anchor="end" fill="rgba(255,255,255,0.5)" font-size="8.5">0</text>
+                                <text x="40" y="150" text-anchor="end" fill="rgba(255,255,255,0.5)" font-size="8.5">380</text>
+                                <text x="40" y="104" text-anchor="end" fill="rgba(255,255,255,0.5)" font-size="8.5">760</text>
+                                <!-- Y axis title -->
+                                <text x="11" y="100" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-size="9" transform="rotate(-90,11,100)">飽和蒸氣壓 / mmHg</text>
+                                <!-- 乙醚 (ether) pink -->
+                                <path d="M 44,182 C 70,168 90,148 115,118 C 135,93 148,63 160,38 C 162,32 163,20 164,12" fill="none" stroke="#f472b6" stroke-width="2.5"/>
+                                <text x="152" y="10" fill="#f472b6" font-size="10" font-weight="bold">乙醚</text>
+                                <!-- 氯仳 (chloroform) blue -->
+                                <path d="M 44,188 C 75,180 105,168 138,148 C 165,128 190,100 212,70 C 225,50 234,30 240,14" fill="none" stroke="#60a5fa" stroke-width="2.5"/>
+                                <text x="226" y="13" fill="#60a5fa" font-size="10" font-weight="bold">氯仳</text>
+                                <!-- 乙醇 (ethanol) green -->
+                                <path d="M 44,191 C 80,186 118,177 155,162 C 188,148 218,122 250,92 C 266,74 278,52 285,28" fill="none" stroke="#4ade80" stroke-width="2.5"/>
+                                <text x="274" y="26" fill="#4ade80" font-size="10" font-weight="bold">乙醇</text>
+                                <!-- 水 (water) orange -->
+                                <path d="M 44,193 C 88,191 130,187 170,178 C 206,168 244,148 270,120 C 292,96 310,66 322,42" fill="none" stroke="#fb923c" stroke-width="2.5"/>
+                                <text x="313" y="40" fill="#fb923c" font-size="10" font-weight="bold">水</text>
+                                <!-- Dashed drop lines -->
+                                <line x1="164" y1="55" x2="164" y2="193" stroke="rgba(244,114,182,0.3)" stroke-width="1" stroke-dasharray="3,3"/>
+                                <line x1="212" y1="55" x2="212" y2="193" stroke="rgba(96,165,250,0.3)" stroke-width="1" stroke-dasharray="3,3"/>
+                                <line x1="255" y1="55" x2="255" y2="193" stroke="rgba(74,222,128,0.3)" stroke-width="1" stroke-dasharray="3,3"/>
+                                <line x1="322" y1="55" x2="322" y2="193" stroke="rgba(251,146,60,0.3)" stroke-width="1" stroke-dasharray="3,3"/>
+                            </svg>
+                            <div style="background: rgba(255,255,255,0.05); border-radius: 8px; padding: 5px 12px; margin-top: 5px; width: 100%;">
+                                <p style="font-size: 0.78rem; color: rgba(255,255,255,0.75); margin: 0; text-align: center;">
+                                    當飽和蒸氣壓 $= 760\text{ mmHg}$（1 atm）時，該溫度即為液體的<strong class="text-yellow">正常沸點</strong>。
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Old Slide (Water Vapor) -->
+                <div class="slide">
+                    <h1>排水集氣法與飽和蒸氣壓</h1>
+                    <div class="flex-row">
+                        <div class="flex-col">
+                            <h2 class="text-yellow">實驗原理</h2>
+                            <p>利用排水法收集的氣體為「濕」氣體，包含氣體本身與 <strong class="text-cyan">水蒸氣</strong>。</p>
+                            <div class="formula-box" style="border-left-color: var(--accent-red);">
+                                $P_{total} = P_{gas} + P_{H_2O}$
+                            </div>
+                            <p>其中 $P_{H_2O}$ 為該溫度下的 <strong class="text-red">飽和水蒸氣壓</strong>。</p>
+                        </div>
+                        <div class="flex-col" style="justify-content: center; align-items: center;">
+                             <svg viewBox="0 0 200 150" style="width: 100%; max-width: 250px;">
+                                <rect x="20" y="80" width="160" height="50" fill="var(--accent-blue)" fill-opacity="0.3" stroke="white"/>
+                                <rect x="80" y="20" width="40" height="100" fill="none" stroke="white" stroke-width="2"/>
+                                <rect x="81" y="21" width="38" height="40" fill="rgba(255,255,255,0.05)"/>
+                                <rect x="81" y="61" width="38" height="59" fill="var(--accent-blue)" fill-opacity="0.5"/>
+                                <text x="100" y="45" text-anchor="middle" fill="white" font-size="10">Gas + Vapor</text>
+                                <text x="100" y="110" text-anchor="middle" fill="white" font-size="10">Water</text>
+                                <path d="M 50,110 Q 70,110 85,90" fill="none" stroke="white" stroke-width="1" marker-end="url(#dot)"/>
+                                <defs><marker id="dot" markerWidth="4" markerHeight="4" refX="2" refY="2"><circle cx="2" cy="2" r="2" fill="white"/></marker></defs>
+                             </svg>
+                             <p style="font-size: 0.9rem; margin-top: 0.5rem;">* 必須扣除水蒸氣壓才是純氣體壓力。</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Examples 1 to 7 from PNGs -->
+                <!-- Example 1 -->
+                <div class="slide">
+                    <h1>例題 1 分壓定律基本計算</h1>
+                    <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; border-left: 5px solid var(--accent-blue); margin-bottom: 10px;">
+                        <p style="font-size: 1.25rem; line-height: 1.5;">在 25°C 時，將 3 atm 的 $O_2$ 4 升及 2 atm 的 $N_2$ 6 升，共同置於 10 升的真空容器中，則：</p>
+                        <p style="font-size: 1.25rem; margin-top: 5px;">(1) 氧氣和氮氣的分壓各為多少？</p>
+                        <p style="font-size: 1.25rem;">(2) 容器中的總壓為多少？</p>
+                    </div>
+                    <div style="display: flex; gap: 20px; align-items: center; justify-content: center; margin-bottom: 5px;">
+                        <div style="width: 100px; height: 100px; border: 2px dashed #38bdf8; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(56, 189, 248, 0.1);">
+                            <span style="color: #38bdf8; font-weight: bold; font-size: 1.2rem;">$O_2$</span>
+                            <span style="font-size: 1rem;">4 L, 3 atm</span>
+                        </div>
+                        <span style="font-size: 2rem;">+</span>
+                        <div style="width: 100px; height: 100px; border: 2px dashed #34d399; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(52, 211, 153, 0.1);">
+                            <span style="color: #34d399; font-weight: bold; font-size: 1.2rem;">$N_2$</span>
+                            <span style="font-size: 1rem;">6 L, 2 atm</span>
+                        </div>
+                        <span style="font-size: 2rem;">➡</span>
+                        <div style="width: 120px; height: 120px; border: 2px solid white; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(255, 255, 255, 0.1);">
+                            <span style="font-weight: bold; font-size: 1.2rem;">混合氣體</span>
+                            <span style="font-size: 1rem;">10 L</span>
+                        </div>
+                    </div>
+                    <div style="flex: 1; width: 100%;">
+                        <div id="ans-content-1" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; padding: 30px 40px; background: rgba(0,0,0,0.95); border-radius: 15px; border: 3px solid var(--accent-green); overflow-y: auto; z-index: 50; flex-direction: column; align-items: flex-start;">
+                            <div style="color: var(--accent-green); font-size: 1.5rem; font-weight: bold; margin-bottom: 15px;">解答與解析：</div>
+                            <div style="color: rgba(255,255,255,0.9); font-size: 1.15rem; line-height: 1.8; flex: 1; text-align: left; width: 100%;">
+                                <p><b>(1) 氧氣和氮氣的分壓：</b></p>
+                                <p>混合後總體積 $V = 10 \text{ L}$。根據波以耳定律 $P_1 V_1 = P_2 V_2$：</p>
+                                <ul style="margin-top: 5px; margin-bottom: 15px; list-style-type: disc; padding-left: 20px;">
+                                    <li>$O_2$ 分壓：$P_{O_2} = \frac{3 \text{ atm} \times 4 \text{ L}}{10 \text{ L}} = 1.2 \text{ atm}$</li>
+                                    <li>$N_2$ 分壓：$P_{N_2} = \frac{2 \text{ atm} \times 6 \text{ L}}{10 \text{ L}} = 1.2 \text{ atm}$</li>
+                                </ul>
+                                <p><b>(2) 容器中的總壓：</b></p>
+                                <p>根據道耳吞分壓定律：$P_t = P_{O_2} + P_{N_2} = 1.2 + 1.2 = 2.4 \text{ atm}$</p>
+                            </div>
+                            <button style="margin-top: 15px; padding: 8px 20px; background: var(--accent-red); color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1rem; align-self: center;" onclick="toggleOverlay('ans-content-1')">關閉</button>
+                        </div>
+                    </div>
+                    <div style="text-align: center; margin-top: auto; padding-top: 15px; border-top: 1px dashed rgba(255,255,255,0.2);">
+                        <button style="padding: 10px 40px; font-size: 1.2rem; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; color: white; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'" onclick="toggleOverlay('ans-content-1')">顯示答案</button>
+                    </div>
+                </div>
+
+                <!-- Example 2 -->
+                <div class="slide">
+                    <h1>例題 2 定容下加熱</h1>
+                    <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; border-left: 5px solid var(--accent-yellow); margin-bottom: 10px;">
+                        <p style="font-size: 1.25rem; line-height: 1.5;">在 27°C 時，有一密閉容器裝有 $N_2$ 與 $O_2$ 的混合氣體，總壓力為 500 mmHg。已知其中 $N_2$ 的莫耳數佔了 60%。若將此容器加熱至 127°C，且容器體積不變，求：</p>
+                        <p style="font-size: 1.25rem; margin-top: 5px;">(1) 加熱前 $N_2$ 與 $O_2$ 的分壓各為多少 mmHg？</p>
+                        <p style="font-size: 1.25rem;">(2) 加熱後容器內的總壓力變為多少 mmHg？</p>
+                    </div>
+                    <div style="display: flex; gap: 40px; align-items: center; justify-content: center; margin-bottom: 5px;">
+                        <div style="text-align: center;">
+                            <div style="width: 100px; height: 100px; border: 2px solid white; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(255,255,255, 0.1);">
+                                <span style="font-size: 1.2rem;">$N_2$ + $O_2$</span>
+                            </div>
+                            <p style="margin-top: 5px; color: var(--accent-cyan);">27°C (300K)<br>500 mmHg</p>
+                        </div>
+                        <span style="font-size: 2rem; color: var(--accent-red);">🔥 加熱 ➡</span>
+                        <div style="text-align: center;">
+                            <div style="width: 100px; height: 100px; border: 2px solid var(--accent-red); border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(248, 113, 113, 0.2);">
+                                <span style="font-size: 1.2rem; color: var(--accent-red);">$N_2$ + $O_2$</span>
+                            </div>
+                            <p style="margin-top: 5px; color: var(--accent-red);">127°C (400K)<br>? mmHg</p>
+                        </div>
+                    </div>
+                    <div style="flex: 1; width: 100%;">
+                        <div id="ans-content-2" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; padding: 30px 40px; background: rgba(0,0,0,0.95); border-radius: 15px; border: 3px solid var(--accent-green); overflow-y: auto; z-index: 50; flex-direction: column; align-items: flex-start;">
+                            <div style="color: var(--accent-green); font-size: 1.5rem; font-weight: bold; margin-bottom: 15px;">解答與解析：</div>
+                            <div style="color: rgba(255,255,255,0.9); font-size: 1.15rem; line-height: 1.8; flex: 1; text-align: left; width: 100%;">
+                                <p><b>(1) 加熱前各氣體分壓：</b></p>
+                                <p>利用分壓與莫耳分率的關係：$P_A = P_t \times X_A$</p>
+                                <ul style="margin-top: 5px; margin-bottom: 15px; list-style-type: disc; padding-left: 20px;">
+                                    <li>$N_2$ 分壓：$P_{N_2} = 500 \times 60\% = 300 \text{ mmHg}$</li>
+                                    <li>$O_2$ 分壓：$P_{O_2} = 500 \times (1 - 60\%) = 200 \text{ mmHg}$</li>
+                                </ul>
+                                <p><b>(2) 加熱後總壓：</b></p>
+                                <p>在定容、定量的情況下，壓力與絕對溫度成正比 (給呂薩克定律)：$\frac{P_1}{T_1} = \frac{P_2}{T_2}$</p>
+                                <ul style="margin-top: 5px; margin-bottom: 15px; list-style-type: disc; padding-left: 20px;">
+                                    <li>$T_1 = 27 + 273 = 300 \text{ K}$</li>
+                                    <li>$T_2 = 127 + 273 = 400 \text{ K}$</li>
+                                </ul>
+                                <p>代入公式：$\frac{500}{300} = \frac{P_2}{400} \Rightarrow P_2 = 500 \times \frac{4}{3} \approx 666.7 \text{ mmHg}$</p>
+                            </div>
+                            <button style="margin-top: 15px; padding: 8px 20px; background: var(--accent-red); color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1rem; align-self: center;" onclick="toggleOverlay('ans-content-2')">關閉</button>
+                        </div>
+                    </div>
+                    <div style="text-align: center; margin-top: auto; padding-top: 15px; border-top: 1px dashed rgba(255,255,255,0.2);">
+                        <button style="padding: 10px 40px; font-size: 1.2rem; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; color: white; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'" onclick="toggleOverlay('ans-content-2')">顯示答案</button>
+                    </div>
+                </div>
+                <!-- Example 2-1 (H2 variant) -->
+                <div class="slide">
+                    <h1>例題 2-1 定容下加熱（含 $H_2$ 反應）</h1>
+                    <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; border-left: 5px solid var(--accent-purple); margin-bottom: 10px;">
+                        <p style="font-size: 1.25rem; line-height: 1.5;">在 27°C 時，有一密閉容器裝有 $H_2$ 與 $O_2$ 的混合氣體，總壓力為 500 mmHg。已知其中 $H_2$ 的莫耳數佔了 60%。若<strong class="text-red">加熱使氫氣與氧氣完全反應後，系統溫度上升為 127°C</strong>，且容器體積不變，求：</p>
+                        <p style="font-size: 1.25rem; margin-top: 5px;">(1) 加熱前 $H_2$ 與 $O_2$ 的分壓各為多少 mmHg？</p>
+                        <p style="font-size: 1.25rem;">(2) 反應後容器內的總壓力變為多少 mmHg？</p>
+                    </div>
+                    <div style="display: flex; gap: 40px; align-items: center; justify-content: center; margin-bottom: 5px;">
+                        <div style="text-align: center;">
+                            <div style="width: 100px; height: 100px; border: 2px solid white; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(255,255,255, 0.1);">
+                                <span style="font-size: 1.2rem;">$H_2$ + $O_2$</span>
+                            </div>
+                            <p style="margin-top: 5px; color: var(--accent-cyan);">27°C (300K)<br>500 mmHg</p>
+                        </div>
+                        <span style="font-size: 2rem; color: var(--accent-red);">🔥 加熱 ➡</span>
+                        <div style="text-align: center;">
+                            <div style="width: 100px; height: 100px; border: 2px solid var(--accent-red); border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(248, 113, 113, 0.2);">
+                                <span style="font-size: 1.2rem; color: var(--accent-red);">$H_2$ + $O_2$</span>
+                            </div>
+                            <p style="margin-top: 5px; color: var(--accent-red);">127°C (400K)<br>? mmHg</p>
+                        </div>
+                    </div>
+                    <div style="flex: 1; width: 100%;">
+                        <div id="ans-content-2b" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; padding: 30px 40px; background: rgba(0,0,0,0.95); border-radius: 15px; border: 3px solid var(--accent-green); overflow-y: auto; z-index: 50; flex-direction: column; align-items: flex-start;">
+                            <div style="color: var(--accent-green); font-size: 1.5rem; font-weight: bold; margin-bottom: 15px;">解答與解析：</div>
+                            <div style="color: rgba(255,255,255,0.9); font-size: 1.15rem; line-height: 1.8; flex: 1; text-align: left; width: 100%;">
+                                <p><b>(1) 加熱前各氣體分壓：</b></p>
+                                <p>利用分壓與莫耳分率的關係：$P_A = P_t \times X_A$</p>
+                                <ul style="margin-top: 5px; margin-bottom: 10px; list-style-type: disc; padding-left: 20px;">
+                                    <li>$H_2$ 分壓：$P_{H_2} = 500 \times 60\% = 300 \text{ mmHg}$</li>
+                                    <li>$O_2$ 分壓：$P_{O_2} = 500 \times (1 - 60\%) = 200 \text{ mmHg}$</li>
+                                </ul>
+                                <p><b>(2) 反應並加熱後總壓：</b></p>
+                                <p>化學反應式：$2H_2(g) + O_2(g) \rightarrow 2H_2O(g)$</p>
+                                <p>根據初壓（同溫同體積下正比於莫耳數）：</p>
+                                <ul style="margin-top: 5px; margin-bottom: 10px; list-style-type: disc; padding-left: 20px;">
+                                    <li>$H_2$ 與 $O_2$ 之比為 $300:200 = 1.5:1$。</li>
+                                    <li>由係數比 $2:1$ 可知 $H_2$ 為限量試劑。</li>
+                                    <li>反應消耗 $H_2$ $300$、消耗 $O_2$ $150$，產生 $H_2O$ $300$。</li>
+                                    <li>剩餘氣體（27°C）：$P_{O_2} = 200 - 150 = 50$，$P_{H_2O} = 300$。</li>
+                                    <li>此時總壓（27°C）$P'_{t} = 50 + 300 = 350 \text{ mmHg}$。</li>
+                                </ul>
+                                <p>最後考慮溫度上升至 127°C（400 K）：</p>
+                                <p>根據給呂薩克定律：$\frac{350}{300} = \frac{P_{final}}{400} \Rightarrow P_{final} = 350 \times \frac{4}{3} \approx 466.7 \text{ mmHg}$</p>
+                                <p style="margin-top: 10px; color: var(--accent-yellow);">📌 結論：因發生化學反應使總莫耳數減少（$500 \rightarrow 350$），故最終壓力較「不反應」的情形低。</p>
+                            </div>
+                            <button style="margin-top: 15px; padding: 8px 20px; background: var(--accent-red); color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1rem; align-self: center;" onclick="toggleOverlay('ans-content-2b')">關閉</button>
+                        </div>
+                    </div>
+                    <div style="text-align: center; margin-top: auto; padding-top: 15px; border-top: 1px dashed rgba(255,255,255,0.2);">
+                        <button style="padding: 10px 40px; font-size: 1.2rem; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; color: white; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'" onclick="toggleOverlay('ans-content-2b')">顯示答案</button>
+                    </div>
+                </div>
+
+                <!-- Example 3 -->
+
+                <div class="slide">
+                    <h1>例題 3 氣體反應與分壓平衡</h1>
+                    <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; border-left: 5px solid var(--accent-purple); margin-bottom: 10px;">
+                        <p style="font-size: 1.25rem; line-height: 1.5;">在 $O_2$ 與 $N_2$ 莫耳比為 $1:4$ 的混合氣體中加入碳粉，加熱使其反應產生 $CO$ 及 $CO_2$。反應後的混合氣體於同溫同體積時壓力增加 $10\%$。若 $O_2$ 完全耗盡，則分壓比 $CO:CO_2$ 為：</p>
+                        <p style="font-size: 1.25rem; margin-top: 10px;">(A) $4:1$ &nbsp;&nbsp; (B) $2:1$ &nbsp;&nbsp; (C) $1:1$ &nbsp;&nbsp; (D) $1:2$</p>
+                    </div>
+                    <div style="flex: 1; width: 100%;">
+                        <div id="ans-content-3" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; padding: 30px 40px; background: rgba(0,0,0,0.95); border-radius: 15px; border: 3px solid var(--accent-green); overflow-y: auto; z-index: 50; flex-direction: column; align-items: flex-start;">
+                            <div style="color: var(--accent-green); font-size: 1.5rem; font-weight: bold; margin-bottom: 15px;">解答與解析：</div>
+                            <div style="color: rgba(255,255,255,0.9); font-size: 1.15rem; line-height: 1.8; flex: 1; text-align: left; width: 100%;">
+                                <p><b>1. 設定初量：</b></p>
+                                <p>設 $n_{O_2} = 1 \text{ mol}$，$n_{N_2} = 4 \text{ mol}$。總莫耳數 $n_1 = 1 + 4 = 5 \text{ mol}$。</p>
+                                <p><b>2. 計算末量：</b></p>
+                                <p>同溫同體積下，壓力與莫耳數成正比 ($P \propto n$)。</p>
+                                <p>壓力增加 $10\%$，則末總莫耳數 $n_2 = 5 \times (1 + 10\%) = 5.5 \text{ mol}$。</p>
+                                <p><b>3. 反應產物分析：</b></p>
+                                <ul style="margin-top: 5px; margin-bottom: 10px; list-style-type: disc; padding-left: 20px;">
+                                    <li>$N_2$ 不參與反應：$n_{N_2} = 4 \text{ mol}$。</li>
+                                    <li>產物（$CO$ 與 $CO_2$）總莫耳數 $= 5.5 - 4 = 1.5 \text{ mol}$。</li>
+                                </ul>
+                                <p><b>4. 利用氧原子守恆：</b></p>
+                                <p>設生成 $CO$ 為 $a \text{ mol}$，生成 $CO_2$ 為 $b \text{ mol}$。</p>
+                                <p>① 總分子數：$a + b = 1.5$</p>
+                                <p>② 氧原子平衡：$a + 2b = 1 \times 2 = 2$ (原本 $1 \text{ mol } O_2$ 有 $2 \text{ mol } O$ 原子)</p>
+                                <p>解聯立：② - ① 得 $b = 0.5$；代入 ① 得 $a = 1$。</p>
+                                <p><b>5. 結論：</b></p>
+                                <p>分壓比等於莫耳數比：$P_{CO} : P_{CO_2} = a : b = 1 : 0.5 = 2 : 1$。</p>
+                                <p style="color: var(--accent-yellow); font-weight: bold;">故答案選 (B)。</p>
+                            </div>
+                            <button style="margin-top: 15px; padding: 8px 20px; background: var(--accent-red); color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1rem; align-self: center;" onclick="toggleOverlay('ans-content-3')">關閉</button>
+                        </div>
+                    </div>
+                    <div style="text-align: center; margin-top: auto; padding-top: 15px; border-top: 1px dashed rgba(255,255,255,0.2);">
+                        <button style="padding: 10px 40px; font-size: 1.2rem; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; color: white; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'" onclick="toggleOverlay('ans-content-3')">顯示答案</button>
+                    </div>
+                </div>
+
+                <!-- Example 4 -->
+                <div class="slide">
+                    <h1>例題 4 三球連通管反應與分壓</h1>
+                    <div style="display: flex; gap: 20px;">
+                        <div style="flex: 1; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; border-left: 5px solid var(--accent-green);">
+                            <p style="font-size: 1.2rem; line-height: 1.5;">同溫下，如下圖 A、B、C 三容器依次裝有 $HCl(g)$、$NH_3(g)$ 及 $CH_4(g)$ 三種氣體。當活栓關閉時，測得各氣體壓力均為 2 atm。若將容器間的活栓打開，三球氣體混合均勻且完全反應後，$NH_3(g)$ 所佔的莫耳分率為多少？</p>
+                            <p style="font-size: 1.25rem; margin-top: 15px;">(A) 0.25 &nbsp;&nbsp; (B) 0.50 &nbsp;&nbsp; (C) 0.75 &nbsp;&nbsp; (D) 0.80</p>
+                        </div>
+                        <div style="width: 320px; display: flex; align-items: center; justify-content: center; position: relative;">
+                            <svg viewBox="0 0 320 160" style="width: 100%;">
+                                <!-- A Bulb -->
+                                <circle cx="45" cy="80" r="30" fill="rgba(248, 113, 113, 0.2)" stroke="var(--accent-red)" stroke-width="2.5"/>
+                                <text x="45" y="75" text-anchor="middle" fill="white" font-size="14">A ($HCl$)</text>
+                                <text x="45" y="95" text-anchor="middle" fill="white" font-size="11">1 L, 2 atm</text>
+                                
+                                <!-- B Bulb -->
+                                <circle cx="150" cy="80" r="40" fill="rgba(56, 189, 248, 0.2)" stroke="var(--accent-blue)" stroke-width="2.5"/>
+                                <text x="150" y="75" text-anchor="middle" fill="white" font-size="14">B ($NH_3$)</text>
+                                <text x="150" y="95" text-anchor="middle" fill="white" font-size="11">2 L, 2 atm</text>
+                                
+                                <!-- C Bulb -->
+                                <circle cx="265" cy="80" r="50" fill="rgba(52, 211, 153, 0.2)" stroke="var(--accent-green)" stroke-width="2.5"/>
+                                <text x="265" y="75" text-anchor="middle" fill="white" font-size="14">C ($CH_4$)</text>
+                                <text x="265" y="95" text-anchor="middle" fill="white" font-size="11">3 L, 2 atm</text>
+                                
+                                <!-- Connecting Tubes -->
+                                <rect x="75" y="75" width="35" height="10" fill="rgba(255,255,255,0.1)" stroke="white" stroke-width="1.5"/>
+                                <rect x="190" y="75" width="25" height="10" fill="rgba(255,255,255,0.1)" stroke="white" stroke-width="1.5"/>
+                                
+                                <!-- Valves -->
+                                <rect x="90" y="60" width="10" height="40" fill="#475569" stroke="white" stroke-width="1.5" rx="2"/>
+                                <rect x="205" y="60" width="10" height="40" fill="#475569" stroke="white" stroke-width="1.5" rx="2"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <div style="flex: 1; width: 100%;">
+                        <div id="ans-content-4" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; padding: 30px 40px; background: rgba(0,0,0,0.95); border-radius: 15px; border: 3px solid var(--accent-green); overflow-y: auto; z-index: 50; flex-direction: column; align-items: flex-start;">
+                            <div style="color: var(--accent-green); font-size: 1.5rem; font-weight: bold; margin-bottom: 15px;">解答與解析：</div>
+                            <div style="color: rgba(255,255,255,0.9); font-size: 1.15rem; line-height: 1.8; flex: 1; text-align: left; width: 100%;">
+                                <p><b>1. 計算初莫耳數（同溫下 $n \propto P \times V$）：</b></p>
+                                <ul style="margin-top: 5px; margin-bottom: 10px; list-style-type: disc; padding-left: 20px;">
+                                    <li>$n_{HCl} \propto 2 \text{ atm} \times 1 \text{ L} = 2$</li>
+                                    <li>$n_{NH_3} \propto 2 \text{ atm} \times 2 \text{ L} = 4$</li>
+                                    <li>$n_{CH_4} \propto 2 \text{ atm} \times 3 \text{ L} = 6$</li>
+                                </ul>
+                                <p><b>2. 化學反應：</b></p>
+                                <p>$HCl(g) + NH_3(g) \rightarrow NH_4Cl(s)$</p>
+                                <p>反應比為 1:1，其中 $HCl$ 為限量試劑（2 &lt; 4）。</p>
+                                <p>反應後：</p>
+                                <ul style="margin-top: 5px; margin-bottom: 10px; list-style-type: disc; padding-left: 20px;">
+                                    <li>$NH_3$ 剩餘量 $= 4 - 2 = 2$</li>
+                                    <li>$CH_4$ 為惰性氣體，不反應，量維持 $6$</li>
+                                    <li>$NH_4Cl$ 為固體，不計入氣體莫耳數</li>
+                                </ul>
+                                <p><b>3. 計算莫耳分率：</b></p>
+                                <p>末總莫耳數 $n_{total} = 2 (NH_3) + 6 (CH_4) = 8$</p>
+                                <p>$NH_3$ 所佔莫耳分率 $X_{NH_3} = \frac{2}{8} = 0.25$</p>
+                                <p style="color: var(--accent-yellow); font-weight: bold;">故答案選 (A)。</p>
+                            </div>
+                            <button style="margin-top: 15px; padding: 8px 20px; background: var(--accent-red); color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1rem; align-self: center;" onclick="toggleOverlay('ans-content-4')">關閉</button>
+                        </div>
+                    </div>
+                    <div style="text-align: center; margin-top: auto; padding-top: 15px; border-top: 1px dashed rgba(255,255,255,0.2);">
+                        <button style="padding: 10px 40px; font-size: 1.2rem; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; color: white; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'" onclick="toggleOverlay('ans-content-4')">顯示答案</button>
+                    </div>
+                </div>
+
+                <!-- Example 5 -->
+                <div class="slide">
+                    <h1>例題 5 排水集氣法綜合計算</h1>
+                    <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; border-left: 5px solid var(--accent-purple); margin-bottom: 10px;">
+                        <p style="font-size: 1.2rem; line-height: 1.6;">27°C 時以排水集氣法收集氧氣一瓶 600 mL，瓶口在水面下 5.44 cm。若瓶外大氣壓力為 752.5 mmHg，已知 27°C 時水的飽和蒸氣壓為 26.5 mmHg，求：<br>
+                        (a) 瓶內氧氣的分壓為多少 mmHg？<br>
+                        (b) 此乾燥氧氣在 127°C、365 mmHg 時，體積為多少 mL？</p>
+                    </div>
+                    <div style="flex: 1; display: flex; align-items: center; justify-content: center;">
+                        <svg viewBox="0 0 300 180" style="width: 250px;">
+                            <!-- Water Trough background water -->
+                            <rect x="20" y="100" width="260" height="70" fill="rgba(56, 189, 248, 0.2)" stroke="var(--accent-blue)" stroke-width="2"/>
+                            
+                            <!-- Collection Bottle (Solid fill to block trough water) -->
+                            <rect x="100" y="20" width="100" height="110" fill="#0f172a" stroke="white" stroke-width="2"/>
+                            
+                            <!-- Water Surface (Outside) -->
+                            <line x1="20" y1="100" x2="100" y2="100" stroke="var(--accent-red)" stroke-width="2"/>
+                            <line x1="200" y1="100" x2="280" y2="100" stroke="var(--accent-red)" stroke-width="2"/>
+                            
+                            <!-- Water level at mouth (Bottom of bottle) -->
+                            <line x1="100" y1="130" x2="200" y2="130" stroke="var(--accent-red)" stroke-width="2"/>
+                            
+                            <!-- Internal Gas Space Label -->
+                            <text x="150" y="75" text-anchor="middle" fill="white" font-size="14">$O_2 + H_2O_{(g)}$</text>
+                            
+                            <!-- Dimension Lines -->
+                            <line x1="210" y1="100" x2="230" y2="100" stroke="var(--accent-green)" stroke-width="1.5"/>
+                            <line x1="210" y1="130" x2="230" y2="130" stroke="var(--accent-green)" stroke-width="1.5"/>
+                            <path d="M220 100 L220 130" stroke="var(--accent-green)" stroke-width="1.5" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+                            <text x="235" y="120" fill="var(--accent-green)" font-size="12">5.44 cm</text>
+                            
+                            <!-- Pressure labels -->
+                            <text x="200" y="85" fill="var(--accent-green)" font-size="12">$P_{atm} = 752.5\text{ mmHg}$</text>
+                        </svg>
+                    </div>
+                    <div style="flex: 1; width: 100%;">
+                        <div id="ans-content-5" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; padding: 30px 40px; background: rgba(0,0,0,0.95); border-radius: 15px; border: 3px solid var(--accent-green); overflow-y: auto; z-index: 50; flex-direction: column; align-items: flex-start;">
+                            <div style="color: var(--accent-green); font-size: 1.5rem; font-weight: bold; margin-bottom: 15px;">解答與解析：</div>
+                            <div style="color: rgba(255,255,255,0.9); font-size: 1.15rem; line-height: 1.8; flex: 1; text-align: left; width: 100%;">
+                                <p><b>(a) 計算氧氣分壓：</b></p>
+                                <p>1. 瓶口位於水面下 $5.44 \text{ cm}$，換算為汞柱壓力：</p>
+                                <p>$\Delta P = \frac{5.44 \text{ cm } H_2O}{1.36} = 4 \text{ mmHg}$ ($1 \text{ mmHg} = 1.36 \text{ cm } H_2O$)</p>
+                                <p>2. 瓶內總壓 $P_{total} = P_{atm} + \Delta P = 752.5 + 4 = 756.5 \text{ mmHg}$</p>
+                                <p>3. 氧氣分壓 $P_{O_2} = P_{total} - P_{H_2O} = 756.5 - 26.5 = 730 \text{ mmHg}$</p>
+                                <p><b>(b) 計算新狀況體積：</b></p>
+                                <p>初狀態：$P_1 = 730 \text{ mmHg}$，$V_1 = 600 \text{ mL}$，$T_1 = 27 + 273 = 300 \text{ K}$</p>
+                                <p>末狀態：$P_2 = 365 \text{ mmHg}$，$T_2 = 127 + 273 = 400 \text{ K}$</p>
+                                <p>利用組合氣體定律：$\frac{P_1V_1}{T_1} = \frac{P_2V_2}{T_2}$</p>
+                                <p>$\frac{730 \times 600}{300} = \frac{365 \times V_2}{400}$</p>
+                                <p>$1460 = \frac{365 \times V_2}{400} \Rightarrow V_2 = \frac{1460 \times 400}{365} = 4 \times 400 = 1600 \text{ mL}$</p>
+                            </div>
+                            <button style="margin-top: 15px; padding: 8px 20px; background: var(--accent-red); color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1rem; align-self: center;" onclick="toggleOverlay('ans-content-5')">關閉</button>
+                        </div>
+                    </div>
+                    <div style="text-align: center; margin-top: auto; padding-top: 15px; border-top: 1px dashed rgba(255,255,255,0.2);">
+                        <button style="padding: 10px 40px; font-size: 1.2rem; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; color: white; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'" onclick="toggleOverlay('ans-content-5')">顯示答案</button>
+                    </div>
+                </div>
+
+                <!-- Example 6 -->
+                <div class="slide">
+                    <h1>例題 6 活塞平衡與蒸氣壓綜合應用</h1>
+                    <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; border-left: 5px solid var(--accent-cyan); margin-bottom: 10px;">
+                        <p style="font-size: 1.15rem; line-height: 1.5;">圖示為一可滑動之活塞，先固定活塞於正中間（兩側容積均為 30.6 升）。已知 100°C 時水的蒸氣壓為 760 mmHg，乙醇為 1140 mmHg。今將容器加熱至 100°C，關閉活門，然後使活塞可自由移動（設原先容器內無空氣存在）：</p>
+                        <div style="margin-top: 10px; font-size: 1.1rem; color: var(--accent-yellow); line-height: 1.6;">
+                            <p>(1) 活塞移動至 $V_B$ 為 $V_A$ 的幾倍停止？</p>
+                            <p>(2) 停止移動時，$V_A$ 產生多少克的水？</p>
+                            <p>(3) 停止移動時，$V_A$ 內的壓力為多少 mmHg？</p>
+                            <p>(4) 使活塞移回中央，需將 $V_A$ 加熱至多少 °C？</p>
+                            <p>(5) 若不關閉活門，然後使活塞可自由移動，則活塞移動至停止時，$V_B$ 為 $V_A$ 的幾倍？</p>
+                            <p>(6) 停止移動時，$V_B$ 容器內的壓力為多少 mmHg？</p>
+                        </div>
+                    </div>
+                    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                        <svg id="ex6-svg" viewBox="0 0 420 280" style="width: 450px; background: white; border-radius: 5px; padding: 10px; user-select: none; touch-action: none;">
+                            <!-- Outer Frame -->
+                            <rect x="5" y="5" width="410" height="270" fill="none" stroke="black" stroke-width="2"/>
+                            
+                             <!-- Middle Insulation Partition (Connecting Top to Bottom, bypassing chamber) -->
+                             <line x1="210" y1="5" x2="210" y2="60" stroke="black" stroke-width="5"/>
+                             <line x1="210" y1="140" x2="210" y2="275" stroke="black" stroke-width="5"/>
+                             <text x="210" y="20" text-anchor="middle" fill="black" font-size="12" font-weight="bold">隔熱板</text>
+                             
+                             <!-- Main Chamber Walls with Openings -->
+                             <rect x="30" y="60" width="360" height="80" fill="#f8fafc" stroke="none"/> <!-- fill only -->
+                             <!-- Top & Bottom walls -->
+                             <line x1="30" y1="60" x2="390" y2="60" stroke="black" stroke-width="3"/>
+                             <line x1="30" y1="140" x2="390" y2="140" stroke="black" stroke-width="3"/>
+                             <!-- Left wall with gap -->
+                             <line x1="30" y1="60" x2="30" y2="85" stroke="black" stroke-width="3"/>
+                             <line x1="30" y1="115" x2="30" y2="140" stroke="black" stroke-width="3"/>
+                             <!-- Right wall with gap -->
+                             <line x1="390" y1="60" x2="390" y2="85" stroke="black" stroke-width="3"/>
+                             <line x1="390" y1="115" x2="390" y2="140" stroke="black" stroke-width="3"/>
+                             
+                             <!-- Draggable Piston -->
+                             <g id="ex6-piston-group" style="cursor: grab;">
+                                 <rect id="ex6-piston" x="200" y="62" width="20" height="76" fill="#4b5563" stroke="black" stroke-width="1"/>
+                                 <text x="210" y="105" id="ex6-piston-label" text-anchor="middle" fill="white" font-size="10" font-weight="bold">活塞</text>
+                             </g>
+                             
+                             <!-- Internal Labels -->
+                             <text x="75" y="80" text-anchor="middle" fill="black" font-size="16" font-weight="bold">$V_A$</text>
+                             <g transform="translate(50, 90)">
+                                 <rect x="0" y="0" width="50" height="22" rx="3" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1"/>
+                                 <text x="25" y="16" id="va-vol" text-anchor="middle" fill="#2563eb" font-size="12" font-weight="bold">30.6 升</text>
+                             </g>
+                             
+                             <text x="345" y="80" text-anchor="middle" fill="black" font-size="16" font-weight="bold">$V_B$</text>
+                             <g transform="translate(320, 90)">
+                                 <rect x="0" y="0" width="50" height="22" rx="3" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1"/>
+                                 <text x="25" y="16" id="vb-vol" text-anchor="middle" fill="#d97706" font-size="12" font-weight="bold">30.6 升</text>
+                             </g>
+                             
+                             <!-- Valve A (Single Pole Switch Style) - Open by Default -->
+                             <g id="valve-a-v" style="cursor: pointer;" onclick="toggleValveEx6('A')">
+                                 <!-- Pivot Point -->
+                                 <circle cx="30" cy="85" r="4" fill="#475569"/>
+                                 <!-- Switch Arm (Lever) -->
+                                 <line id="valve-arm-a-v" x1="30" y1="85" x2="30" y2="115" stroke="#ef4444" stroke-width="5" stroke-linecap="round" style="transition: transform 0.3s; transform-origin: 30px 85px; transform: rotate(80deg);"/>
+                                 <text x="15" y="75" text-anchor="end" fill="black" font-size="10" font-weight="bold">活門A</text>
+                             </g>
+                             
+                             <!-- Valve B (Single Pole Switch Style) - Open by Default -->
+                             <g id="valve-b-v" style="cursor: pointer;" onclick="toggleValveEx6('B')">
+                                 <!-- Pivot Point -->
+                                 <circle cx="390" cy="85" r="4" fill="#475569"/>
+                                 <!-- Switch Arm (Lever) -->
+                                 <line id="valve-arm-b-v" x1="390" y1="85" x2="390" y2="115" stroke="#ef4444" stroke-width="5" stroke-linecap="round" style="transition: transform 0.3s; transform-origin: 390px 85px; transform: rotate(-80deg);"/>
+                                 <text x="405" y="75" text-anchor="start" fill="black" font-size="10" font-weight="bold">活門B</text>
+                             </g>
+                             
+                             <!-- Beaker A (Water) - Grounded -->
+                             <g transform="translate(60, 230)">
+                                 <path d="M 0,0 L 40,0 L 40,40 Q 40,45 35,45 L 5,45 Q 0,45 0,40 Z" fill="none" stroke="black" stroke-width="1.5"/>
+                                 <path d="M 2,10 L 38,10 L 38,40 Q 38,43 35,43 L 5,43 Q 2,43 2,40 Z" fill="#38bdf8" opacity="0.6"/>
+                                 <text x="-10" y="25" text-anchor="end" fill="#0369a1" font-size="14" font-weight="bold">水</text>
+                             </g>
+                             
+                             <!-- Beaker B (Ethanol) - Grounded -->
+                             <g transform="translate(320, 230)">
+                                 <path d="M 0,0 L 40,0 L 40,40 Q 40,45 35,45 L 5,45 Q 0,45 0,40 Z" fill="none" stroke="black" stroke-width="1.5"/>
+                                 <path d="M 2,15 L 38,15 L 38,40 Q 38,43 35,43 L 5,43 Q 2,43 2,40 Z" fill="#fbbf24" opacity="0.6"/>
+                                 <text x="50" y="25" text-anchor="start" fill="#92400e" font-size="14" font-weight="bold">乙醇</text>
+                             </g>
+                        </svg>
+                        <p style="color: #64748b; font-size: 0.9rem; margin-top: 5px;">提示：可用滑鼠拖曳灰色活塞，點擊中間隔熱板旁的「活門」切換開關。</p>
+                    </div>
+                    <script>
+                        (function() {
+                            const svg = document.getElementById('ex6-svg');
+                            const pistonGroup = document.getElementById('ex6-piston-group');
+                            const piston = document.getElementById('ex6-piston');
+                            const label = document.getElementById('ex6-piston-label');
+                            const vaText = document.getElementById('va-vol');
+                            const vbText = document.getElementById('vb-vol');
+                            
+                            let isDraggingEx6 = false;
+                            let vAOpen = true;
+                            let vBOpen = true;
+                            
+                            window.toggleValveEx6 = function(side) {
+                                if (side === 'A') {
+                                    vAOpen = !vAOpen;
+                                    const arm = document.getElementById('valve-arm-a-v');
+                                    if (vAOpen) {
+                                        // rotate out (counter-clockwise)
+                                        arm.style.transform = 'rotate(80deg)';
+                                        arm.style.stroke = '#ef4444';
+                                    } else {
+                                        arm.style.transform = 'rotate(0deg)';
+                                        arm.style.stroke = 'black';
+                                    }
+                                } else {
+                                    vBOpen = !vBOpen;
+                                    const arm = document.getElementById('valve-arm-b-v');
+                                    if (vBOpen) {
+                                        // rotate out (clockwise)
+                                        arm.style.transform = 'rotate(-80deg)';
+                                        arm.style.stroke = '#ef4444';
+                                    } else {
+                                        arm.style.transform = 'rotate(0deg)';
+                                        arm.style.stroke = 'black';
+                                    }
+                                }
+                            };
+                            
+                            function updatePistonPos(clientX) {
+                                const rect = svg.getBoundingClientRect();
+                                const x = (clientX - rect.left) * (420 / rect.width);
+                                let newX = x - 10;
+                                if (newX < 33) newX = 33;
+                                if (newX > 367) newX = 367;
+                                
+                                piston.setAttribute('x', newX);
+                                label.setAttribute('x', newX + 10);
+                                
+                                const leftEdge = 30;
+                                const chamberWidth = 360;
+                                const vAFraction = (newX - leftEdge) / (chamberWidth - 20);
+                                const totalVol = 61.2;
+                                const vA = (vAFraction * totalVol).toFixed(1);
+                                const vB = (totalVol - parseFloat(vA)).toFixed(1);
+                                
+                                vaText.textContent = vA + ' 升';
+                                vbText.textContent = vB + ' 升';
+                                if (typeof MathJax !== 'undefined') {
+                                    MathJax.typesetPromise([vaText.parentNode, vbText.parentNode]).catch(() => {});
+                                }
+                            }
+                            
+                            pistonGroup.addEventListener('mousedown', (e) => { isDraggingEx6 = true; pistonGroup.style.cursor = 'grabbing'; });
+                            window.addEventListener('mousemove', (e) => { if (isDraggingEx6) updatePistonPos(e.clientX); });
+                            window.addEventListener('mouseup', () => { isDraggingEx6 = false; pistonGroup.style.cursor = 'grab'; });
+                            
+                            pistonGroup.addEventListener('touchstart', (e) => { isDraggingEx6 = true; });
+                            window.addEventListener('touchmove', (e) => { if (isDraggingEx6) updatePistonPos(e.touches[0].clientX); });
+                            window.addEventListener('touchend', () => { isDraggingEx6 = false; });
+                        })();
+                    </script>
+
+                    <div style="flex: 1; width: 100%;">
+                        <div id="ans-content-6" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; padding: 30px 40px; background: rgba(0,0,0,0.95); border-radius: 15px; border: 3px solid var(--accent-green); overflow-y: auto; z-index: 50; flex-direction: column; align-items: flex-start;">
+                            <div style="color: var(--accent-green); font-size: 1.5rem; font-weight: bold; margin-bottom: 15px;">解答與解析：</div>
+                            <div style="color: rgba(255,255,255,0.9); font-size: 1rem; line-height: 1.6; flex: 1; text-align: left; width: 100%;">
+                                <p><b>核心概念：</b> 100°C 時，$1 \text{ mole}$ 氣體在 $760 \text{ mmHg}$ 下體積約為 $30.6 \text{ 升}$ ($V = \frac{1 \times 0.082 \times 373}{1} \approx 30.6 \text{ L}$)。
+                                <br>初態：$n_{H_2O} = 1 \text{ mole}$, $n_{EtOH} = 1140/760 = 1.5 \text{ moles}$。</p>
+                                <p><b>(1) 活塞平衡時 $V_B/V_A$：</b><br>
+                                壓力平衡 $P_A = P_B$。若 $P = 760 \text{ mmHg}$，則 $V_B = 1.5 \times 30.6 = 45.9 \text{ L}$，$V_A = 61.2 - 45.9 = 15.3 \text{ L}$。<br>
+                                此時 $P_A = \frac{1 \times 30.6 \times 760}{15.3} = 1520 > 760$，故水會液化，壓力維持 $760$。
+                                <b>答案：$V_B = 3 V_A$。</b></p>
+                                <p><b>(2) 水液化量：</b><br>
+                                $V_A = 15.3 \text{ L}$ 時，氣態水為 $\frac{15.3}{30.6} = 0.5 \text{ mole}$。<br>
+                                液化量 $= 1.0 - 0.5 = 0.5 \text{ mole} = 0.5 \times 18 = 9 \text{ 克}$。</p>
+                                <p><b>(3) $V_A$ 壓力：</b> 飽和蒸氣壓 <b>760 mmHg</b>。</p>
+                                <p><b>(4) 移回中央：</b> $V_B = 30.6 \text{ L} \Rightarrow P_B = 1.5 \text{ atm}$。
+                                需使水之 $P_{vap} = 1.5 \text{ atm} = 1140 \text{ mmHg}$，需加熱。
+                                </p>
+                                <p><b>(5) 不關閉活門：</b><br>
+                                $P_A$ 恆定為 $760$，$P_B$ 恆定為 $1140$。因 $P_B > P_A$，活塞會向左移到底。<b>答案：$V_A = 0$</b>。</p>
+                                <p><b>(6) $V_B$ 壓力：</b> 始終維持飽和蒸氣壓 <b>1140 mmHg</b>。</p>
+                            </div>
+                            <button style="margin-top: 15px; padding: 8px 20px; background: var(--accent-red); color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1rem; align-self: center;" onclick="toggleOverlay('ans-content-6')">關閉</button>
+                        </div>
+                    </div>
+                    <div style="text-align: center; margin-top: auto; padding-top: 15px; border-top: 1px dashed rgba(255,255,255,0.2);">
+                        <button style="padding: 10px 40px; font-size: 1.2rem; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; color: white; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'" onclick="toggleOverlay('ans-content-6')">顯示答案</button>
+                    </div>
+                </div>
+
+
+                <!-- Slide 5: Game -->
+                <div class="slide" id="slide-game">
+                    <h1>單元挑戰：分壓定律連連看</h1>
+                    <p style="text-align: center; color: var(--accent-green); margin-top: -10px;">請連接正確的定義與關係。</p>
+                    <div id="game-container" style="position: relative; flex: 1; display: flex; justify-content: space-between; padding: 20px 40px; background: rgba(0,0,0,0.2); border-radius: 20px; overflow: hidden;">
+                        <svg id="game-svg" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5;"></svg>
+                        <div id="left-column" style="display: flex; flex-direction: column; justify-content: space-around; gap: 8px; z-index: 10; width: 40%;"></div>
+                        <div id="right-column" style="display: flex; flex-direction: column; justify-content: space-around; gap: 8px; z-index: 10; width: 40%;"></div>
+                        <div id="game-feedback" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(16, 185, 129, 0.95); padding: 2rem 4rem; border-radius: 20px; font-size: 2.5rem; color: white; font-weight: bold; box-shadow: 0 0 50px rgba(16, 185, 129, 0.5); z-index: 100; text-align: center;">🎉 太棒了！</div>
+                    </div>
+                    <div style="text-align: center; margin-top: 10px;">
+                        <button class="btn" style="width: auto; display: inline-block;" onclick="resetGame()">再玩一次</button>
+                    </div>
+                </div>
+            </div>
+
+            <canvas id="drawing-layer"></canvas>
+        </div>
+
+        <div id="slide-info">1 / 5</div>
+
+        <!-- Controls Toolbar -->
+        <div id="toolbar">
+            <div id="drag-handle" title="拖曳移動工具列">≡</div>
+            <button class="btn-tool" id="btn-prev" title="上一頁">▲</button>
+            <button class="btn-tool" id="btn-next" title="下一頁">▼</button>
+            <div style="height: 1px; width: 25px; background: rgba(255,255,255,0.3); margin: 6px 0;"></div>
+            
+            <button class="btn-tool" id="btn-draw" title="手寫模式">✎</button>
+            
+            <div class="color-picker" id="color-picker">
+                <div class="color-swatch selected" style="background: #f8fafc;" data-color="#f8fafc"></div>
+                <div class="color-swatch" style="background: #f87171;" data-color="#f87171"></div>
+                <div class="color-swatch" style="background: #38bdf8;" data-color="#38bdf8"></div>
+                <div class="color-swatch" style="background: #fbbf24;" data-color="#fbbf24"></div>
+                <div class="color-swatch" style="background: #34d399;" data-color="#34d399"></div>
+            </div>
+
+            <div id="size-picker" style="display: none; flex-direction: column; align-items: center; gap: 2px; margin: 2px 0; width: 100%; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 5px;">
+                <input type="range" id="pen-size" min="1" max="20" value="3" style="width: 100%; height: 4px; cursor: pointer;">
+            </div>
+
+            <div id="eraser-tools" style="display: none; width: 100%; flex-direction: column; gap: 4px; align-items: center;">
+                <button class="btn-tool" id="btn-eraser" title="橡皮擦">
+                    <svg viewBox="0 0 24 24"><path d="M16.24,3.56L21.19,8.51C21.97,9.29 21.97,10.55 21.19,11.33L12.01,20.5H22V22.5H10.12L2.81,15.19C2.03,14.41 2.03,13.15 2.81,12.37L12,3.19C12.78,2.41 14.05,2.41 14.83,3.19L16.24,3.56M4.22,13.78L10.83,20.39L14.83,16.39L8.22,9.78L4.22,13.78Z"/></svg>
+                </button>
+                <button class="btn-tool" id="btn-clear" title="全清">🗑</button>
+            </div>
+            <div style="height: 1px; width: 25px; background: rgba(255,255,255,0.3); margin: 6px 0;"></div>
+            <button class="btn-tool" id="btn-exit-fs" title="回到目錄">🏠</button>
+        </div>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        let isDrawingMode = false;
+        let drawMode = 'pen';
+        let penColor = '#f8fafc';
+        let penSize = 3;
+        let slideDrawings = {}; 
+        let lastX = 0;
+        let lastY = 0;
+
+        function toggleOverlay(id) {
+            const overlay = document.getElementById(id);
+            if (overlay) overlay.style.display = (overlay.style.display === 'none' || overlay.style.display === '') ? 'flex' : 'none';
+        }
+
+        const slides = document.querySelectorAll('.slide');
+        const slideInfo = document.getElementById('slide-info');
+        const canvas = document.getElementById('drawing-layer');
+        const ctx = canvas.getContext('2d');
+        let isDrawing = false;
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            restoreDrawing();
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        function getCoords(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            return [clientX - rect.left, clientY - rect.top];
+        }
+
+        function startDrawing(e) {
+            if (!isDrawingMode) return;
+            isDrawing = true;
+            [lastX, lastY] = getCoords(e);
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            const [x, y] = getCoords(e);
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(x, y);
+            ctx.strokeStyle = drawMode === 'eraser' ? '#0b1120' : penColor;
+            ctx.lineWidth = drawMode === 'eraser' ? penSize * 10 : penSize;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+            [lastX, lastY] = [x, y];
+        }
+
+        function stopDrawing() {
+            if (isDrawing) {
+                isDrawing = false;
+                slideDrawings[currentSlide] = canvas.toDataURL();
+            }
+        }
+
+        function restoreDrawing() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if (slideDrawings[currentSlide]) {
+                const img = new Image();
+                img.onload = () => ctx.drawImage(img, 0, 0);
+                img.src = slideDrawings[currentSlide];
+            }
+        }
+
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDrawing(e); }, {passive: false});
+        canvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e); }, {passive: false});
+        canvas.addEventListener('touchend', stopDrawing);
+
+        function updateSlides() {
+            slides.forEach((s, i) => s.classList.toggle('active', i === currentSlide));
+            slideInfo.textContent = `${currentSlide + 1} / ${slides.length}`;
+            restoreDrawing();
+            if (slides[currentSlide].id === 'slide-game') initGame();
+        }
+
+        document.getElementById('btn-next').addEventListener('click', () => { if (currentSlide < slides.length - 1) { currentSlide++; updateSlides(); } });
+        document.getElementById('btn-prev').addEventListener('click', () => { if (currentSlide > 0) { currentSlide--; updateSlides(); } });
+
+        document.getElementById('btn-draw').addEventListener('click', (e) => {
+            isDrawingMode = !isDrawingMode;
+            if (isDrawingMode) drawMode = 'pen';
+            e.currentTarget.classList.toggle('active-tool', isDrawingMode);
+            canvas.classList.toggle('drawing-active', isDrawingMode);
+            document.getElementById('color-picker').style.display = isDrawingMode ? 'grid' : 'none';
+            document.getElementById('size-picker').style.display = isDrawingMode ? 'flex' : 'none';
+            document.getElementById('eraser-tools').style.display = isDrawingMode ? 'flex' : 'none';
+        });
+
+        document.getElementById('btn-eraser').addEventListener('click', (e) => {
+            drawMode = (drawMode === 'eraser' ? 'pen' : 'eraser');
+            e.currentTarget.classList.toggle('active-tool', drawMode === 'eraser');
+        });
+
+        document.querySelectorAll('.color-swatch').forEach(sw => {
+            sw.addEventListener('click', () => {
+                document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
+                sw.classList.add('selected');
+                penColor = sw.dataset.color;
+                drawMode = 'pen';
+                document.getElementById('btn-draw').classList.add('active-tool');
+                document.getElementById('btn-eraser').classList.remove('active-tool');
+            });
+        });
+
+        document.getElementById('pen-size').addEventListener('input', (e) => { penSize = parseInt(e.target.value); });
+        document.getElementById('btn-clear').addEventListener('click', () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            slideDrawings[currentSlide] = null;
+        });
+
+        document.getElementById('btn-start').addEventListener('click', () => {
+            document.getElementById('start-overlay').style.display = 'none';
+            if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen();
+            updateSlides();
+        });
+
+        document.getElementById('btn-exit-fs').addEventListener('click', () => {
+            window.location.href = '../../index.html';
+        });
+
+        const gameData = [
+            { left: '分壓定律定義', right: '$P_{total} = P_1 + P_2 + \\dots$' },
+            { left: '莫耳分率 ($X_i$)', right: '$n_i / n_{total}$' },
+            { left: '分壓與總壓關係', right: '$P_i = X_i \\cdot P_{total}$' },
+            { left: '排水集氣法總壓', right: '$P_{total} = P_{gas} + P_{H_2O}$' },
+            { left: '飽和水蒸氣壓', right: '僅與溫度有關' },
+            { left: '同溫同體積下', right: '壓力比 = 莫耳數比' },
+            { left: '混合氣體總莫耳數', right: '$n_{total} = n_1 + n_2 + \\dots$' },
+            { left: '莫耳分率總和', right: '$\\sum X_i = 1$' },
+            { left: '平均分子量 ($\\overline{M}$)', right: '$\\sum M_i X_i$' },
+            { left: '乾燥純氣體壓力', right: '濕氣壓扣除水蒸氣壓' }
+        ];
+
+        let connections = [], draggingLine = null, startDot = null;
+        let isDraggingGame = false;
+
+        function initGame() {
+            const leftCol = document.getElementById('left-column');
+            const rightCol = document.getElementById('right-column');
+            leftCol.innerHTML = ''; 
+            rightCol.innerHTML = ''; 
+            connections = [];
+            drawConnections();
+            
+            const selectedData = [...gameData].sort(() => Math.random() - 0.5).slice(0, 5).map((item, i) => ({ ...item, currentMatch: i }));
+            const shuffledRight = [...selectedData].sort(() => Math.random() - 0.5);
+            
+            selectedData.forEach(item => { 
+                const div = document.createElement('div'); 
+                div.className = 'game-item'; 
+                div.innerHTML = `<span>${item.left}</span><div class="dot left-dot" data-index="${item.currentMatch}"></div>`; 
+                leftCol.appendChild(div); 
+            });
+            shuffledRight.forEach(item => { 
+                const div = document.createElement('div'); 
+                div.className = 'game-item'; 
+                div.innerHTML = `<div class="dot right-dot" data-index="${item.currentMatch}"></div><span>${item.right}</span>`; 
+                rightCol.appendChild(div); 
+            });
+            
+            MathJax.typesetPromise(); 
+            
+            document.querySelectorAll('.dot').forEach(dot => {
+                dot.addEventListener('mousedown', startGameDrag);
+                dot.addEventListener('touchstart', startGameDrag, {passive: false});
+            });
+        }
+
+        function startGameDrag(e) {
+            if (e.type === 'touchstart') e.preventDefault();
+            const dot = e.currentTarget;
+            if (dot.classList.contains('active')) return;
+            
+            e.stopPropagation(); 
+            isDraggingGame = true;
+            startDot = dot;
+            
+            const svg = document.getElementById('game-svg');
+            const rect = svg.getBoundingClientRect();
+            const dotRect = dot.getBoundingClientRect();
+            
+            const startX = dotRect.left + dotRect.width/2 - rect.left;
+            const startY = dotRect.top + dotRect.height/2 - rect.top;
+            
+            draggingLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            draggingLine.setAttribute('x1', startX);
+            draggingLine.setAttribute('y1', startY);
+            draggingLine.setAttribute('x2', startX);
+            draggingLine.setAttribute('y2', startY);
+            draggingLine.setAttribute('stroke', 'rgba(255,255,255,0.8)');
+            draggingLine.setAttribute('stroke-width', '4');
+            draggingLine.setAttribute('stroke-dasharray', '5,5');
+            svg.appendChild(draggingLine);
+        }
+
+        function onGameDrag(e) {
+            if (!isDraggingGame || !draggingLine) return;
+            
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            
+            const svg = document.getElementById('game-svg');
+            const rect = svg.getBoundingClientRect();
+            
+            draggingLine.setAttribute('x2', clientX - rect.left);
+            draggingLine.setAttribute('y2', clientY - rect.top);
+            
+            draggingLine.style.pointerEvents = 'none';
+            const hoveredEl = document.elementFromPoint(clientX, clientY);
+            
+            if (hoveredEl && hoveredEl.classList.contains('dot') && hoveredEl.className !== startDot.className && !hoveredEl.classList.contains('active')) {
+                if (hoveredEl.dataset.index === startDot.dataset.index) {
+                    draggingLine.setAttribute('stroke', 'var(--accent-green)');
+                } else {
+                    draggingLine.setAttribute('stroke', 'var(--accent-red)');
+                }
+            } else {
+                draggingLine.setAttribute('stroke', 'rgba(255,255,255,0.8)');
+            }
+        }
+
+        function onGameDrop(e) {
+            if (!isDraggingGame) return;
+            isDraggingGame = false;
+            
+            const clientX = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
+            const clientY = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
+            
+            const hoveredEl = document.elementFromPoint(clientX, clientY);
+            
+            if (hoveredEl && hoveredEl.classList.contains('dot') && hoveredEl.className !== startDot.className && !hoveredEl.classList.contains('active')) {
+                if (hoveredEl.dataset.index === startDot.dataset.index) {
+                    hoveredEl.classList.add('active');
+                    startDot.classList.add('active');
+                    connections.push({from: startDot, to: hoveredEl});
+                    
+                    if (draggingLine) draggingLine.remove();
+                    drawConnections();
+                    
+                    if (connections.length === 5) {
+                        document.getElementById('game-feedback').style.display = 'block';
+                    }
+                } else {
+                    if (draggingLine) {
+                        draggingLine.setAttribute('stroke', 'var(--accent-red)');
+                        draggingLine.setAttribute('stroke-dasharray', '');
+                        const tempLine = draggingLine;
+                        setTimeout(() => tempLine.remove(), 400);
+                    }
+                }
+            } else {
+                if (draggingLine) draggingLine.remove();
+            }
+            
+            draggingLine = null;
+            startDot = null;
+        }
+
+        window.addEventListener('mousemove', onGameDrag);
+        window.addEventListener('touchmove', onGameDrag, {passive: false});
+        window.addEventListener('mouseup', onGameDrop);
+        window.addEventListener('touchend', onGameDrop);
+
+        function drawConnections() {
+            const svg = document.getElementById('game-svg'); 
+            svg.innerHTML = ''; 
+            const rect = svg.getBoundingClientRect();
+            connections.forEach(conn => {
+                const r1 = conn.from.getBoundingClientRect(), r2 = conn.to.getBoundingClientRect();
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', r1.left + r1.width/2 - rect.left); 
+                line.setAttribute('y1', r1.top + r1.height/2 - rect.top);
+                line.setAttribute('x2', r2.left + r2.width/2 - rect.left); 
+                line.setAttribute('y2', r2.top + r2.height/2 - rect.top);
+                line.setAttribute('stroke', 'var(--accent-green)'); 
+                line.setAttribute('stroke-width', '4'); 
+                svg.appendChild(line);
+            });
+        }
+        
+        function resetGame() { 
+            document.getElementById('game-feedback').style.display = 'none'; 
+            document.getElementById('game-svg').innerHTML = ''; 
+            initGame(); 
+        }
+
+        const toolbar = document.getElementById('toolbar'), dragHandle = document.getElementById('drag-handle');
+        let isDraggingToolbar = false, dragOffY = 0;
+        const startDrag = (y) => { isDraggingToolbar = true; dragOffY = y - toolbar.offsetTop; };
+        const moveDrag = (y) => { if (isDraggingToolbar) { toolbar.style.top = (y - dragOffY) + 'px'; toolbar.style.bottom = 'auto'; toolbar.style.transform = 'none'; } };
+        dragHandle.addEventListener('mousedown', (e) => startDrag(e.clientY)); window.addEventListener('mousemove', (e) => moveDrag(e.clientY)); window.addEventListener('mouseup', () => isDraggingToolbar = false);
+        dragHandle.addEventListener('touchstart', (e) => startDrag(e.touches[0].clientY)); window.addEventListener('touchmove', (e) => moveDrag(e.touches[0].clientY)); window.addEventListener('touchend', () => isDraggingToolbar = false);
+
+        // Particle Simulation
+        class Particle {
+            constructor(x, y, vx, vy, radius, color) {
+                this.x = x; this.y = y; this.vx = vx; this.vy = vy; this.radius = radius; this.color = color;
+            }
+            update(width, height) {
+                this.x += this.vx; this.y += this.vy;
+                if (this.x - this.radius < 0) { this.x = this.radius; this.vx *= -1; }
+                else if (this.x + this.radius > width) { this.x = width - this.radius; this.vx *= -1; }
+                if (this.y - this.radius < 0) { this.y = this.radius; this.vy *= -1; }
+                else if (this.y + this.radius > height) { this.y = height - this.radius; this.vy *= -1; }
+            }
+            draw(ctx) {
+                ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = this.color; ctx.fill(); ctx.closePath();
+            }
+        }
+
+        function createGasSimulation(canvasId, numBlue, numRed, speedMultiplier) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const particles = [];
+            const radius = 6;
+            
+            const addParticles = (num, color, speedScale) => {
+                for (let i = 0; i < num; i++) {
+                    const x = radius + Math.random() * (canvas.width - 2 * radius);
+                    const y = radius + Math.random() * (canvas.height - 2 * radius);
+                    const angle = Math.random() * Math.PI * 2;
+                    const speed = (0.5 + Math.random() * 1.5) * speedScale;
+                    particles.push(new Particle(x, y, Math.cos(angle) * speed, Math.sin(angle) * speed, radius, color));
+                }
+            };
+
+            addParticles(numBlue, '#38bdf8', speedMultiplier);
+            addParticles(numRed, '#f87171', speedMultiplier * 1.5); // Red is faster
+
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                // Particle Collision
+                for (let i = 0; i < particles.length; i++) {
+                    for (let j = i + 1; j < particles.length; j++) {
+                        const p1 = particles[i], p2 = particles[j];
+                        const dx = p2.x - p1.x, dy = p2.y - p1.y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        if (dist < p1.radius + p2.radius) {
+                            const nx = dx / dist, ny = dy / dist;
+                            const p = (p1.vx * nx + p1.vy * ny - p2.vx * nx - p2.vy * ny);
+                            p1.vx -= p * nx; p1.vy -= p * ny;
+                            p2.vx += p * nx; p2.vy += p * ny;
+                            const overlap = p1.radius + p2.radius - dist;
+                            p1.x -= nx * overlap / 2; p1.y -= ny * overlap / 2;
+                            p2.x += nx * overlap / 2; p2.y += ny * overlap / 2;
+                        }
+                    }
+                }
+                particles.forEach(p => { p.update(canvas.width, canvas.height); p.draw(ctx); });
+                requestAnimationFrame(animate);
+            }
+            animate();
+        }
+
+        setTimeout(() => {
+            createGasSimulation('canvas-gas1', 6, 0, 1);
+            createGasSimulation('canvas-gas2', 0, 4, 1.3);
+            createGasSimulation('canvas-gas3', 6, 4, 1.1);
+        }, 100);
+
+        // ========= Saturated Vapor Pressure Interactive Simulation =========
+        function initSatVaporSim() {
+            const pvCanvas = document.getElementById('canvas-pv');
+            const pistonCanvas = document.getElementById('canvas-piston');
+            const label = document.getElementById('sat-vp-label');
+            if (!pvCanvas || !pistonCanvas) return;
+
+            // --- Setup canvas resolution ---
+            function setupCanvas(c) {
+                const rect = c.getBoundingClientRect();
+                c.width = rect.width * window.devicePixelRatio || rect.width;
+                c.height = rect.height * window.devicePixelRatio || rect.height;
+                const ctx = c.getContext('2d');
+                ctx.scale(window.devicePixelRatio || 1, window.devicePixelRatio || 1);
+                return { ctx, w: rect.width, h: rect.height };
+            }
+
+            const pv = setupCanvas(pvCanvas);
+            const pc = setupCanvas(pistonCanvas);
+
+            // --- State ---
+            const WALL_X = 0.08;       // fraction where container wall is located
+            const PISTON_MIN_X = 0.20; // fraction of container width (leftmost)
+            const PISTON_MAX_X = 0.95; // fraction (rightmost)
+            const TURN_X = 0.50;       // fraction where liquid disappears
+            let pistonFrac = 0.30;     // current piston position fraction
+            let isDragging = false;
+
+            // --- Particle system ---
+            const MAX_PARTICLES = 28;
+            const PARTICLE_RADIUS = 3.5;
+            const PARTICLE_SPEED = 1.3;
+            let particles = [];
+
+            function makeParticle(xMin, xMax, yMin, yMax) {
+                const angle = Math.random() * Math.PI * 2;
+                return {
+                    x: xMin + Math.random() * (xMax - xMin),
+                    y: yMin + Math.random() * (yMax - yMin),
+                    vx: Math.cos(angle) * PARTICLE_SPEED,
+                    vy: Math.sin(angle) * PARTICLE_SPEED
+                };
+            }
+
+            function syncParticles() {
+                // How many particles should exist?
+                let targetN;
+                if (pistonFrac <= TURN_X) {
+                    // Liquid-vapor coexistence: n proportional to volume
+                    targetN = Math.round(MAX_PARTICLES * (pistonFrac - PISTON_MIN_X) / (TURN_X - PISTON_MIN_X));
+                    targetN = Math.max(4, targetN);
+                } else {
+                    // All vapor: count stays at MAX
+                    targetN = MAX_PARTICLES;
+                }
+
+                // Compute gas space bounds
+                const pistonX = pistonFrac * pc.w;
+                const wallX = 0.08 * pc.w;
+                const pistonTop = 0.12 * pc.h;
+                const gasBottom = liquidSurface();
+
+                while (particles.length < targetN) {
+                    particles.push(makeParticle(wallX + PARTICLE_RADIUS, pistonX - PARTICLE_RADIUS, pistonTop + PARTICLE_RADIUS, gasBottom - PARTICLE_RADIUS));
+                }
+                while (particles.length > targetN) {
+                    particles.splice(Math.floor(Math.random() * particles.length), 1);
+                }
+            }
+
+            function liquidSurface() {
+                // Returns Y coordinate of liquid top surface inside container
+                const maxLiqH = 0.30 * pc.h; // max liquid height
+                const containerBottom = 0.92 * pc.h;
+                if (pistonFrac >= TURN_X) return containerBottom; // no liquid
+                const liquidFrac = 1 - (pistonFrac - PISTON_MIN_X) / (TURN_X - PISTON_MIN_X);
+                return containerBottom - liquidFrac * maxLiqH;
+            }
+
+            // --- Draw piston container ---
+            function drawPiston() {
+                const ctx = pc.ctx;
+                const w = pc.w, h = pc.h;
+                ctx.clearRect(0, 0, w, h);
+
+                const wallX = WALL_X * w;
+                const pistonX = pistonFrac * w;
+                const containerTop = 0.05 * h;
+                const containerBottom = 0.92 * h;
+                const liqSurface = liquidSurface();
+
+                // Container walls — all four sides fully closed
+                ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                // left wall
+                ctx.moveTo(wallX, containerTop);
+                ctx.lineTo(wallX, containerBottom);
+                // bottom
+                ctx.lineTo(pistonX, containerBottom);
+                ctx.stroke();
+                // top wall (solid white line — closes the container)
+                ctx.beginPath();
+                ctx.moveTo(wallX, containerTop);
+                ctx.lineTo(pistonX, containerTop);
+                ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([]);
+                ctx.stroke();
+
+                // Liquid water (blue fill)
+                if (pistonFrac < TURN_X) {
+                    ctx.fillStyle = 'rgba(56, 189, 248, 0.35)';
+                    ctx.fillRect(wallX + 1, liqSurface, pistonX - wallX - 2, containerBottom - liqSurface);
+                    // Wavy surface
+                    ctx.strokeStyle = 'rgba(56,189,248,0.8)';
+                    ctx.lineWidth = 1.5;
+                    ctx.beginPath();
+                    const waveCount = 6;
+                    const segW = (pistonX - wallX) / waveCount;
+                    ctx.moveTo(wallX, liqSurface);
+                    for (let i = 0; i < waveCount; i++) {
+                        const xMid = wallX + segW * (i + 0.5);
+                        const xEnd = wallX + segW * (i + 1);
+                        ctx.quadraticCurveTo(xMid, liqSurface - 3 * Math.sin(Date.now() / 400 + i), xEnd, liqSurface);
+                    }
+                    ctx.stroke();
+
+                    // Water label — fixed position BELOW the container, outside piston
+                    ctx.fillStyle = 'rgba(56,189,248,0.85)';
+                    ctx.font = `bold ${Math.max(9, w * 0.048)}px sans-serif`;
+                    ctx.textAlign = 'left';
+                    ctx.fillText('▲ 液態水 H₂O', wallX + 4, h - 3);
+                }
+
+                // Piston
+                const pistonWidth = Math.max(14, w * 0.06);
+                const grad = ctx.createLinearGradient(pistonX, 0, pistonX + pistonWidth, 0);
+                grad.addColorStop(0, 'rgba(148,163,184,0.9)');
+                grad.addColorStop(1, 'rgba(71,85,105,0.9)');
+                ctx.fillStyle = grad;
+                ctx.fillRect(pistonX, containerTop, pistonWidth, containerBottom - containerTop);
+                ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(pistonX, containerTop, pistonWidth, containerBottom - containerTop);
+                // Piston grip lines
+                ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+                for (let i = 0.2; i < 1; i += 0.2) {
+                    const gy = containerTop + (containerBottom - containerTop) * i;
+                    ctx.beginPath();
+                    ctx.moveTo(pistonX + 3, gy);
+                    ctx.lineTo(pistonX + pistonWidth - 3, gy);
+                    ctx.stroke();
+                }
+                // Arrow hint on piston
+                ctx.fillStyle = 'rgba(251,191,36,0.85)';
+                ctx.font = `bold ${Math.max(12, w * 0.055)}px sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.fillText('⟺', pistonX + pistonWidth / 2, (containerTop + containerBottom) / 2 + 4);
+
+                // Particles
+                particles.forEach(p => {
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, PARTICLE_RADIUS, 0, Math.PI * 2);
+                    ctx.fillStyle = '#34d399';
+                    ctx.fill();
+                    // Motion trail
+                    ctx.beginPath();
+                    ctx.arc(p.x - p.vx * 2, p.y - p.vy * 2, PARTICLE_RADIUS * 0.4, 0, Math.PI * 2);
+                    ctx.fillStyle = 'rgba(52,211,153,0.3)';
+                    ctx.fill();
+                });
+
+                // Drag hint text
+                ctx.fillStyle = 'rgba(255,255,255,0.3)';
+                ctx.font = `${Math.max(9, w * 0.045)}px sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.fillText('← 拖曳活塞 →', (wallX + pistonX) / 2, containerTop + 18);
+            }
+
+            // --- Draw P-V diagram ---
+            function drawPV() {
+                const ctx = pv.ctx;
+                const w = pv.w, h = pv.h;
+                ctx.clearRect(0, 0, w, h);
+
+                const pad = { l: WALL_X * w, r: (1 - PISTON_MAX_X) * w, t: 12, b: 26 };
+                const gw = w - pad.l - pad.r;
+                const gh = h - pad.t - pad.b;
+
+                // Background
+                ctx.fillStyle = 'rgba(0,0,0,0.4)';
+                ctx.fillRect(pad.l, pad.t, gw, gh);
+
+                // Grid
+                ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+                ctx.lineWidth = 1;
+                for (let i = 1; i < 4; i++) {
+                    const gy = pad.t + gh * i / 4;
+                    ctx.beginPath(); ctx.moveTo(pad.l, gy); ctx.lineTo(pad.l + gw, gy); ctx.stroke();
+                }
+                for (let i = 1; i < 5; i++) {
+                    const gx = pad.l + gw * i / 5;
+                    ctx.beginPath(); ctx.moveTo(gx, pad.t); ctx.lineTo(gx, pad.t + gh); ctx.stroke();
+                }
+
+                // Axes
+                ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.moveTo(pad.l, pad.t); ctx.lineTo(pad.l, pad.t + gh); ctx.lineTo(pad.l + gw, pad.t + gh);
+                ctx.stroke();
+
+                // Axis labels
+                ctx.fillStyle = 'rgba(255,255,255,0.6)';
+                ctx.font = `${Math.max(9, w * 0.06)}px sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.fillText('V（體積）', pad.l + gw / 2, h - 3);
+                ctx.save(); ctx.translate(10, pad.t + gh / 2); ctx.rotate(-Math.PI / 2);
+                ctx.fillText('P（壓力）', 0, 0); ctx.restore();
+
+                // Curve: Phase1 = flat Psat from Vmin to Vturn; Phase2 = 1/V from Vturn onwards
+                const Vmin = WALL_X;
+                const Vturn = TURN_X;
+                const Vmax = PISTON_MAX_X;
+                const Psat_y = 0.28 * gh; // Y position of Psat line (from top of graph area)
+
+                // Convert V fraction → canvas x
+                const vToX = (vf) => pad.l + (vf - Vmin) / (Vmax - Vmin) * gw;
+                // Convert P (0-1) → canvas y: P=1 at top, P=0 at bottom
+                const pToY = (pf) => pad.t + (1 - pf) * gh;
+
+                // Shade: liquid-vapor region
+                ctx.fillStyle = 'rgba(56,189,248,0.08)';
+                ctx.fillRect(pad.l, pad.t, vToX(Vturn) - pad.l, gh);
+
+                // Phase 1: horizontal Psat line
+                ctx.beginPath();
+                ctx.moveTo(vToX(Vmin), pToY(0.72));
+                ctx.lineTo(vToX(Vturn), pToY(0.72));
+                ctx.strokeStyle = 'rgba(56,189,248,0.9)';
+                ctx.lineWidth = 2.5;
+                ctx.stroke();
+
+                // Phase 2: inverse curve P = Psat * Vturn / V
+                ctx.beginPath();
+                ctx.moveTo(vToX(Vturn), pToY(0.72));
+                for (let vf = Vturn; vf <= Vmax; vf += 0.01) {
+                    const pf = 0.72 * Vturn / vf;
+                    ctx.lineTo(vToX(vf), pToY(pf));
+                }
+                ctx.strokeStyle = 'rgba(168,85,247,0.9)';
+                ctx.lineWidth = 2.5;
+                ctx.stroke();
+
+                // Turn point marker
+                ctx.beginPath();
+                ctx.arc(vToX(Vturn), pToY(0.72), 4, 0, Math.PI * 2);
+                ctx.fillStyle = 'white';
+                ctx.fill();
+
+                // Psat label
+                ctx.fillStyle = 'rgba(56,189,248,0.8)';
+                ctx.font = `${Math.max(8, w * 0.052)}px sans-serif`;
+                ctx.textAlign = 'left';
+                ctx.fillText('P_sat', pad.l + 3, pToY(0.72) - 4);
+
+                // Red dot: current position
+                let dotX, dotY;
+                if (pistonFrac <= Vturn) {
+                    dotX = vToX(pistonFrac);
+                    dotY = pToY(0.72);
+                } else {
+                    const pf = 0.72 * Vturn / pistonFrac;
+                    dotX = vToX(pistonFrac);
+                    dotY = pToY(pf);
+                }
+                // Glow
+                const glowGrad = ctx.createRadialGradient(dotX, dotY, 0, dotX, dotY, 12);
+                glowGrad.addColorStop(0, 'rgba(248,113,113,0.5)');
+                glowGrad.addColorStop(1, 'rgba(248,113,113,0)');
+                ctx.beginPath();
+                ctx.arc(dotX, dotY, 12, 0, Math.PI * 2);
+                ctx.fillStyle = glowGrad;
+                ctx.fill();
+                // Dot
+                ctx.beginPath();
+                ctx.arc(dotX, dotY, 5.5, 0, Math.PI * 2);
+                ctx.fillStyle = '#f87171';
+                ctx.fill();
+                ctx.strokeStyle = 'white';
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+            }
+
+            // --- Update particles ---
+            function updateParticles() {
+                const pistonX = pistonFrac * pc.w;
+                const wallX = 0.08 * pc.w;
+                const pistonTop = 0.12 * pc.h;
+                const gasBottom = liquidSurface();
+
+                particles.forEach(p => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    // Bounce off left wall
+                    if (p.x - PARTICLE_RADIUS < wallX) { p.x = wallX + PARTICLE_RADIUS; p.vx = Math.abs(p.vx); }
+                    // Bounce off piston
+                    if (p.x + PARTICLE_RADIUS > pistonX) { p.x = pistonX - PARTICLE_RADIUS; p.vx = -Math.abs(p.vx); }
+                    // Bounce off top
+                    if (p.y - PARTICLE_RADIUS < pistonTop) { p.y = pistonTop + PARTICLE_RADIUS; p.vy = Math.abs(p.vy); }
+                    // Bounce off liquid surface
+                    if (p.y + PARTICLE_RADIUS > gasBottom) { p.y = gasBottom - PARTICLE_RADIUS; p.vy = -Math.abs(p.vy); }
+                });
+            }
+
+            // --- Update status label ---
+            function updateLabel() {
+                if (pistonFrac < TURN_X) {
+                    label.innerHTML = '狀態：<strong style="color:#38bdf8">液氣共存</strong> ｜ 壓力恆等於 <strong style="color:#f87171">P<sub>sat</sub></strong>（飽和蒸氣壓）';
+                } else {
+                    label.innerHTML = '狀態：<strong style="color:#a855f7">全部汽化</strong> ｜ 壓力隨體積增大而<strong style="color:#fbbf24">減小</strong>（波以耳定律）';
+                }
+                if (typeof MathJax !== 'undefined') MathJax.typesetPromise([label]).catch(() => {});
+            }
+
+            // --- Main loop ---
+            function loop() {
+                syncParticles();
+                updateParticles();
+                drawPiston();
+                drawPV();
+                requestAnimationFrame(loop);
+            }
+            loop();
+
+            // --- Drag events on piston canvas ---
+            function getPistonFrac(clientX) {
+                const rect = pistonCanvas.getBoundingClientRect();
+                const x = clientX - rect.left;
+                return Math.max(PISTON_MIN_X + 0.01, Math.min(PISTON_MAX_X - 0.01, x / rect.width));
+            }
+
+            pistonCanvas.addEventListener('mousedown', (e) => { isDragging = true; pistonFrac = getPistonFrac(e.clientX); updateLabel(); });
+            window.addEventListener('mousemove', (e) => { if (isDragging) { pistonFrac = getPistonFrac(e.clientX); updateLabel(); } });
+            window.addEventListener('mouseup', () => { isDragging = false; });
+            pistonCanvas.addEventListener('touchstart', (e) => { e.preventDefault(); isDragging = true; pistonFrac = getPistonFrac(e.touches[0].clientX); updateLabel(); }, { passive: false });
+            window.addEventListener('touchmove', (e) => { if (isDragging) { e.preventDefault(); pistonFrac = getPistonFrac(e.touches[0].clientX); updateLabel(); } }, { passive: false });
+            window.addEventListener('touchend', () => { isDragging = false; });
+        }
+
+        // Init when slide becomes visible (use slide change hook)
+        let satVpInited = false;
+        const origShowSlide = window.showSlide;
+        window.showSlide = function(n) {
+            if (origShowSlide) origShowSlide(n);
+            if (!satVpInited) { initSatVaporSim(); satVpInited = true; }
+        };
+        // Also init after a short delay to catch first paint
+        setTimeout(() => { if (!satVpInited) { initSatVaporSim(); satVpInited = true; } }, 500);
+    </script>
+</body>
+</html>

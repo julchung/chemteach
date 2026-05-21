@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>擴散與逸散 - 互動教學</title>
+    <script>
+        MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']], processEscapes: true },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        :root {
+            --bg-dark: #0b1120;
+            --bg-panel: rgba(30, 41, 59, 0.7);
+            --text-main: #f8fafc;
+            --accent-blue: #38bdf8;
+            --accent-green: #34d399;
+            --accent-red: #f87171;
+            --accent-yellow: #fbbf24;
+            --accent-purple: #a855f7;
+            --accent-cyan: #22d3ee;
+        }
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+        body, html { width: 100%; height: 100%; background-color: var(--bg-dark); color: var(--text-main); font-family: 'Segoe UI', 'Microsoft JhengHei', Tahoma, Geneva, Verdana, sans-serif; overflow: hidden; background-image: radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px); background-size: 30px 30px; }
+        #app { position: relative; width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: center; overflow: hidden; }
+        #start-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--bg-dark); z-index: 100; display: flex; flex-direction: column; justify-content: center; align-items: center; background-image: radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px); background-size: 30px 30px; }
+        #presentation-area { position: relative; width: 100vw; height: 100vh; background: transparent; overflow: hidden; }
+        #slides-container { position: absolute; top: 2vh; left: 5vw; right: 5vw; bottom: 5vh; }
+        
+        .slide { position: absolute; top: 0; left: 0; width: 100%; height: 100%; padding: 0.5rem 6rem 1rem 2rem; opacity: 0; pointer-events: none; transition: opacity 0.5s ease; display: flex; flex-direction: column; overflow-y: auto; overflow-x: hidden; }
+        @media (max-width: 768px) { .slide { padding: 0.5rem 4.5rem 1rem 1.5rem; } }
+        .slide.active { opacity: 1; pointer-events: auto; z-index: 10; }
+        
+        .slide h1 { color: var(--accent-blue); font-size: clamp(1.8rem, 2.5vw, 2.4rem); margin-bottom: 0.5rem; text-align: center; border-bottom: 2px solid rgba(56, 189, 248, 0.3); padding-bottom: 0.4rem; flex-shrink: 0; }
+        .slide h2 { color: var(--accent-yellow); font-size: clamp(1.4rem, 2vw, 1.8rem); margin-top: 0.5rem; margin-bottom: 0.8rem; }
+        .slide p, .slide li { font-size: clamp(1.1rem, 1.5vw, 1.4rem); line-height: 1.6; margin-bottom: 0.6rem; }
+        
+        .formula-box { background: rgba(0,0,0,0.3); border-left: 5px solid var(--accent-green); padding: clamp(0.5rem, 1.5vw, 1rem); border-radius: 0 10px 10px 0; margin: 1rem 0; font-size: clamp(1.2rem, 2vw, 1.8rem); text-align: center; overflow-x: auto; }
+        .flex-row { display: flex; flex-wrap: wrap; gap: 2rem; margin-top: 1rem; flex: 1; min-height: 0; }
+        .flex-col { flex: 1 1 400px; background: rgba(255,255,255,0.03); padding: 1.5rem; border-radius: 10px; overflow-x: auto; display: flex; flex-direction: column; }
+        .rule-card { background: rgba(56, 189, 248, 0.1); border: 1px solid var(--accent-blue); padding: 1rem; border-radius: 10px; margin-bottom: 1rem; }
+        
+        #drawing-layer { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 20; pointer-events: none; touch-action: none; }
+        #drawing-layer.drawing-active { pointer-events: auto; }
+        
+        #toolbar { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); background: rgba(15, 23, 42, 0.9); padding: 10px 5px; border-radius: 20px; display: flex; flex-direction: column; gap: 8px; align-items: center; z-index: 2000; border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 10px 25px rgba(0,0,0,0.5); backdrop-filter: blur(10px); width: 45px; }
+        .btn-tool { background: transparent; color: rgba(255,255,255,0.6); border: 1px solid rgba(255,255,255,0.2); padding: 6px 10px; border-radius: 15px; cursor: pointer; font-size: 0.8rem; font-weight: normal; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 5px; width: 100%; text-align: center; }
+        .btn-tool:hover { background: rgba(255,255,255,0.1); }
+        .btn-tool.active-tool, .btn-tool.primary { background: var(--accent-blue); border-color: var(--accent-blue); color: #000; }
+        .btn-tool svg { width: 20px; height: 20px; fill: currentColor; }
+        
+        .color-picker { display: none; grid-template-columns: 1fr; width: 100%; padding-top: 5px; gap: 4px; }
+        .color-swatch { width: 20px; height: 20px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; transition: transform 0.2s; margin: 0 auto; }
+        .color-swatch.selected { border-color: white; transform: scale(1.2); }
+        
+        #drag-handle { width: 100%; text-align: center; color: rgba(255,255,255,0.4); cursor: grab; padding: 2px 0; margin-bottom: 5px; margin-top: -5px; user-select: none; font-size: 1.2rem; line-height: 0.5; }
+        
+        #slide-info { position: absolute; bottom: 20px; left: 20px; z-index: 15; font-size: 1.2rem; font-weight: bold; color: rgba(255,255,255,0.4); background: rgba(0,0,0,0.3); padding: 5px 12px; border-radius: 10px; backdrop-filter: blur(5px); border: 1px solid rgba(255,255,255,0.1); }
+        
+        .game-item { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 8px 15px; border-radius: 12px; display: flex; align-items: center; width: 100%; min-height: 55px; height: 10vh; max-height: 90px; transition: all 0.2s; position: relative; font-size: 1.1rem; gap: 10px; overflow: visible; }
+        #left-column .game-item { justify-content: flex-start; text-align: left; }
+        #right-column .game-item { justify-content: flex-end; text-align: right; }
+        .game-item span { flex: 1; min-width: 0; white-space: normal; overflow-wrap: break-word; line-height: 1.2; }
+        .dot { width: 16px; height: 16px; background: #fff; border-radius: 50%; cursor: pointer; box-shadow: 0 0 10px rgba(255,255,255,0.5); transition: transform 0.2s, background 0.2s; flex-shrink: 0; z-index: 5; }
+        .left-dot { margin-left: auto; }
+        .right-dot { margin-right: auto; }
+        .dot:hover { transform: scale(1.3); background: var(--accent-blue); }
+        .dot.active { background: var(--accent-green); box-shadow: 0 0 15px var(--accent-green); }
+        .text-red { color: var(--accent-red); }
+        .text-cyan { color: var(--accent-cyan); }
+        
+        /* Demo specific styles */
+        .demo-container {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+        .demo-canvas {
+            width: 100%;
+            max-width: 350px;
+            height: 120px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            background: #000;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div id="start-overlay">
+            <h1 style="color: var(--accent-blue); font-size: clamp(2.5rem, 5vw, 4rem); margin-bottom: 1rem; text-align: center;">擴散與逸散</h1>
+            <p style="color: rgba(255,255,255,0.7); font-size: clamp(1.2rem, 3vw, 1.5rem); margin-bottom: 3rem; text-align: center;">格銳目定律及其應用</p>
+            <button id="btn-start" class="btn primary" style="font-size: clamp(1.2rem, 2.5vw, 1.5rem); padding: 15px 40px;">▶ 點擊進入全螢幕教學</button>
+        </div>
+
+        <div id="presentation-area">
+            <div id="slides-container">
+                <!-- Slide 1: Concepts -->
+                <div class="slide active">
+                    <h1>擴散與逸散的概念</h1>
+                    <div class="flex-row">
+                        <!-- Left: Diffusion -->
+                        <div class="flex-col" style="background: rgba(56, 189, 248, 0.05); border: 1px solid rgba(56, 189, 248, 0.2); display: flex; flex-direction: column;">
+                            <h2 class="text-yellow">擴散 (Diffusion)</h2>
+                            <p>氣體分子因自身運動而由高濃度向低濃度擴展，最終達到均勻分布。例如：香水味在室內傳播。</p>
+                            <div class="demo-container" style="margin-top: auto; background: rgba(0,0,0,0.4);">
+                                <h3 style="color: var(--accent-blue); margin-bottom: 5px; font-size: 1.1rem;">擴散動態演示</h3>
+                                <canvas id="diffusion-canvas" class="demo-canvas"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Right: Effusion -->
+                        <div class="flex-col" style="background: rgba(168, 85, 247, 0.05); border: 1px solid rgba(168, 85, 247, 0.2); display: flex; flex-direction: column;">
+                            <h2 class="text-yellow">逸散 (Effusion)</h2>
+                            <p>氣體分子經由微小孔徑進入另一空間（或真空）的過程。</p>
+                            <div class="demo-container" style="margin-top: auto; background: rgba(0,0,0,0.4);">
+                                <h3 style="color: var(--accent-purple); margin-bottom: 5px; font-size: 1.1rem;">逸散動態演示</h3>
+                                <canvas id="effusion-canvas" class="demo-canvas"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 2: Graham's Law & Kinetic Energy -->
+                <div class="slide">
+                    <h1>格銳目定律與運動速率</h1>
+                    <div class="flex-row" style="gap: 1rem;">
+                        <!-- Left Column: Graham's Law -->
+                        <div class="flex-col" style="flex: 1.3; min-width: 0;">
+                            <h2 class="text-yellow" style="font-size: 1.2rem;">格銳目定律內容</h2>
+                            <p style="text-align: left; font-size: 1rem;">在同溫同壓下，氣體的逸散速率 ($r$) 與其分子量 ($M$) 的 <strong class="text-cyan">平方根</strong> 成反比。</p>
+                            <div class="formula-box" style="margin: 8px 0; font-size: 1.1rem;">
+                                $r \propto \frac{1}{\sqrt{M}} \implies \frac{r_1}{r_2} = \sqrt{\frac{M_2}{M_1}}$
+                            </div>
+                            
+                            <h2 class="text-yellow" style="margin-top: 0.5rem; font-size: 1.2rem;">平均動能與速率</h2>
+                            <p style="text-align: left; font-size: 1rem;">相同溫度下，各氣體分子的平均動能相等：</p>
+                            <div class="formula-box" style="font-size: 1.2rem; border-left-color: var(--accent-red); margin: 8px 0;">
+                                $\overline{E_k} = \frac{3}{2}kT \implies v_{rms} = \sqrt{\frac{3RT}{M}}$
+                            </div>
+                        </div>
+
+                        <!-- Middle Column: Distribution Graph (SVG) -->
+                        <div class="flex-col" style="flex: 1; min-width: 0; background: #cccccc; border-radius: 10px; padding: 15px; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: inset 0 0 10px rgba(0,0,0,0.1);">
+                            <h3 style="color: #333; font-size: 1.1rem; margin-bottom: 10px; font-weight: bold;">分子速率分佈曲線 ($T_2 > T_1$)</h3>
+                            <svg viewBox="0 0 400 280" style="width: 100%; height: auto; font-family: Arial, sans-serif;">
+                                <!-- Chart Background -->
+                                <rect x="50" y="30" width="330" height="210" fill="white" stroke="#333" stroke-width="1"/>
+                                
+                                <!-- Axes Ticks -->
+                                <g stroke="#000" stroke-width="1">
+                                    <line x1="50" y1="240" x2="50" y2="245" />
+                                    <line x1="116" y1="240" x2="116" y2="245" />
+                                    <line x1="182" y1="240" x2="182" y2="245" />
+                                    <line x1="248" y1="240" x2="248" y2="245" />
+                                    <line x1="314" y1="240" x2="314" y2="245" />
+                                    <line x1="380" y1="240" x2="380" y2="245" />
+                                </g>
+
+                                <!-- Axes Numbers -->
+                                <g font-size="10" text-anchor="middle" fill="#000">
+                                    <text x="50" y="258">0</text>
+                                    <text x="116" y="258">400</text>
+                                    <text x="182" y="258">800</text>
+                                    <text x="248" y="258">1200</text>
+                                    <text x="314" y="258">1600</text>
+                                    <text x="380" y="258">2000</text>
+                                </g>
+
+                                <!-- Y Axis Title -->
+                                <g transform="translate(15, 135) rotate(-90)" font-size="11" text-anchor="middle" fill="#000" font-style="italic">
+                                    <text y="0">Fraction of molecules</text>
+                                    <text y="12">at a particular speed</text>
+                                </g>
+                                <path d="M 18 45 L 25 35 L 32 45" fill="none" stroke="#000" stroke-width="1.5" transform="translate(25, 0)"/>
+                                <line x1="50" y1="35" x2="50" y2="240" stroke="#000" stroke-width="1.5" />
+
+                                <!-- X Axis Title -->
+                                <text x="215" y="275" font-size="12" font-weight="bold" text-anchor="middle" fill="#000">Molecular speed (m/s)</text>
+                                <line x1="50" y1="240" x2="380" y2="240" stroke="#000" stroke-width="1.5" />
+
+                                <!-- Curves -->
+                                <!-- T1 Curve (Low T) - Sharper and smoother -->
+                                <path d="M 50 240 C 70 240, 100 40, 120 40 C 145 40, 170 210, 330 240" fill="none" stroke="#333" stroke-width="2.5" />
+                                <text x="140" y="45" font-size="14" font-weight="bold" fill="#333">T1</text>
+
+                                <!-- T2 Curve (High T) - Lower and broader -->
+                                <path d="M 50 240 C 100 240, 180 120, 220 120 C 270 120, 330 210, 380 230" fill="none" stroke="#777" stroke-width="2.5" />
+                                <text x="250" y="130" font-size="14" font-weight="bold" fill="#777">T2</text>
+                                
+                                <path d="M 350 215 L 380 225" stroke="#777" stroke-width="2.5" stroke-dasharray="4,4" fill="none" />
+
+                                <!-- Comparison Note -->
+                                <text x="300" y="60" font-size="12" font-weight="bold" fill="#000">(T2 > T1)</text>
+                            </svg>
+                        </div>
+
+                        <!-- Right Column: Rate Expressions -->
+                        <div class="flex-col" style="flex: 1.3; min-width: 0;">
+                            <h2 class="text-green" style="font-size: 1.2rem;">速率的表達方式</h2>
+                            <ul style="margin-left: 1.2rem; font-size: 1rem; line-height: 1.4;">
+                                <li>莫耳數隨時間：$n / t$</li>
+                                <li>體積隨時間：$V / t$</li>
+                                <li>移動距離隨時間：$L / t$</li>
+                            </ul>
+                            <div class="rule-card" style="margin-top: 1rem; padding: 0.8rem;">
+                                <p style="font-size: 0.95rem;">若擴散相同距離 ($L$)，時間 ($t$) 比：</p>
+                                <div style="text-align: center; font-size: 1.2rem; margin-top: 5px;">$\frac{t_1}{t_2} = \sqrt{\frac{M_1}{M_2}}$</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 3: Kinetic Molecular Theory (KMT) -->
+                <div class="slide">
+                    <h1>氣體動力論 (Kinetic Molecular Theory)</h1>
+                    <div class="flex-row">
+                        <div class="flex-col" style="flex: 1.2;">
+                            <h2 class="text-yellow">基本假設 (Postulates)</h2>
+                            <ul style="margin-left: 1.2rem; font-size: 1rem; line-height: 1.4;">
+                                <li>氣體由大量粒子組成，體積可忽略。</li>
+                                <li>分子呈隨機運動，遵守牛頓力學。</li>
+                                <li>分子間無作用力（除碰撞時）。</li>
+                                <li>碰撞為完全彈性碰撞（無能量損失）。</li>
+                                <li>平均動能僅與絕對溫度 ($T$) 有關。</li>
+                            </ul>
+                        </div>
+                        <div class="flex-col" style="flex: 1.5; background: rgba(255,255,255,0.05); font-size: 1.3rem;">
+                            <h2 class="text-green">公式推導過程</h2>
+                            <p style="margin-bottom: 0.5rem;">1. 單個分子碰撞器壁產生的壓力：</p>
+                            <div style="background: rgba(0,0,0,0.2); padding: 10px; border-radius: 5px; margin-bottom: 1rem;">
+                                $F = \frac{\Delta p}{\Delta t} = \frac{2mv_x}{2L/v_x} = \frac{mv_x^2}{L}$
+                            </div>
+                            <p style="margin-bottom: 0.5rem;">2. $N$ 個分子總壓力 (考慮三維 $v^2 = 3v_x^2$)：</p>
+                            <div class="formula-box" style="margin: 0 0 1rem 0; text-align: left; padding: 10px;">
+                                $P = \frac{1}{3} \frac{Nm\overline{v^2}}{V}$
+                            </div>
+                            <p style="margin-bottom: 0.5rem;">3. 結合理想氣體方程式 $PV=nRT$：</p>
+                            <div style="background: rgba(56, 189, 248, 0.1); padding: 10px; border-radius: 5px; margin-bottom: 0.5rem;">
+                                $\frac{1}{3}Nm\overline{v^2} = nRT \implies \frac{1}{2}m\overline{v^2} = \frac{3}{2} \frac{R}{N_A} T$
+                            </div>
+                            <p style="color: var(--accent-yellow);">$\therefore \overline{E_k} = \frac{3}{2}kT$</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 4: Practice -->
+                <div class="slide">
+                    <h1>觀念與計算練習</h1>
+                    <div class="flex-row">
+                        <div class="flex-col" style="position: relative;">
+                            <div id="overlay-ans-1" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 50; flex-direction: column; align-items: flex-start; justify-content: flex-start; border-radius: 10px; text-align: left; border: 3px solid var(--accent-red); padding: 30px;">
+                                <div style="color: var(--accent-red); font-size: 2.2rem; font-weight: 900; margin-bottom: 20px;">解答：4 : 1</div>
+                                <div style="color: white; font-size: 1.1rem; line-height: 1.8;">
+                                    $M(H_2) = 2, M(O_2) = 32$<br>
+                                    $\frac{r_1}{r_2} = \sqrt{\frac{32}{2}} = \sqrt{16} = 4$<br>
+                                    氫氣速率是氧氣的 4 倍。
+                                </div>
+                                <button class="btn" style="margin-top: auto; width: auto; background: var(--accent-red); align-self: center;" onclick="toggleOverlay('overlay-ans-1')">關閉</button>
+                            </div>
+                            <h2 class="text-yellow">例題 1</h2>
+                            <p>在同溫同壓下，氫氣 ($H_2$) 與氧氣 ($O_2$) 的逸散速率比為何？</p>
+                            <button class="btn" style="margin-top: 2rem;" onclick="toggleOverlay('overlay-ans-1')">顯示解答</button>
+                        </div>
+                        <div class="flex-col" style="position: relative;">
+                            <div id="overlay-ans-2" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 50; flex-direction: column; align-items: flex-start; justify-content: flex-start; border-radius: 10px; text-align: left; border: 3px solid var(--accent-red); padding: 30px;">
+                                <div style="color: var(--accent-red); font-size: 2.2rem; font-weight: 900; margin-bottom: 20px;">解答：$\sqrt{2}$ 倍</div>
+                                <div style="color: white; font-size: 1.1rem; line-height: 1.8;">
+                                    $v \propto \sqrt{T}$<br>
+                                    $300\text{K} \to 600\text{K}$ (溫度翻倍)<br>
+                                    速率變為原本的 $\sqrt{2} \approx 1.414$ 倍。
+                                </div>
+                                <button class="btn" style="margin-top: auto; width: auto; background: var(--accent-red); align-self: center;" onclick="toggleOverlay('overlay-ans-2')">關閉</button>
+                            </div>
+                            <h2 class="text-yellow">例題 2</h2>
+                            <p>同種氣體將溫度由 $27^\circ C$ (300K) 升高至 $327^\circ C$ (600K)，分子的運動速率變為幾倍？</p>
+                            <button class="btn" style="margin-top: 2rem;" onclick="toggleOverlay('overlay-ans-2')">顯示解答</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 5: Game -->
+                <div class="slide" id="slide-game">
+                    <h1>單元挑戰：擴散與動力論連連看</h1>
+                    <div id="game-container" style="position: relative; flex: 1; display: flex; justify-content: space-between; padding: 20px 40px; background: rgba(0,0,0,0.2); border-radius: 20px; overflow: hidden;">
+                        <svg id="game-svg" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5;"></svg>
+                        <div id="left-column" style="display: flex; flex-direction: column; justify-content: space-around; gap: 8px; z-index: 10; width: 40%;"></div>
+                        <div id="right-column" style="display: flex; flex-direction: column; justify-content: space-around; gap: 8px; z-index: 10; width: 40%;"></div>
+                        <div id="game-feedback" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(16, 185, 129, 0.95); padding: 2rem 4rem; border-radius: 20px; font-size: 2.5rem; color: white; font-weight: bold; box-shadow: 0 0 50px rgba(16, 185, 129, 0.5); z-index: 100; text-align: center;">🎉 太棒了！</div>
+                    </div>
+                    <div style="text-align: center; margin-top: 10px;">
+                        <button class="btn" style="width: auto; display: inline-block;" onclick="resetGame()">再玩一次</button>
+                    </div>
+                </div>
+            </div>
+
+            <canvas id="drawing-layer"></canvas>
+        </div>
+
+        <div id="slide-info">1 / 5</div>
+
+        <!-- Controls Toolbar -->
+        <div id="toolbar">
+            <div id="drag-handle" title="拖曳移動工具列">≡</div>
+            <button class="btn-tool" id="btn-prev" title="上一頁">▲</button>
+            <button class="btn-tool" id="btn-next" title="下一頁">▼</button>
+            <div style="height: 1px; width: 25px; background: rgba(255,255,255,0.3); margin: 6px 0;"></div>
+            
+            <button class="btn-tool" id="btn-draw" title="手寫模式">✎</button>
+            
+            <div class="color-picker" id="color-picker">
+                <div class="color-swatch selected" style="background: #f8fafc;" data-color="#f8fafc"></div>
+                <div class="color-swatch" style="background: #f87171;" data-color="#f87171"></div>
+                <div class="color-swatch" style="background: #38bdf8;" data-color="#38bdf8"></div>
+                <div class="color-swatch" style="background: #fbbf24;" data-color="#fbbf24"></div>
+                <div class="color-swatch" style="background: #34d399;" data-color="#34d399"></div>
+            </div>
+
+            <div id="size-picker" style="display: none; flex-direction: column; align-items: center; gap: 2px; margin: 2px 0; width: 100%; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 5px;">
+                <input type="range" id="pen-size" min="1" max="20" value="3" style="width: 100%; height: 4px; cursor: pointer;">
+            </div>
+
+            <div id="eraser-tools" style="display: none; width: 100%; flex-direction: column; gap: 4px; align-items: center;">
+                <button class="btn-tool" id="btn-eraser" title="橡皮擦">
+                    <svg viewBox="0 0 24 24"><path d="M16.24,3.56L21.19,8.51C21.97,9.29 21.97,10.55 21.19,11.33L12.01,20.5H22V22.5H10.12L2.81,15.19C2.03,14.41 2.03,13.15 2.81,12.37L12,3.19C12.78,2.41 14.05,2.41 14.83,3.19L16.24,3.56M4.22,13.78L10.83,20.39L14.83,16.39L8.22,9.78L4.22,13.78Z"/></svg>
+                </button>
+                <button class="btn-tool" id="btn-clear" title="全清">🗑</button>
+            </div>
+            <div style="height: 1px; width: 25px; background: rgba(255,255,255,0.3); margin: 6px 0;"></div>
+            <button class="btn-tool" id="btn-exit-fs" title="回到目錄">🏠</button>
+        </div>
+    </div>
+
+    <script>
+        // Particle System for Animations
+        class Particle {
+            constructor(canvas, x, y, color, size, speedX, speedY) {
+                this.canvas = canvas;
+                this.ctx = canvas.getContext('2d');
+                this.x = x;
+                this.y = y;
+                this.color = color;
+                this.size = size;
+                this.vx = speedX;
+                this.vy = speedY;
+            }
+            update(mode) {
+                this.x += this.vx;
+                this.y += this.vy;
+                if (mode === 'diffusion') {
+                    if (this.x < 0 || this.x > this.canvas.width) this.vx *= -1;
+                    if (this.y < 0 || this.y > this.canvas.height) this.vy *= -1;
+                } else if (mode === 'effusion') {
+                    const holeTop = this.canvas.height * 0.4;
+                    const holeBottom = this.canvas.height * 0.6;
+                    const midX = this.canvas.width / 2;
+                    
+                    // Wall boundaries
+                    if (this.x < 0 || this.x > this.canvas.width) this.vx *= -1;
+                    if (this.y < 0 || this.y > this.canvas.height) this.vy *= -1;
+                    
+                    // Partition logic
+                    const nextX = this.x + this.vx;
+                    if ((this.x < midX && nextX >= midX) || (this.x > midX && nextX <= midX)) {
+                        if (this.y < holeTop || this.y > holeBottom) {
+                            this.vx *= -1;
+                        }
+                    }
+                }
+                this.x = Math.max(0, Math.min(this.canvas.width, this.x));
+                this.y = Math.max(0, Math.min(this.canvas.height, this.y));
+            }
+            draw() {
+                this.ctx.beginPath();
+                this.ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                this.ctx.fillStyle = this.color;
+                this.ctx.fill();
+            }
+        }
+
+        const diffCanvas = document.getElementById('diffusion-canvas');
+        const effCanvas = document.getElementById('effusion-canvas');
+        let diffParticles = [], effParticles = [];
+        let lastResetTime = Date.now();
+
+        function initDemos() {
+            diffCanvas.width = diffCanvas.offsetWidth;
+            diffCanvas.height = diffCanvas.offsetHeight;
+            effCanvas.width = effCanvas.offsetWidth;
+            effCanvas.height = effCanvas.offsetHeight;
+            
+            diffParticles = [];
+            for(let i=0; i<40; i++) {
+                const speed = 1.2; // Same speed for all particles
+                const angle = Math.random() * Math.PI * 2;
+                // Clustered in bottom-left
+                const x = Math.random() * 30;
+                const y = diffCanvas.height - Math.random() * 30;
+                diffParticles.push(new Particle(diffCanvas, x, y, '#38bdf8', 4, Math.cos(angle)*speed, Math.sin(angle)*speed));
+            }
+            
+            effParticles = [];
+            for(let i=0; i<40; i++) {
+                const speed = 1.2; // Constant speed for consistency
+                const angle = Math.random() * Math.PI * 2;
+                // Distributed in left container
+                const x = Math.random() * (effCanvas.width / 2 - 10);
+                const y = Math.random() * effCanvas.height;
+                effParticles.push(new Particle(effCanvas, x, y, '#a855f7', 4, Math.cos(angle)*speed, Math.sin(angle)*speed));
+            }
+            lastResetTime = Date.now();
+        }
+
+        function animateDemos() {
+            if (currentSlide === 0) {
+                // Check for 5-second reset
+                if (Date.now() - lastResetTime > 5000) {
+                    initDemos();
+                }
+
+                const dCtx = diffCanvas.getContext('2d');
+                dCtx.clearRect(0, 0, diffCanvas.width, diffCanvas.height);
+                diffParticles.forEach(p => { p.update('diffusion'); p.draw(); });
+
+                const eCtx = effCanvas.getContext('2d');
+                eCtx.clearRect(0, 0, effCanvas.width, effCanvas.height);
+                // Draw Partition
+                eCtx.strokeStyle = 'rgba(255,255,255,0.5)';
+                eCtx.lineWidth = 2;
+                eCtx.beginPath();
+                eCtx.moveTo(effCanvas.width/2, 0);
+                eCtx.lineTo(effCanvas.width/2, effCanvas.height * 0.4);
+                eCtx.moveTo(effCanvas.width/2, effCanvas.height * 0.6);
+                eCtx.lineTo(effCanvas.width/2, effCanvas.height);
+                eCtx.stroke();
+                
+                effParticles.forEach(p => { p.update('effusion'); p.draw(); });
+            }
+            requestAnimationFrame(animateDemos);
+        }
+
+        window.addEventListener('load', () => {
+            initDemos();
+            animateDemos();
+        });
+
+        let currentSlide = 0;
+        let isDrawingMode = false;
+        let drawMode = 'pen';
+        let penColor = '#f8fafc';
+        let penSize = 3;
+        let slideDrawings = {}; 
+        let lastX = 0;
+        let lastY = 0;
+
+        function toggleOverlay(id) {
+            const overlay = document.getElementById(id);
+            if (overlay) overlay.style.display = (overlay.style.display === 'none' || overlay.style.display === '') ? 'flex' : 'none';
+        }
+
+        const slides = document.querySelectorAll('.slide');
+        const slideInfo = document.getElementById('slide-info');
+        const canvas = document.getElementById('drawing-layer');
+        const ctx = canvas.getContext('2d');
+        let isDrawing = false;
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            restoreDrawing();
+            if (typeof initDemos === 'function') initDemos();
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        function getCoords(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            return [clientX - rect.left, clientY - rect.top];
+        }
+
+        function startDrawing(e) {
+            if (!isDrawingMode) return;
+            isDrawing = true;
+            [lastX, lastY] = getCoords(e);
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            const [x, y] = getCoords(e);
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(x, y);
+            ctx.strokeStyle = drawMode === 'eraser' ? '#0b1120' : penColor;
+            ctx.lineWidth = drawMode === 'eraser' ? penSize * 10 : penSize;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+            [lastX, lastY] = [x, y];
+        }
+
+        function stopDrawing() {
+            if (isDrawing) {
+                isDrawing = false;
+                slideDrawings[currentSlide] = canvas.toDataURL();
+            }
+        }
+
+        function restoreDrawing() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if (slideDrawings[currentSlide]) {
+                const img = new Image();
+                img.onload = () => ctx.drawImage(img, 0, 0);
+                img.src = slideDrawings[currentSlide];
+            }
+        }
+
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDrawing(e); }, {passive: false});
+        canvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e); }, {passive: false});
+        canvas.addEventListener('touchend', stopDrawing);
+
+        function updateSlides() {
+            slides.forEach((s, i) => s.classList.toggle('active', i === currentSlide));
+            slideInfo.textContent = `${currentSlide + 1} / ${slides.length}`;
+            restoreDrawing();
+            if (slides[currentSlide].id === 'slide-game') initGame();
+        }
+
+        document.getElementById('btn-next').addEventListener('click', () => { if (currentSlide < slides.length - 1) { currentSlide++; updateSlides(); } });
+        document.getElementById('btn-prev').addEventListener('click', () => { if (currentSlide > 0) { currentSlide--; updateSlides(); } });
+
+        document.getElementById('btn-draw').addEventListener('click', (e) => {
+            isDrawingMode = !isDrawingMode;
+            if (isDrawingMode) drawMode = 'pen';
+            e.currentTarget.classList.toggle('active-tool', isDrawingMode);
+            canvas.classList.toggle('drawing-active', isDrawingMode);
+            document.getElementById('color-picker').style.display = isDrawingMode ? 'grid' : 'none';
+            document.getElementById('size-picker').style.display = isDrawingMode ? 'flex' : 'none';
+            document.getElementById('eraser-tools').style.display = isDrawingMode ? 'flex' : 'none';
+        });
+
+        document.getElementById('btn-eraser').addEventListener('click', (e) => {
+            drawMode = (drawMode === 'eraser' ? 'pen' : 'eraser');
+            e.currentTarget.classList.toggle('active-tool', drawMode === 'eraser');
+        });
+
+        document.querySelectorAll('.color-swatch').forEach(sw => {
+            sw.addEventListener('click', () => {
+                document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
+                sw.classList.add('selected');
+                penColor = sw.dataset.color;
+                drawMode = 'pen';
+                document.getElementById('btn-draw').classList.add('active-tool');
+                document.getElementById('btn-eraser').classList.remove('active-tool');
+            });
+        });
+
+        document.getElementById('pen-size').addEventListener('input', (e) => { penSize = parseInt(e.target.value); });
+        document.getElementById('btn-clear').addEventListener('click', () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            slideDrawings[currentSlide] = null;
+        });
+
+        document.getElementById('btn-start').addEventListener('click', () => {
+            document.getElementById('start-overlay').style.display = 'none';
+            if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen();
+            updateSlides();
+            if (typeof initDemos === 'function') initDemos();
+        });
+
+        document.getElementById('btn-exit-fs').addEventListener('click', () => {
+            window.location.href = '../../index.html';
+        });
+
+        // --- Game System (Slide 5) ---
+        const gameDataPool = [
+            { left: '格銳目定律', right: '$r \\propto \\frac{1}{\\sqrt{M}}$' },
+            { left: '逸散速率比', right: '$\\sqrt{\\frac{M_2}{M_1}}$' },
+            { left: '平均動能公式', right: '$\\overline{E_k} = \\frac{3}{2}kT$' },
+            { left: '方均根速率', right: '$v_{rms} = \\sqrt{\\frac{3RT}{M}}$' },
+            { left: '擴散時間比', right: '$\\sqrt{\\frac{M_1}{M_2}}$' },
+            { left: '格銳目定律前提', right: '同溫同壓' },
+            { left: '氣體動力論壓力', right: '$P = \\frac{1}{3}\\frac{Nmv^2}{V}$' },
+            { left: '絕對溫度', right: '分子平均動能指標' },
+            { left: '分壓定律', right: '$P_{total} = \\sum P_i$' },
+            { left: '氣體常數 R', right: '$0.082 \\frac{\\text{atm}\\cdot\\text{L}}{\\text{mol}\\cdot\\text{K}}$' },
+            { left: '莫耳質量 $M$', right: '$\\frac{dRT}{P}$' },
+            { left: '波以耳定律', right: '$P_1V_1 = P_2V_2$' }
+        ];
+
+        let gameConnections = [];
+        let activeLine = null;
+        let dragStartDot = null;
+
+        function initGame() {
+            const leftCol = document.getElementById('left-column');
+            const rightCol = document.getElementById('right-column');
+            const svg = document.getElementById('game-svg');
+            
+            leftCol.innerHTML = ''; 
+            rightCol.innerHTML = ''; 
+            svg.innerHTML = '';
+            gameConnections = [];
+            document.getElementById('game-feedback').style.display = 'none';
+
+            // Randomly select 5 items from pool
+            const selected = [...gameDataPool].sort(() => Math.random() - 0.5).slice(0, 5);
+            const indexedData = selected.map((item, i) => ({ ...item, id: i }));
+            
+            const shuffledLeft = [...indexedData].sort(() => Math.random() - 0.5);
+            const shuffledRight = [...indexedData].sort(() => Math.random() - 0.5);
+
+            shuffledLeft.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'game-item';
+                div.innerHTML = `<span>${item.left}</span><div class="dot left-dot" data-id="${item.id}"></div>`;
+                leftCol.appendChild(div);
+            });
+
+            shuffledRight.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'game-item';
+                div.innerHTML = `<div class="dot right-dot" data-id="${item.id}"></div><span>${item.right}</span>`;
+                rightCol.appendChild(div);
+            });
+
+            // Delayed typesetting to ensure DOM is ready
+            setTimeout(() => {
+                MathJax.typesetPromise([leftCol, rightCol]).catch((err) => console.log(err));
+            }, 100);
+            
+            // Add event listeners to dots
+            const dots = document.querySelectorAll('.dot');
+            dots.forEach(dot => {
+                dot.addEventListener('mousedown', onDragStart);
+                dot.addEventListener('touchstart', (e) => { e.preventDefault(); onDragStart(e); }, {passive: false});
+            });
+        }
+
+        function onDragStart(e) {
+            const dot = e.currentTarget;
+            if (dot.classList.contains('matched')) return;
+
+            dragStartDot = dot;
+            const svg = document.getElementById('game-svg');
+            const rect = svg.getBoundingClientRect();
+            const dotRect = dot.getBoundingClientRect();
+            
+            const startX = dotRect.left + dotRect.width/2 - rect.left;
+            const startY = dotRect.top + dotRect.height/2 - rect.top;
+
+            activeLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            activeLine.setAttribute('x1', startX);
+            activeLine.setAttribute('y1', startY);
+            activeLine.setAttribute('x2', startX);
+            activeLine.setAttribute('y2', startY);
+            activeLine.setAttribute('stroke', 'var(--accent-yellow)');
+            activeLine.setAttribute('stroke-width', '4');
+            activeLine.setAttribute('stroke-linecap', 'round');
+            svg.appendChild(activeLine);
+
+            window.addEventListener('mousemove', onDragging);
+            window.addEventListener('touchmove', onDragging, {passive: false});
+            window.addEventListener('mouseup', onDragEnd);
+            window.addEventListener('touchend', onDragEnd);
+        }
+
+        function onDragging(e) {
+            if (!activeLine) return;
+            const svg = document.getElementById('game-svg');
+            const rect = svg.getBoundingClientRect();
+            const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+            const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
+
+            activeLine.setAttribute('x2', x);
+            activeLine.setAttribute('y2', y);
+
+            const target = findTargetDot(e.touches ? e.touches[0].clientX : e.clientX, e.touches ? e.touches[0].clientY : e.clientY);
+            if (target && target !== dragStartDot && !target.classList.contains('matched')) {
+                const isCorrect = target.dataset.id === dragStartDot.dataset.id && 
+                                  target.classList.contains('left-dot') !== dragStartDot.classList.contains('left-dot');
+                activeLine.setAttribute('stroke', isCorrect ? 'var(--accent-green)' : 'var(--accent-red)');
+            } else {
+                activeLine.setAttribute('stroke', 'var(--accent-yellow)');
+            }
+        }
+
+        function onDragEnd(e) {
+            window.removeEventListener('mousemove', onDragging);
+            window.removeEventListener('touchmove', onDragging);
+            window.removeEventListener('mouseup', onDragEnd);
+            window.removeEventListener('touchend', onDragEnd);
+
+            if (!activeLine) return;
+
+            const clientX = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
+            const clientY = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
+            const target = findTargetDot(clientX, clientY);
+
+            const isCorrect = target && 
+                             target !== dragStartDot && 
+                             !target.classList.contains('matched') &&
+                             target.dataset.id === dragStartDot.dataset.id &&
+                             target.classList.contains('left-dot') !== dragStartDot.classList.contains('left-dot');
+
+            if (isCorrect) {
+                const svg = document.getElementById('game-svg');
+                const rect = svg.getBoundingClientRect();
+                const targetRect = target.getBoundingClientRect();
+                activeLine.setAttribute('x2', targetRect.left + targetRect.width/2 - rect.left);
+                activeLine.setAttribute('y2', targetRect.top + targetRect.height/2 - rect.top);
+                activeLine.setAttribute('stroke', 'var(--accent-green)');
+                
+                dragStartDot.classList.add('matched');
+                target.classList.add('matched');
+                gameConnections.push({ line: activeLine, from: dragStartDot, to: target });
+                
+                if (gameConnections.length === 5) {
+                    setTimeout(() => {
+                        document.getElementById('game-feedback').style.display = 'block';
+                    }, 300);
+                }
+            } else {
+                activeLine.remove();
+            }
+
+            activeLine = null;
+            dragStartDot = null;
+        }
+
+        function findTargetDot(x, y) {
+            const dots = document.querySelectorAll('.dot');
+            for (let dot of dots) {
+                const r = dot.getBoundingClientRect();
+                if (x >= r.left - 15 && x <= r.right + 15 && y >= r.top - 15 && y <= r.bottom + 15) {
+                    return dot;
+                }
+            }
+            return null;
+        }
+
+        function resetGame() { document.getElementById('game-feedback').style.display = 'none'; initGame(); }
+
+        const toolbar = document.getElementById('toolbar'), dragHandle = document.getElementById('drag-handle');
+        let isDraggingToolbar = false, dragOffY = 0;
+        const startDrag = (y) => { isDraggingToolbar = true; dragOffY = y - toolbar.offsetTop; };
+        const moveDrag = (y) => { if (isDraggingToolbar) { toolbar.style.top = (y - dragOffY) + 'px'; toolbar.style.bottom = 'auto'; toolbar.style.transform = 'none'; } };
+        dragHandle.addEventListener('mousedown', (e) => startDrag(e.clientY)); window.addEventListener('mousemove', (e) => moveDrag(e.clientY)); window.addEventListener('mouseup', () => isDraggingToolbar = false);
+        dragHandle.addEventListener('touchstart', (e) => startDrag(e.touches[0].clientY)); window.addEventListener('touchmove', (e) => moveDrag(e.touches[0].clientY)); window.addEventListener('touchend', () => isDraggingToolbar = false);
+    </script>
+</body>
+</html>
