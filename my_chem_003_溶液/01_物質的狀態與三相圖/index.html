@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>物質的狀態與三相圖 - 互動教學</title>
+    <script>
+        MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']], processEscapes: true },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        :root {
+            --bg-dark: #0b1120;
+            --bg-panel: rgba(30, 41, 59, 0.7);
+            --text-main: #f8fafc;
+            --accent-blue: #38bdf8;
+            --accent-green: #34d399;
+            --accent-red: #f87171;
+            --accent-yellow: #fbbf24;
+            --accent-purple: #a855f7;
+            --accent-cyan: #22d3ee;
+        }
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+        body, html { width: 100%; height: 100%; background-color: var(--bg-dark); color: var(--text-main); font-family: 'Segoe UI', 'Microsoft JhengHei', Tahoma, Geneva, Verdana, sans-serif; overflow: hidden; background-image: radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px); background-size: 30px 30px; }
+        #app { position: relative; width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: center; overflow: hidden; }
+        #start-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--bg-dark); z-index: 100; display: flex; flex-direction: column; justify-content: center; align-items: center; background-image: radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px); background-size: 30px 30px; }
+        #presentation-area { position: relative; width: 100vw; height: 100vh; background: transparent; overflow: hidden; }
+        #slides-container { position: absolute; top: 2vh; left: 5vw; right: 5vw; bottom: 5vh; }
+        
+        .slide { position: absolute; top: 0; left: 0; width: 100%; height: 100%; padding: 0.5rem 6rem 1rem 2rem; opacity: 0; pointer-events: none; transition: opacity 0.5s ease; display: flex; flex-direction: column; overflow-y: auto; overflow-x: hidden; }
+        @media (max-width: 768px) { .slide { padding: 0.5rem 4.5rem 1rem 1.5rem; } }
+        .slide.active { opacity: 1; pointer-events: auto; z-index: 10; }
+        
+        .slide h1 { color: var(--accent-blue); font-size: clamp(1.8rem, 2.5vw, 2.4rem); margin-bottom: 0.5rem; text-align: center; border-bottom: 2px solid rgba(56, 189, 248, 0.3); padding-bottom: 0.4rem; flex-shrink: 0; }
+        .slide h2 { color: var(--accent-yellow); font-size: clamp(1.4rem, 2vw, 1.8rem); margin-top: 0.5rem; margin-bottom: 0.8rem; }
+        .slide p, .slide li { font-size: clamp(1.1rem, 1.3vw, 1.3rem); line-height: 1.6; margin-bottom: 0.6rem; }
+        
+        .formula-box { background: rgba(0,0,0,0.3); border-left: 5px solid var(--accent-green); padding: clamp(0.5rem, 1.5vw, 1rem); border-radius: 0 10px 10px 0; margin: 1rem 0; font-size: clamp(1.2rem, 2vw, 1.6rem); text-align: center; overflow-x: auto; }
+        .flex-row { display: flex; flex-wrap: wrap; gap: 2rem; margin-top: 1rem; flex: 1; min-height: 0; }
+        .flex-col { flex: 1 1 400px; background: rgba(255,255,255,0.03); padding: 1.5rem; border-radius: 10px; overflow-x: auto; display: flex; flex-direction: column; }
+        .rule-card { background: rgba(56, 189, 248, 0.1); border: 1px solid var(--accent-blue); padding: 1rem; border-radius: 10px; margin-bottom: 1rem; }
+        
+        .table-chem { width: 100%; border-collapse: collapse; margin: 1rem 0; background: rgba(30, 41, 59, 0.5); border-radius: 10px; overflow: hidden; font-size: 1.1rem; }
+        .table-chem th, .table-chem td { padding: 0.8rem; border: 1px solid rgba(255,255,255,0.1); text-align: center; }
+        .table-chem th { background: rgba(56, 189, 248, 0.2); color: var(--accent-blue); font-weight: bold; }
+        .table-chem td { color: rgba(255,255,255,0.9); }
+
+        #drawing-layer { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 20; pointer-events: none; touch-action: none; }
+        #drawing-layer.drawing-active { pointer-events: auto; }
+        
+        #toolbar { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); background: rgba(15, 23, 42, 0.9); padding: 10px 5px; border-radius: 20px; display: flex; flex-direction: column; gap: 8px; align-items: center; z-index: 2000; border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 10px 25px rgba(0,0,0,0.5); backdrop-filter: blur(10px); width: 45px; }
+        .btn-tool { background: transparent; color: rgba(255,255,255,0.6); border: 1px solid rgba(255,255,255,0.2); padding: 6px 10px; border-radius: 15px; cursor: pointer; font-size: 0.8rem; font-weight: normal; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 5px; width: 100%; text-align: center; }
+        .btn-tool:hover { background: rgba(255,255,255,0.1); }
+        .btn-tool.active-tool, .btn-tool.primary { background: var(--accent-blue); border-color: var(--accent-blue); color: #000; }
+        .btn-tool svg { width: 20px; height: 20px; fill: currentColor; }
+        
+        .color-picker { display: none; grid-template-columns: 1fr; width: 100%; padding-top: 5px; gap: 4px; }
+        .color-swatch { width: 20px; height: 20px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; transition: transform 0.2s; margin: 0 auto; }
+        .color-swatch.selected { border-color: white; transform: scale(1.2); }
+        
+        #drag-handle { width: 100%; text-align: center; color: rgba(255,255,255,0.4); cursor: grab; padding: 2px 0; margin-bottom: 5px; margin-top: -5px; user-select: none; font-size: 1.2rem; line-height: 0.5; }
+        
+        #slide-info { position: absolute; bottom: 20px; left: 20px; z-index: 15; font-size: 1.2rem; font-weight: bold; color: rgba(255,255,255,0.4); background: rgba(0,0,0,0.3); padding: 5px 12px; border-radius: 10px; backdrop-filter: blur(5px); border: 1px solid rgba(255,255,255,0.1); }
+        
+        .btn { background: var(--accent-blue); color: #000; border: none; padding: 10px 20px; border-radius: 10px; cursor: pointer; font-size: 1.1rem; font-weight: bold; transition: transform 0.2s, background 0.2s; }
+        .btn:hover { transform: translateY(-2px); background: #7dd3fc; }
+        
+        .text-red { color: var(--accent-red); }
+        .text-cyan { color: var(--accent-cyan); }
+        .text-yellow { color: var(--accent-yellow); }
+        .text-green { color: var(--accent-green); }
+        .text-purple { color: var(--accent-purple); }
+
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div id="start-overlay">
+            <h1 style="color: var(--accent-blue); font-size: clamp(2.5rem, 5vw, 4rem); margin-bottom: 1rem; text-align: center;">物質的狀態與三相圖</h1>
+            <p style="color: rgba(255,255,255,0.7); font-size: clamp(1.2rem, 3vw, 1.5rem); margin-bottom: 3rem; text-align: center;">高中選修化學教學模組</p>
+            <button id="btn-start" class="btn primary" style="font-size: clamp(1.2rem, 2.5vw, 1.5rem); padding: 15px 40px;">▶ 點擊進入全螢幕教學</button>
+        </div>
+
+        <div id="presentation-area">
+            <div id="slides-container">
+                
+                <!-- Slide 1: States of Matter -->
+                <div class="slide active">
+                    <h1>物質三態間的變化與性質</h1>
+                    <p style="text-align:center;">不同的狀況下，物質的三態可以互相轉換，並伴隨著能量的吸收或放出。</p>
+                    <table class="table-chem" style="margin-top: 2rem;">
+                        <tr>
+                            <th>性質</th>
+                            <th class="text-cyan">固態 (Solid)</th>
+                            <th class="text-green">液態 (Liquid)</th>
+                            <th class="text-red">氣態 (Gas)</th>
+                        </tr>
+                        <tr>
+                            <td>形狀與體積</td>
+                            <td>有一定的體積和形狀，位置固定</td>
+                            <td>有一定的體積，無一定形狀</td>
+                            <td>無一定體積和形狀</td>
+                        </tr>
+                        <tr>
+                            <td>分子間作用力</td>
+                            <td>大</td>
+                            <td>中</td>
+                            <td>小</td>
+                        </tr>
+                        <tr>
+                            <td>分子間距離</td>
+                            <td>緊密靠在一起</td>
+                            <td>緊密，但有流動性</td>
+                            <td>分子可自由運動 (距離遠)</td>
+                        </tr>
+                        <tr>
+                            <td>密度</td>
+                            <td>大 (少數例外如冰、銻、生鐵)</td>
+                            <td>通常比固態小</td>
+                            <td>低</td>
+                        </tr>
+                        <tr>
+                            <td>可壓縮性</td>
+                            <td>加壓影響不大</td>
+                            <td>加壓影響不大</td>
+                            <td>加壓可使體積明顯變小</td>
+                        </tr>
+                        <tr>
+                            <td>分子運動方式</td>
+                            <td>振動與轉動</td>
+                            <td>振動、轉動、移動</td>
+                            <td>振動、轉動、移動</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- Slide 2: Phase Changes -->
+                <div class="slide">
+                    <h1>物質的相變化 (一)：汽化與凝結</h1>
+                    <div class="flex-row">
+                        <div class="flex-col">
+                            <h2 class="text-yellow">蒸發 (Evaporation)</h2>
+                            <ul>
+                                <li>液體其表面分子，慢慢吸收空氣中的熱而離開液面的現象。</li>
+                                <li>是一種<strong class="text-cyan">緩和的汽化</strong>。</li>
+                            </ul>
+                            <h2 class="text-yellow">蒸氣壓 (Vapor Pressure)</h2>
+                            <ul>
+                                <li>液體分子離開液面形成氣體後，造成的壓力。</li>
+                                <li>凝結：氣態粒子撞擊液面重回到液體的現象。</li>
+                            </ul>
+                        </div>
+                        <div class="flex-col">
+                            <h2 class="text-yellow">沸騰 (Boiling)</h2>
+                            <div class="rule-card">
+                                <p>加熱至特定溫度時，液體分子得到足夠能量，克服大氣壓力與分子間作用力，在<strong class="text-red">液體表面及內部同時劇烈汽化</strong>的現象。</p>
+                            </div>
+                            <ul>
+                                <li><strong>條件：</strong>飽和蒸氣壓 ＝ 液面上大氣壓力。</li>
+                                <li><strong>正常沸點：</strong>一大氣壓下的沸點。</li>
+                                <li>沸點愈高，表示分子間的作用力愈大。</li>
+                                <li>沸騰期間，純物質的<strong class="text-green">溫度保持不變</strong>。</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 3: Sublimation & Heat -->
+                <div class="slide">
+                    <h1>物質的相變化 (二)：昇華與相變熱</h1>
+                    <div class="flex-row">
+                        <div class="flex-col">
+                            <h2 class="text-yellow">昇華 (Sublimation)</h2>
+                            <ul>
+                                <li>固體<strong class="text-cyan">直接變為氣體</strong>的現象。</li>
+                                <li>具足夠能量的固體表面粒子逸出而產生蒸氣壓，隨溫度升高而增大。</li>
+                                <li>例如：$0^\circ\text{C}$ 時冰的蒸氣壓為 $4.58 \text{ mmHg}$，所以雪會逐漸昇華消失。</li>
+                                <li><strong>正常昇華點：</strong>固體蒸氣壓達 1 atm 時的溫度（如乾冰為 $-78^\circ\text{C}$）。</li>
+                            </ul>
+                        </div>
+                        <div class="flex-col">
+                            <h2 class="text-yellow">莫耳汽化熱與熔化熱</h2>
+                            <div class="rule-card">
+                                <strong>莫耳汽化熱：</strong>定溫定壓下，1莫耳液體汽化所需的能量。
+                            </div>
+                            <ul>
+                                <li>沸點愈高的液體，分子間引力愈強，所需莫耳汽化熱愈多。</li>
+                                <li><strong>莫耳熔化熱：</strong>破壞固態粒子間的作用力與晶體的穩定排列。</li>
+                                <li>同一物質：<strong class="text-red">莫耳汽化熱 ＞ 莫耳熔化熱</strong>。</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 4: Melting & Freezing -->
+                <div class="slide">
+                    <h1>物質的相變化 (三)：熔化與壓力效應</h1>
+                    <div class="flex-row" style="align-items: center; gap: 2rem;">
+                        <div class="flex-col" style="flex: 1 1 350px;">
+                            <h2 class="text-yellow">熔化 (Melting)</h2>
+                            <ul>
+                                <li>固體於定溫下漸化為液體，固液共存，兩相蒸氣壓相等。</li>
+                                <li><strong>正常熔點：</strong>1大氣壓下的熔點（同凝固點）。</li>
+                            </ul>
+                            <h2 class="text-purple">特殊現象：過冷與突沸</h2>
+                            <ul>
+                                <li><strong>過冷液體：</strong>溫度低於凝固點時仍是液體的非穩定狀態。</li>
+                                <li><strong>突沸：</strong>液體溫度高於沸點卻未沸騰，受干擾會瞬間汽化。</li>
+                            </ul>
+                        </div>
+                        <div class="flex-col" style="flex: 1 1 400px; background: rgba(255,255,255,0.05); text-align: center; padding: 2rem; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                            <h3 style="color:var(--accent-purple); margin-bottom:1rem; font-size:1.4rem;">冷卻曲線與過冷現象</h3>
+                            <svg width="100%" height="250" viewBox="0 0 300 150" preserveAspectRatio="xMidYMid meet">
+                                <!-- Axes -->
+                                <line x1="40" y1="130" x2="280" y2="130" stroke="var(--text-main)" stroke-width="2"/> <!-- Time -->
+                                <line x1="40" y1="130" x2="40" y2="20" stroke="var(--text-main)" stroke-width="2"/> <!-- Temp -->
+                                <text x="285" y="135" fill="var(--text-main)" font-size="12">時間</text>
+                                <text x="35" y="15" fill="var(--text-main)" font-size="12" text-anchor="end">溫度</text>
+                                
+                                <!-- Freezing Point Line (dashed) -->
+                                <line x1="40" y1="60" x2="280" y2="60" stroke="rgba(255,255,255,0.3)" stroke-width="1" stroke-dasharray="4,4"/>
+                                <text x="35" y="65" fill="var(--accent-yellow)" font-size="12" text-anchor="end">凝固點</text>
+                                
+                                <!-- Cooling Curve -->
+                                <path d="M 40 20 L 100 60 L 120 90 L 130 60 L 220 60 L 260 100" fill="none" stroke="var(--accent-cyan)" stroke-width="3" stroke-linejoin="round"/>
+                                
+                                <!-- Labels -->
+                                <text x="70" y="35" fill="var(--accent-cyan)" font-size="12">液體冷卻</text>
+                                <text x="175" y="55" fill="var(--accent-yellow)" font-size="12" text-anchor="middle">固液共存 (凝固放熱)</text>
+                                <text x="250" y="90" fill="var(--accent-cyan)" font-size="12">固體冷卻</text>
+                                
+                                <circle cx="120" cy="90" r="4" fill="var(--accent-purple)"/>
+                                <!-- 指引線與說明 -->
+                                <line x1="120" y1="90" x2="150" y2="110" stroke="var(--accent-purple)" stroke-width="1"/>
+                                <text x="155" y="115" fill="var(--accent-purple)" font-size="12">過冷液體</text>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 5: Phase Diagram -->
+                <div class="slide">
+                    <h1>相圖 (Phase Diagram) 核心觀念</h1>
+                    <p style="text-align:center;">表示物質在各相平衡時，壓力 (P-atm) 與溫度 (℃) 的關係曲線圖。</p>
+                    <div class="flex-row" style="margin-top: 0.5rem; gap: 1rem;">
+                        <div class="flex-col" style="flex: 1.5; padding: 0.5rem;">
+                            <h2 class="text-yellow" style="font-size: 1.2rem; margin-top: 0;">三相點與臨界點</h2>
+                            <ul style="font-size: 1rem; margin-bottom: 0;">
+                                <li><strong>三相點：</strong>固液氣三相共存的唯一平衡點。</li>
+                                <li><strong>臨界點：</strong>超過臨界溫度，無論加多大壓力皆無法液化。</li>
+                            </ul>
+                            
+                            <h2 class="text-green" style="margin-top:1rem; font-size: 1.2rem;">壓力對熔點的影響 <span style="font-size:0.9rem;color:#888;">(對應右方曲線)</span></h2>
+                            <div class="rule-card" style="border-color: var(--accent-blue); padding: 0.8rem; margin-bottom: 0.5rem;">
+                                <h3 style="font-size: 1rem; margin-bottom: 0.2rem; color: var(--accent-blue);">1. 熔化時體積「收縮」 (如：水、鉍、銻)</h3>
+                                <p style="font-size: 0.95rem; margin-bottom: 0;">加壓有助收縮 $\rightarrow$ <strong class="text-red">加壓使熔點下降</strong>。<br><span style="color:#aaa;">(固液共存曲線向左傾斜，斜率為負)</span></p>
+                            </div>
+                            <div class="rule-card" style="border-color: var(--accent-yellow); padding: 0.8rem;">
+                                <h3 style="font-size: 1rem; margin-bottom: 0.2rem; color: var(--accent-yellow);">2. 熔化時體積「膨脹」 (絕大多數如 CO₂)</h3>
+                                <p style="font-size: 0.95rem; margin-bottom: 0;">加壓阻礙膨脹 $\rightarrow$ <strong class="text-red">加壓使熔點上升</strong>。<br><span style="color:#aaa;">(固液共存曲線向右傾斜，斜率為正)</span></p>
+                            </div>
+                        </div>
+                        <div class="flex-col" style="flex: 1; display:flex; flex-direction:column; gap:0.5rem; background:transparent; padding:0;">
+                            <!-- 水相圖 SVG -->
+                            <div style="flex: 1; position:relative; background:rgba(255,255,255,0.05); border-radius:10px; padding:0.5rem; text-align:center; min-height: 180px;">
+                                <h3 style="color:var(--accent-cyan); margin-bottom:0.2rem; font-size:1.1rem;">水 (H₂O) 的三相圖 <span style="font-size:0.8rem;color:#888;">(熔點曲線斜率為負)</span></h3>
+                                <svg width="100%" height="160" viewBox="0 0 300 200" preserveAspectRatio="xMidYMid meet">
+                                    <!-- Axes -->
+                                    <line x1="40" y1="180" x2="280" y2="180" stroke="var(--text-main)" stroke-width="2"/>
+                                    <line x1="40" y1="180" x2="40" y2="20" stroke="var(--text-main)" stroke-width="2"/>
+                                    <text x="285" y="185" fill="var(--text-main)" font-size="12">T (℃)</text>
+                                    <text x="35" y="15" fill="var(--text-main)" font-size="12" text-anchor="end">P (atm)</text>
+                                    <!-- Regions -->
+                                    <text x="80" y="80" fill="var(--accent-blue)" font-size="16">固 (冰)</text>
+                                    <text x="170" y="60" fill="var(--accent-green)" font-size="16">液 (水)</text>
+                                    <text x="220" y="160" fill="var(--accent-red)" font-size="16">氣 (水蒸氣)</text>
+                                    <!-- Triple Point -->
+                                    <circle cx="120" cy="140" r="4" fill="var(--accent-yellow)"/>
+                                    <text x="130" y="145" fill="var(--accent-yellow)" font-size="11">三相點 (0.01℃, 4.58mmHg)</text>
+                                    <!-- Critical Point -->
+                                    <circle cx="250" cy="40" r="4" fill="var(--accent-red)"/>
+                                    <text x="240" y="35" fill="var(--accent-red)" font-size="11" text-anchor="end">臨界點 (374℃, 218atm)</text>
+                                    <!-- Curves -->
+                                    <path d="M 40 180 Q 80 160 120 140" fill="none" stroke="var(--accent-yellow)" stroke-width="2"/>
+                                    <!-- Negative slope melting curve -->
+                                    <path d="M 120 140 Q 115 80 100 30" fill="none" stroke="var(--accent-blue)" stroke-width="2"/>
+                                    <path d="M 120 140 Q 180 110 250 40" fill="none" stroke="var(--accent-green)" stroke-width="2"/>
+                                </svg>
+                            </div>
+                            <!-- CO2相圖 SVG -->
+                            <div style="flex: 1; position:relative; background:rgba(255,255,255,0.05); border-radius:10px; padding:0.5rem; text-align:center; min-height: 180px;">
+                                <h3 style="color:var(--accent-cyan); margin-bottom:0.2rem; font-size:1.1rem;">二氧化碳 (CO₂) 的三相圖 <span style="font-size:0.8rem;color:#888;">(熔點曲線斜率為正)</span></h3>
+                                <svg width="100%" height="160" viewBox="0 0 300 200" preserveAspectRatio="xMidYMid meet">
+                                    <!-- Axes -->
+                                    <line x1="40" y1="180" x2="280" y2="180" stroke="var(--text-main)" stroke-width="2"/>
+                                    <line x1="40" y1="180" x2="40" y2="20" stroke="var(--text-main)" stroke-width="2"/>
+                                    <text x="285" y="185" fill="var(--text-main)" font-size="12">T (℃)</text>
+                                    <text x="35" y="15" fill="var(--text-main)" font-size="12" text-anchor="end">P (atm)</text>
+                                    <!-- Regions -->
+                                    <text x="80" y="70" fill="var(--accent-blue)" font-size="16">固 (乾冰)</text>
+                                    <text x="150" y="60" fill="var(--accent-green)" font-size="16">液態</text>
+                                    <text x="200" y="150" fill="var(--accent-red)" font-size="16">氣態</text>
+                                    <!-- Triple Point -->
+                                    <circle cx="120" cy="120" r="4" fill="var(--accent-yellow)"/>
+                                    <text x="130" y="125" fill="var(--accent-yellow)" font-size="11">三相點 (-56.6℃, 5.11atm)</text>
+                                    <!-- Critical Point -->
+                                    <circle cx="230" cy="40" r="4" fill="var(--accent-red)"/>
+                                    <text x="220" y="35" fill="var(--accent-red)" font-size="11" text-anchor="end">臨界點 (31℃, 72.8atm)</text>
+                                    <!-- Curves -->
+                                    <path d="M 40 180 Q 80 150 120 120" fill="none" stroke="var(--accent-yellow)" stroke-width="2"/>
+                                    <!-- Positive slope melting curve -->
+                                    <path d="M 120 120 Q 130 80 140 30" fill="none" stroke="var(--accent-blue)" stroke-width="2"/>
+                                    <path d="M 120 120 Q 180 90 230 40" fill="none" stroke="var(--accent-green)" stroke-width="2"/>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 6: Special States -->
+                <div class="slide">
+                    <h1>物質的特殊狀態</h1>
+                    <div class="flex-row">
+                        <div class="flex-col">
+                            <h2 class="text-yellow">超臨界流體 (Supercritical Fluid)</h2>
+                            <ul>
+                                <li>在低於臨界溫度下，可區分物質為氣體或液體。</li>
+                                <li>溫度<strong class="text-red">高於臨界溫度</strong>時，隨著壓力變大，物質的密度也變大（如液體般），但卻無法凝結。</li>
+                                <li>統稱為流體 (fluid)，具備高擴散性與強溶解力。</li>
+                            </ul>
+                        </div>
+                        <div class="flex-col">
+                            <h2 class="text-yellow">液晶 (Liquid Crystal)</h2>
+                            <div class="rule-card" style="border-color: var(--accent-cyan);">
+                                <ul>
+                                    <li>具有特殊形狀分子組合時產生。</li>
+                                    <li>它們<strong class="text-cyan">可以流動</strong>（具備液體的性質）。</li>
+                                    <li>又<strong class="text-green">擁有結晶的光學性質</strong>（具備固體的光學各向異性）。</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 7: Examples 1 -->
+                <div class="slide">
+                    <h1>觀念演練：狀態判斷</h1>
+                    <div class="flex-row">
+                        <div class="flex-col" style="position: relative;">
+                            <div id="overlay-ans-1" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 50; flex-direction: column; align-items: flex-start; justify-content: center; border-radius: 10px; text-align: left; padding: 2rem; border: 3px solid var(--accent-red);">
+                                <div style="color: var(--accent-red); font-size: 3rem; font-weight: 900;">解答：(B)</div>
+                                <div style="color: white; font-size: 1.2rem; margin-top: 15px; line-height: 1.6;">
+                                    在 $0^\circ\text{C}$ 時（高於三相點 $0.0098^\circ\text{C}$ 的左側，但低於正常熔點）。<br>
+                                    當壓力為 $2\text{ atm}$ 時，因加壓冰點下降，此時為<strong class="text-cyan">水 (液態)</strong>。<br>
+                                    壓力下降至 $1\text{ atm}$（正常壓力，熔點為 $0^\circ\text{C}$）時，會部分結冰形成<strong class="text-cyan">冰 (固態)</strong>。<br>
+                                    壓力繼續降至低於 $4.58\text{ mmHg}$ 時，會昇華變成<strong class="text-cyan">水蒸氣</strong>。<br>
+                                    故過程為 水 → 冰 → 水蒸氣。
+                                </div>
+                                <button class="btn" style="margin-top: 20px; width: auto; background: var(--accent-red); align-self: center;" onclick="toggleOverlay('overlay-ans-1')">關閉</button>
+                            </div>
+                            <h2 class="text-yellow">例題 1</h2>
+                            <p style="font-size:1.2rem;">已知水的三相點（T點）：壓力 $4.58\text{ mmHg}$，溫度 $0.0098^\circ\text{C}$。<br>臨界點（C點）：壓力 $217.7\text{ atm}$，溫度 $374.1^\circ\text{C}$。<br>將水的溫度維持在 $0^\circ\text{C}$，壓力自 $2\text{ atm}$ 逐漸下降，則在過程中，純水的狀態如何改變？</p>
+                            <div style="font-size:1.2rem; margin-top: 1rem;">
+                                (A) 冰 → 水 → 水蒸氣<br>
+                                (B) 水 → 冰 → 水蒸氣<br>
+                                (C) 冰 → 水蒸氣 → 水<br>
+                                (D) 水蒸氣 → 水 → 冰
+                            </div>
+                            <div style="margin-top: auto; text-align: center; padding-top: 1rem;">
+                                <button class="btn" onclick="toggleOverlay('overlay-ans-1')">顯示解答</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 8: Examples 2 -->
+                <div class="slide">
+                    <h1>觀念演練：二氧化碳的相圖</h1>
+                    <div class="flex-row">
+                        <div class="flex-col" style="position: relative;">
+                            <div id="overlay-ans-2" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 50; flex-direction: column; align-items: flex-start; justify-content: center; border-radius: 10px; text-align: left; padding: 2rem; border: 3px solid var(--accent-red);">
+                                <div style="color: var(--accent-red); font-size: 3rem; font-weight: 900;">解答：(C)</div>
+                                <div style="color: white; font-size: 1.2rem; margin-top: 15px; line-height: 1.6;">
+                                    (A) 二氧化碳三相點為 $5.11\text{ atm}$，在 $1\text{ atm}$ 下沒有液態，低於 $-78.5^\circ\text{C}$ 時為固態乾冰。<br>
+                                    (B) 溫度 $-56.6^\circ\text{C}$（三相點溫度）且壓力大於 $5.11\text{ atm}$ 時，因CO2加壓熔點上升，故 $10\text{ atm}$ 應為固態。<br>
+                                    (C) 正確。溫度 $31.0^\circ\text{C}$ 且 $75\text{ atm}$（高於臨界壓），尚未超過臨界溫度，且處於液氣交界，高壓下存在液態。<br>
+                                    (D) $32.0^\circ\text{C}$ 已超過臨界溫度 $31.0^\circ\text{C}$，此時為超臨界流體，無法成為液態。
+                                </div>
+                                <button class="btn" style="margin-top: 20px; width: auto; background: var(--accent-red); align-self: center;" onclick="toggleOverlay('overlay-ans-2')">關閉</button>
+                            </div>
+                            <h2 class="text-yellow">例題 2</h2>
+                            <p style="font-size:1.15rem;">二氧化碳的三相點壓力為 $5.11\text{ atm}$，溫度為 $-56.6^\circ\text{C}$。<br>臨界點：壓力 $72.8\text{ atm}$，溫度 $31.0^\circ\text{C}$。下列敘述何項正確？</p>
+                            <div style="font-size:1.1rem; margin-top: 1rem; line-height: 1.8;">
+                                (A) 在一大氣壓時，溫度低於 $-78.5^\circ\text{C}$，以液態二氧化碳存在。<br>
+                                (B) 壓力 $10\text{ atm}$，溫度為 $-56.6^\circ\text{C}$ 以液態二氧化碳存在。<br>
+                                (C) 壓力 $75\text{ atm}$，溫度 $31.0^\circ\text{C}$ 以液態二氧化碳存在。<br>
+                                (D) 壓力 $75\text{ atm}$，溫度 $32.0^\circ\text{C}$ 以液態二氧化碳存在。<br>
+                            </div>
+                            <div style="margin-top: auto; text-align: center; padding-top: 1rem;">
+                                <button class="btn" onclick="toggleOverlay('overlay-ans-2')">顯示解答</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <canvas id="drawing-layer"></canvas>
+        </div>
+
+        <div id="slide-info">1 / 8</div>
+
+        <!-- Controls Toolbar -->
+        <div id="toolbar">
+            <div id="drag-handle" title="拖曳移動工具列">≡</div>
+            <button class="btn-tool" id="btn-prev" title="上一頁">▲</button>
+            <button class="btn-tool" id="btn-next" title="下一頁">▼</button>
+            <div style="height: 1px; width: 25px; background: rgba(255,255,255,0.3); margin: 6px 0;"></div>
+            
+            <button class="btn-tool" id="btn-draw" title="手寫模式">✎</button>
+            
+            <div class="color-picker" id="color-picker">
+                <div class="color-swatch selected" style="background: #f8fafc;" data-color="#f8fafc"></div>
+                <div class="color-swatch" style="background: #f87171;" data-color="#f87171"></div>
+                <div class="color-swatch" style="background: #38bdf8;" data-color="#38bdf8"></div>
+                <div class="color-swatch" style="background: #fbbf24;" data-color="#fbbf24"></div>
+                <div class="color-swatch" style="background: #34d399;" data-color="#34d399"></div>
+            </div>
+
+            <div id="size-picker" style="display: none; flex-direction: column; align-items: center; gap: 2px; margin: 2px 0; width: 100%; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 5px;">
+                <input type="range" id="pen-size" min="1" max="20" value="3" style="width: 100%; height: 4px; cursor: pointer;">
+            </div>
+
+            <div id="eraser-tools" style="display: none; width: 100%; flex-direction: column; gap: 4px; align-items: center;">
+                <button class="btn-tool" id="btn-eraser" title="橡皮擦">
+                    <svg viewBox="0 0 24 24"><path d="M16.24,3.56L21.19,8.51C21.97,9.29 21.97,10.55 21.19,11.33L12.01,20.5H22V22.5H10.12L2.81,15.19C2.03,14.41 2.03,13.15 2.81,12.37L12,3.19C12.78,2.41 14.05,2.41 14.83,3.19L16.24,3.56M4.22,13.78L10.83,20.39L14.83,16.39L8.22,9.78L4.22,13.78Z"/></svg>
+                </button>
+                <button class="btn-tool" id="btn-clear" title="全清">🗑</button>
+            </div>
+            <div style="height: 1px; width: 25px; background: rgba(255,255,255,0.3); margin: 6px 0;"></div>
+            <button class="btn-tool" id="btn-exit-fs" title="回到目錄">🏠</button>
+        </div>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        let isDrawingMode = false;
+        let drawMode = 'pen';
+        let penColor = '#f8fafc';
+        let penSize = 3;
+        let slideDrawings = {}; 
+        let lastX = 0;
+        let lastY = 0;
+
+        function toggleOverlay(id) {
+            const overlay = document.getElementById(id);
+            if (overlay) overlay.style.display = (overlay.style.display === 'none' || overlay.style.display === '') ? 'flex' : 'none';
+        }
+
+        const slides = document.querySelectorAll('.slide');
+        const slideInfo = document.getElementById('slide-info');
+        const canvas = document.getElementById('drawing-layer');
+        const ctx = canvas.getContext('2d');
+        let isDrawing = false;
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            restoreDrawing();
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        function getCoords(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            return [clientX - rect.left, clientY - rect.top];
+        }
+
+        function startDrawing(e) {
+            if (!isDrawingMode) return;
+            isDrawing = true;
+            [lastX, lastY] = getCoords(e);
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            const [x, y] = getCoords(e);
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(x, y);
+            
+            if (drawMode === 'eraser') {
+                ctx.globalCompositeOperation = 'destination-out';
+                ctx.strokeStyle = 'rgba(0,0,0,1)';
+                ctx.lineWidth = penSize * 10;
+            } else {
+                ctx.globalCompositeOperation = 'source-over';
+                ctx.strokeStyle = penColor;
+                ctx.lineWidth = penSize;
+            }
+            
+            ctx.lineCap = 'round';
+            ctx.stroke();
+            [lastX, lastY] = [x, y];
+        }
+
+        function stopDrawing() {
+            if (isDrawing) {
+                isDrawing = false;
+                slideDrawings[currentSlide] = canvas.toDataURL();
+            }
+        }
+
+        function restoreDrawing() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.globalCompositeOperation = 'source-over';
+            if (slideDrawings[currentSlide]) {
+                const img = new Image();
+                img.onload = () => ctx.drawImage(img, 0, 0);
+                img.src = slideDrawings[currentSlide];
+            }
+        }
+
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDrawing(e); }, {passive: false});
+        canvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e); }, {passive: false});
+        canvas.addEventListener('touchend', stopDrawing);
+
+        function updateSlides() {
+            slides.forEach((s, i) => s.classList.toggle('active', i === currentSlide));
+            slideInfo.textContent = `${currentSlide + 1} / ${slides.length}`;
+            restoreDrawing();
+        }
+
+        document.getElementById('btn-next').addEventListener('click', () => { if (currentSlide < slides.length - 1) { currentSlide++; updateSlides(); } });
+        document.getElementById('btn-prev').addEventListener('click', () => { if (currentSlide > 0) { currentSlide--; updateSlides(); } });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === 'PageDown') {
+                if (currentSlide < slides.length - 1) { currentSlide++; updateSlides(); }
+            } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+                if (currentSlide > 0) { currentSlide--; updateSlides(); }
+            }
+        });
+
+        document.getElementById('btn-draw').addEventListener('click', (e) => {
+            isDrawingMode = !isDrawingMode;
+            if (isDrawingMode) drawMode = 'pen';
+            e.currentTarget.classList.toggle('active-tool', isDrawingMode);
+            canvas.classList.toggle('drawing-active', isDrawingMode);
+            document.getElementById('color-picker').style.display = isDrawingMode ? 'grid' : 'none';
+            document.getElementById('size-picker').style.display = isDrawingMode ? 'flex' : 'none';
+            document.getElementById('eraser-tools').style.display = isDrawingMode ? 'flex' : 'none';
+        });
+
+        document.getElementById('btn-eraser').addEventListener('click', (e) => {
+            drawMode = (drawMode === 'eraser' ? 'pen' : 'eraser');
+            e.currentTarget.classList.toggle('active-tool', drawMode === 'eraser');
+            document.getElementById('btn-draw').classList.toggle('active-tool', drawMode === 'pen');
+        });
+
+        document.querySelectorAll('.color-swatch').forEach(sw => {
+            sw.addEventListener('click', () => {
+                document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
+                sw.classList.add('selected');
+                penColor = sw.dataset.color;
+                drawMode = 'pen';
+                document.getElementById('btn-draw').classList.add('active-tool');
+                document.getElementById('btn-eraser').classList.remove('active-tool');
+            });
+        });
+
+        document.getElementById('pen-size').addEventListener('input', (e) => { penSize = parseInt(e.target.value); });
+        document.getElementById('btn-clear').addEventListener('click', () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            slideDrawings[currentSlide] = null;
+        });
+
+        document.getElementById('btn-start').addEventListener('click', () => {
+            document.getElementById('start-overlay').style.display = 'none';
+            if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen();
+            updateSlides();
+        });
+
+        document.getElementById('btn-exit-fs').addEventListener('click', () => {
+            if (document.fullscreenElement) {
+                document.exitFullscreen();
+            }
+            window.location.href = '../../index.html';
+        });
+
+        const toolbar = document.getElementById('toolbar'), dragHandle = document.getElementById('drag-handle');
+        let isDraggingToolbar = false, dragOffY = 0;
+        const startDrag = (y) => { isDraggingToolbar = true; dragOffY = y - toolbar.offsetTop; };
+        const moveDrag = (y) => { if (isDraggingToolbar) { toolbar.style.top = (y - dragOffY) + 'px'; toolbar.style.bottom = 'auto'; toolbar.style.transform = 'none'; } };
+        dragHandle.addEventListener('mousedown', (e) => startDrag(e.clientY)); 
+        window.addEventListener('mousemove', (e) => moveDrag(e.clientY)); 
+        window.addEventListener('mouseup', () => isDraggingToolbar = false);
+        dragHandle.addEventListener('touchstart', (e) => startDrag(e.touches[0].clientY)); 
+        window.addEventListener('touchmove', (e) => moveDrag(e.touches[0].clientY)); 
+        window.addEventListener('touchend', () => isDraggingToolbar = false);
+    </script>
+</body>
+</html>

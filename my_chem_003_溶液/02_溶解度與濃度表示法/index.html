@@ -1,0 +1,1265 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>溶解度與濃度表示法 - 互動教學</title>
+    <script>
+        MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']], processEscapes: true },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --bg-panel: rgba(30, 41, 59, 0.7);
+            --text-main: #f8fafc;
+            --accent-blue: #38bdf8;
+            --accent-green: #34d399;
+            --accent-red: #f87171;
+            --accent-yellow: #fbbf24;
+            --accent-purple: #c084fc;
+            --accent-cyan: #22d3ee;
+        }
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+        body, html { width: 100%; height: 100%; background-color: var(--bg-dark); color: var(--text-main); font-family: 'Segoe UI', 'Microsoft JhengHei', Tahoma, Geneva, Verdana, sans-serif; overflow: hidden; background-image: radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px); background-size: 30px 30px; }
+        #app { position: relative; width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: center; overflow: hidden; }
+        
+        #start-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--bg-dark); z-index: 100; display: flex; flex-direction: column; justify-content: center; align-items: center; background-image: radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px); background-size: 30px 30px; }
+        .btn { background: var(--accent-blue); color: #000; border: none; padding: 12px 30px; border-radius: 12px; font-size: 1.2rem; font-weight: bold; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 15px rgba(56, 189, 248, 0.4); }
+        .btn:hover { transform: scale(1.05); background: #7dd3fc; }
+        
+        #presentation-area { position: relative; width: 100vw; height: 100vh; background: transparent; overflow: hidden; }
+        #slides-container { position: absolute; top: 2vh; left: 4vw; right: 4vw; bottom: 4vh; }
+        
+        .slide { position: absolute; top: 0; left: 0; width: 100%; height: 100%; padding: 1.5rem 6rem 1.5rem 2.5rem; opacity: 0; pointer-events: none; transition: opacity 0.5s ease; display: flex; flex-direction: column; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.2) transparent; }
+        .slide.active { opacity: 1; pointer-events: auto; z-index: 10; }
+        
+        .slide h1 { color: var(--accent-blue); font-size: clamp(1.8rem, 3vw, 2.8rem); margin-bottom: 1rem; text-align: center; border-bottom: 2px solid rgba(56, 189, 248, 0.3); padding-bottom: 0.5rem; flex-shrink: 0; }
+        .slide h2 { color: var(--accent-yellow); font-size: clamp(1.4rem, 2.2vw, 2rem); margin-top: 1rem; margin-bottom: 0.8rem; }
+        .slide p, .slide li { font-size: clamp(1.1rem, 1.6vw, 1.5rem); line-height: 1.7; margin-bottom: 0.8rem; }
+        
+        .formula-box { background: rgba(15, 23, 42, 0.6); border-left: 6px solid var(--accent-green); padding: 1.2rem; border-radius: 0 15px 15px 0; margin: 1.2rem 0; font-size: clamp(1.3rem, 2vw, 1.8rem); text-align: center; backdrop-filter: blur(5px); border: 1px solid rgba(52, 211, 153, 0.3); border-left-width: 6px; }
+        .flex-row { display: flex; flex-wrap: wrap; gap: 2rem; margin-top: 1rem; flex: 1; }
+        .flex-col { flex: 1 1 450px; background: rgba(255,255,255,0.03); padding: 1.5rem; border-radius: 15px; border: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; }
+        .highlight-card { background: rgba(56, 189, 248, 0.1); border: 1px solid var(--accent-blue); padding: 1rem; border-radius: 12px; margin: 1rem 0; }
+        
+        #drawing-layer { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 20; pointer-events: none; touch-action: none; }
+        #drawing-layer.drawing-active { pointer-events: auto; }
+        
+        #toolbar { position: absolute; right: 20px; top: 50%; transform: translateY(-50%); background: rgba(15, 23, 42, 0.9); padding: 12px 8px; border-radius: 25px; display: flex; flex-direction: column; gap: 10px; align-items: center; z-index: 2000; border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 15px 35px rgba(0,0,0,0.6); backdrop-filter: blur(15px); width: 55px; }
+        .btn-tool { background: transparent; color: rgba(255,255,255,0.7); border: 1px solid rgba(255,255,255,0.1); width: 40px; height: 40px; border-radius: 50%; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
+        .btn-tool:hover { background: rgba(255,255,255,0.15); color: #fff; }
+        .btn-tool.active-tool { background: var(--accent-blue); border-color: var(--accent-blue); color: #000; }
+        .btn-tool svg { width: 22px; height: 22px; fill: currentColor; }
+        
+        .color-picker { display: none; grid-template-columns: 1fr; width: 100%; gap: 6px; padding: 5px 0; }
+        .color-swatch { width: 24px; height: 24px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; transition: transform 0.2s; margin: 0 auto; }
+        .color-swatch.selected { border-color: white; transform: scale(1.25); box-shadow: 0 0 10px rgba(255,255,255,0.5); }
+        
+        #drag-handle { width: 100%; text-align: center; color: rgba(255,255,255,0.4); cursor: grab; padding: 5px 0; font-size: 1.4rem; line-height: 0.5; }
+        #slide-info { position: absolute; bottom: 25px; left: 25px; z-index: 15; font-size: 1.3rem; font-weight: bold; color: rgba(255,255,255,0.5); background: rgba(0,0,0,0.4); padding: 6px 15px; border-radius: 12px; backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.1); }
+        
+        .table-chem { width: 100%; border-collapse: collapse; margin: 1.5rem 0; background: rgba(30, 41, 59, 0.4); border-radius: 12px; overflow: hidden; font-size: 1.6rem; }
+        .table-chem th, .table-chem td { padding: 1.8rem 1rem; border: 1px solid rgba(255,255,255,0.1); text-align: center; line-height: 1.4; }
+        .table-chem th { background: rgba(56, 189, 248, 0.2); color: var(--accent-blue); font-weight: bold; font-size: 1.8rem; }
+        .table-chem tr:hover { background: rgba(255,255,255,0.05); }
+
+        .precip-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1rem; margin-top: 1rem; }
+        .precip-card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 15px; padding: 1rem; text-align: center; transition: all 0.3s; }
+        .precip-card:hover { transform: translateY(-5px); background: rgba(255,255,255,0.08); border-color: var(--accent-blue); }
+        .color-sample { width: 60px; height: 60px; border-radius: 12px; margin: 0 auto 0.8rem; box-shadow: 0 4px 10px rgba(0,0,0,0.3); border: 2px solid rgba(255,255,255,0.2); }
+
+        .game-item { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); padding: 12px 20px; border-radius: 15px; display: flex; align-items: center; width: 100%; min-height: 55px; transition: all 0.2s; position: relative; font-size: 1.2rem; }
+        .dot { width: 18px; height: 18px; background: #fff; border-radius: 50%; cursor: pointer; box-shadow: 0 0 10px rgba(255,255,255,0.5); transition: transform 0.2s; flex-shrink: 0; z-index: 5; }
+        .left-dot { margin-left: auto; margin-right: -10px; }
+        .right-dot { margin-right: auto; margin-left: -10px; }
+        .dot:hover { transform: scale(1.4); background: var(--accent-blue); }
+        .dot.active { background: var(--accent-green); box-shadow: 0 0 15px var(--accent-green); }
+
+        .text-blue { color: var(--accent-blue); }
+        .text-green { color: var(--accent-green); }
+        .text-yellow { color: var(--accent-yellow); }
+        .text-red { color: var(--accent-red); }
+        .text-purple { color: var(--accent-purple); }
+        .text-cyan { color: var(--accent-cyan); }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div id="start-overlay">
+            <h1 style="color: var(--accent-blue); font-size: clamp(2.5rem, 5vw, 4.5rem); margin-bottom: 1rem; text-align: center; text-shadow: 0 0 20px rgba(56, 189, 248, 0.4);">溶液的溶解度與濃度</h1>
+            <p style="color: rgba(255,255,255,0.7); font-size: clamp(1.2rem, 3vw, 1.8rem); margin-bottom: 3.5rem; text-align: center;">Solubility and Concentration Units</p>
+            <button id="btn-start" class="btn" style="font-size: 1.5rem; padding: 18px 50px;">▶ 開始學習</button>
+        </div>
+
+        <div id="presentation-area">
+            <div id="slides-container">
+                <!-- Slide 1: Introduction -->
+                <div class="slide active">
+                    <h1>溶液與濃度定義</h1>
+                    <div class="flex-row">
+                        <div class="flex-col">
+                            <h2 class="text-yellow">什麼是濃度？</h2>
+                            <p>在一定量的<span class="text-blue">溶液</span>或<span class="text-green">溶劑</span>中所含<span class="text-red">溶質</span>的量，稱為該溶液的濃度。</p>
+                            <div class="highlight-card">
+                                <p><strong class="text-cyan">基本守恆觀念：</strong></p>
+                                <ul style="margin-left: 1.5rem;">
+                                    <li>質量守恆：溶液質量 = 溶質質量 + 溶劑質量</li>
+                                    <li>體積非加成：溶液體積 <strong class="text-red">≠</strong> 溶質體積 + 溶劑體積</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="flex-col">
+                            <h2 class="text-yellow">溶液的組成</h2>
+                            <div style="text-align: center; margin: 2rem 0;">
+                                <svg width="200" height="200" viewBox="0 0 100 100">
+                                    <rect x="20" y="30" width="60" height="60" rx="5" fill="rgba(56, 189, 248, 0.2)" stroke="var(--accent-blue)" stroke-width="2"/>
+                                    <circle cx="35" cy="50" r="3" fill="var(--accent-red)"/>
+                                    <circle cx="65" cy="60" r="3" fill="var(--accent-red)"/>
+                                    <circle cx="50" cy="75" r="3" fill="var(--accent-red)"/>
+                                    <text x="50" y="20" fill="var(--accent-blue)" font-size="8" text-anchor="middle">溶液 (Solution)</text>
+                                    <path d="M 25 95 L 75 95" stroke="var(--text-main)" stroke-width="1"/>
+                                    <text x="50" y="85" fill="var(--text-main)" font-size="6" text-anchor="middle">溶劑 (Solvent)</text>
+                                    <text x="40" y="45" fill="var(--accent-red)" font-size="5">溶質 (Solute)</text>
+                                </svg>
+                            </div>
+                            <p style="font-size: 1rem; color: rgba(255,255,255,0.6);">* 通常量多者為溶劑，量少者為溶質；若有水存在，水通常視為溶劑。</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 2: Units -->
+                <div class="slide">
+                    <h1>常用的濃度表示法</h1>
+                    <table class="table-chem">
+                        <thead>
+                            <tr>
+                                <th>名稱</th>
+                                <th>符號</th>
+                                <th>定義與公式</th>
+                                <th>備註</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>重量百分率</td>
+                                <td class="text-yellow">$W\%$</td>
+                                <td>$\frac{W_{\text{溶質}}}{W_{\text{溶液}}} \times 100\%$</td>
+                                <td>不受 $T, P$ 影響</td>
+                            </tr>
+                            <tr>
+                                <td>體積莫耳濃度</td>
+                                <td class="text-blue">$C_M$ (M)</td>
+                                <td>$\frac{n_{\text{溶質 (mol)}}}{V_{\text{溶液 (L)}}}$</td>
+                                <td><span class="text-red">受 $T$ 影響</span></td>
+                            </tr>
+                            <tr>
+                                <td>重量莫耳濃度</td>
+                                <td class="text-green">$C_m$ (m)</td>
+                                <td>$\frac{n_{\text{溶質 (mol)}}}{W_{\text{溶劑 (kg)}}}$</td>
+                                <td>不受 $T, P$ 影響</td>
+                            </tr>
+                            <tr>
+                                <td>莫耳分率</td>
+                                <td class="text-purple">$X$</td>
+                                <td>$\frac{n_A}{n_{\text{總}}}$</td>
+                                <td>總和必為 1</td>
+                            </tr>
+                            <tr>
+                                <td>百萬分點</td>
+                                <td class="text-cyan">ppm</td>
+                                <td>$\frac{W_{\text{溶質}}}{W_{\text{溶液}}} \times 10^6$</td>
+                                <td>微量分析用</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Slide 3: Example 1 -->
+                <div class="slide">
+                    <h1>濃度換算練習 (一)</h1>
+                    <div class="flex-col" style="flex: 1; margin-top: 1rem;">
+                        <h2 class="text-yellow">例題 1</h2>
+                        <p>某濃鹽酸比重為 1.20，含 36% 的 HCl。試求其體積莫耳濃度？($HCl = 36.5$)</p>
+                        
+                        <div id="ans-1" class="highlight-card" style="display: none; margin-top: 1rem; background: rgba(248, 113, 113, 0.15); border-color: var(--accent-red);">
+                            <h3 class="text-red">【解答】</h3>
+                            <p>$M = \frac{10 \cdot d \cdot W\%}{M_w} = \frac{10 \cdot 1.20 \cdot 36}{36.5} \approx 11.8 \text{ M}$</p>
+                        </div>
+                    </div>
+                    <div style="text-align: center; margin-top: auto; padding-top: 1rem;">
+                        <button class="btn" onclick="toggleAns('ans-1')">顯示 / 隱藏解答</button>
+                    </div>
+                </div>
+
+                <!-- Slide 4: Example 2 -->
+                <div class="slide">
+                    <h1>濃度換算練習 (二)</h1>
+                    <div class="flex-col" style="flex: 1; margin-top: 1rem;">
+                        <h2 class="text-yellow">例題 2</h2>
+                        <p>15 M 的氨水，比重為 0.9。試求其重量莫耳濃度？($NH_3 = 17$)</p>
+                        
+                        <div id="ans-2" class="highlight-card" style="display: none; margin-top: 1rem; background: rgba(248, 113, 113, 0.15); border-color: var(--accent-red);">
+                            <h3 class="text-red">【解答】</h3>
+                            <p>假設溶液 1 升：</p>
+                            <ul style="margin-left: 2rem; font-size: 1.1rem;">
+                                <li>$n_{\text{氨}} = 15 \text{ mol}, W_{\text{氨}} = 15 \times 17 = 255 \text{ g}$</li>
+                                <li>$W_{\text{溶液}} = 1000 \text{ mL} \times 0.9 = 900 \text{ g}$</li>
+                                <li>$W_{\text{水}} = 900 - 255 = 645 \text{ g} = 0.645 \text{ kg}$</li>
+                                <li>$m = \frac{15 \text{ mol}}{0.645 \text{ kg}} \approx 23.26 \text{ m}$</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div style="text-align: center; margin-top: auto; padding-top: 1rem;">
+                        <button class="btn" onclick="toggleAns('ans-2')">顯示 / 隱藏解答</button>
+                    </div>
+                </div>
+
+                <!-- Slide 5: Example 3 -->
+                <div class="slide">
+                    <h1>濃度換算練習 (三)</h1>
+                    <div class="flex-col" style="flex: 1; margin-top: 1rem;">
+                        <h2 class="text-yellow">例題 3</h2>
+                        <p>欲由密度 1.8、濃度 98％ 之濃硫酸配製密度 1.3、濃度 49％ 之硫酸 1.0 升時需加水若干？</p>
+                        <p>(A) 650mL (B) 639mL (C) 624mL (D) 615mL</p>
+                        
+                        <div id="ans-3" class="highlight-card" style="display: none; margin-top: 1rem; background: rgba(248, 113, 113, 0.15); border-color: var(--accent-red);">
+                            <h3 class="text-red">【解答】(A)</h3>
+                            <p>1. 計算所需溶質硫酸質量：</p>
+                            <p>$W_{\text{硫酸}} = 1000 \text{ mL} \times 1.3 \text{ g/mL} \times 49\% = 637 \text{ g}$</p>
+                            <p>2. 計算所需濃硫酸溶液質量：</p>
+                            <p>$W_{\text{濃硫酸}} = \frac{637 \text{ g}}{98\%} = 650 \text{ g}$</p>
+                            <p>3. 質量守恆，需加水質量 = 總質量 - 濃硫酸質量：</p>
+                            <p>$W_{\text{水}} = (1000 \text{ mL} \times 1.3) - 650 = 1300 - 650 = 650 \text{ g} \implies \text{650 mL}$</p>
+                        </div>
+                    </div>
+                    <div style="text-align: center; margin-top: auto; padding-top: 1rem;">
+                        <button class="btn" onclick="toggleAns('ans-3')">顯示 / 隱藏解答</button>
+                    </div>
+                </div>
+
+                <!-- Slide 6: Equilibrium -->
+                <div class="slide">
+                    <h1>溶解平衡與飽和狀態</h1>
+                    <div class="flex-row">
+                        <div class="flex-col">
+                            <h2 class="text-yellow">溶解與結晶</h2>
+                            <p><span class="text-green">溶解：</span>溶質粒子進入溶劑的過程。</p>
+                            <p><span class="text-red">結晶：</span>溶質粒子重新附著於固體的過程。</p>
+                            <div class="formula-box">
+                                動態平衡：溶解速率 = 結晶速率
+                            </div>
+                        </div>
+                        <div class="flex-col">
+                            <h2 class="text-yellow">飽和分類</h2>
+                            <ul style="margin-left: 1.5rem;">
+                                <li><strong class="text-cyan">未飽和：</strong>可繼續溶解，速$_D$ > 速$_C$。</li>
+                                <li><strong class="text-green">飽和：</strong>達最大溶解量，速$_D$ = 速$_C$。</li>
+                                <li><strong class="text-red">過飽和：</strong>暫時含過量溶質，極不穩定。加入晶種或震動即會析出。</li>
+                            </ul>
+                            <div class="highlight-card" style="margin-top: 1rem; border-color: var(--accent-purple);">
+                                <p>過飽和溶液常用於：<span class="text-purple">暖暖包、製糖結晶</span></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 7: Solubility -->
+                <div class="slide">
+                    <h1>溶解度 (Solubility)</h1>
+                    <div class="flex-row">
+                        <div class="flex-col">
+                            <h2 class="text-yellow">定義</h2>
+                            <p>在定溫、定壓下，一定量溶劑所能溶解溶質的<span class="text-red">最大量</span>。</p>
+                            <div class="formula-box" style="font-size: 2rem;">
+                                $S = \frac{\text{溶質質量 (g)}}{100\text{g 溶劑}}$
+                            </div>
+                        </div>
+                        <div class="flex-col">
+                            <h2 class="text-yellow">分類 (25°C)</h2>
+                            <ul style="margin-left: 1.5rem; gap: 10px; display: flex; flex-direction: column;">
+                                <li><span class="text-green">可溶：</span>$S > 0.1 \text{ M}$</li>
+                                <li><span class="text-yellow">微溶：</span>$0.1 \text{ M} > S > 10^{-4} \text{ M}$</li>
+                                <li><span class="text-red">難溶 (不溶)：</span>$S < 10^{-4} \text{ M}$</li>
+                            </ul>
+                            <p style="margin-top: 1rem; font-size: 1rem;">* 化學上沒有絕對「不溶」的物質，只是溶解度極小。</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 8: Factors -->
+                <div class="slide">
+                    <h1>影響溶解度的因素</h1>
+                    <div class="flex-row">
+                        <div class="flex-col">
+                            <h2 class="text-yellow">1. 本性 (Like dissolves like)</h2>
+                            <p>極性溶質易溶於極性溶劑 (如：食鹽溶於水)。</p>
+                            <p>非極性溶質易溶於非極性溶劑 (如：油漆溶於松香水)。</p>
+                            
+                            <h2 class="text-yellow" style="margin-top: 1rem;">2. 溫度</h2>
+                            <p><span class="text-red">吸熱溶解：</span>$T \uparrow, S \uparrow$ (大多數固體)。</p>
+                            <p><span class="text-blue">放熱溶解：</span>$T \uparrow, S \downarrow$ (如：$Ce_2(SO_4)_3$)。</p>
+                        </div>
+                        <div class="flex-col">
+                            <h2 class="text-cyan">3. 壓力 (亨利定律)</h2>
+                            <p>主要影響<span class="text-cyan">氣體</span>。在定溫下，氣體的溶解度與液面上的該氣體分壓成正比。</p>
+                            <div class="formula-box" style="border-left-color: var(--accent-cyan);">
+                                $S = k \cdot P$
+                            </div>
+                            <p style="font-size: 1rem;">* 例：打開汽水時壓力下降，溶解度降低導致 $CO_2$ 冒出。</p>
+                            <div class="highlight-card" style="background: rgba(34, 211, 238, 0.1); border-color: var(--accent-cyan);">
+                                <p><strong class="text-cyan">注意：</strong>氣體溶解為<strong class="text-red">放熱</strong>，故溫度升高時氣體溶解度降低。</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 9: Henry's Law Animation -->
+                <div class="slide" id="slide-henry" style="padding: 1rem 5.5rem 1rem 2rem;">
+                    <h1 style="margin-bottom: 0.6rem;">亨利定律：動態平衡與壓力影響</h1>
+                    <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 1.2rem; flex: 1; min-height: 0;">
+
+                        <!-- LEFT PANEL: Equilibrium Animation -->
+                        <div style="background: linear-gradient(135deg, rgba(15,23,42,0.9), rgba(30,41,59,0.8)); border: 1px solid rgba(56,189,248,0.3); border-radius: 16px; padding: 1rem; display: flex; flex-direction: column; gap: 0.6rem; box-shadow: 0 8px 32px rgba(0,0,0,0.4);">
+                            <!-- Equation -->
+                            <div style="text-align: center; background: rgba(56,189,248,0.08); border-radius: 10px; padding: 0.5rem 1rem; border: 1px solid rgba(56,189,248,0.2);">
+                                <div style="font-size: 1.4rem; font-weight: bold; color: #fbbf24; letter-spacing: 2px; margin-bottom: 4px;">
+                                    H₂<span style="color:#22d3ee;">(g)</span>
+                                    <span style="color:#fff; font-size:1.1rem; margin: 0 6px;">⇌</span>
+                                    H₂<span style="color:#38bdf8;">(aq)</span>
+                                </div>
+                                <div style="font-size: 1.0rem; color: rgba(255,255,255,0.55);">平衡常數 $K_c = \dfrac{[\,H_2(aq)\,]}{P_{H_2}}$</div>
+                            </div>
+                            <!-- Canvas -->
+                            <div id="henry-anim-container" style="position: relative; flex: 1; min-height: 200px; border-radius: 12px; overflow: hidden; border: 2px solid rgba(56,189,248,0.25); background: #050c1a;">
+                                <canvas id="henry-anim-canvas" style="position:absolute;top:0;left:0;width:100%;height:100%;"></canvas>
+                            </div>
+                            <!-- Status + Button -->
+                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;">
+                                <div id="henry-status" style="font-size: 0.9rem; font-weight: bold; color: #fbbf24; background: rgba(251,191,36,0.1); padding: 4px 12px; border-radius: 20px; border: 1px solid rgba(251,191,36,0.3);">⏳ 準備中...</div>
+                                <button id="btn-reset-henry" style="background: linear-gradient(135deg,#0ea5e9,#2563eb); color:#fff; border:none; padding: 6px 16px; border-radius: 20px; font-size: 0.9rem; cursor: pointer; font-weight: bold; box-shadow: 0 2px 10px rgba(14,165,233,0.4); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">↺ 重置</button>
+                            </div>
+                            <div style="display:flex; gap: 1rem; justify-content: center; font-size: 0.82rem; color: rgba(255,255,255,0.5);">
+                                <span><span style="color:#22d3ee; font-size:1rem;">●</span> 氣態 H₂</span>
+                                <span><span style="color:#3b82f6; font-size:1rem;">●</span> 溶解 H₂(aq)</span>
+                            </div>
+                        </div>
+
+                        <!-- RIGHT PANEL: Piston Simulation -->
+                        <div style="background: linear-gradient(135deg, rgba(15,23,42,0.9), rgba(14,30,50,0.8)); border: 1px solid rgba(34,211,238,0.3); border-radius: 16px; padding: 1rem; display: flex; flex-direction: column; gap: 0.6rem; box-shadow: 0 8px 32px rgba(0,0,0,0.4);">
+                            <!-- Header -->
+                            <div style="text-align: center; background: rgba(34,211,238,0.08); border-radius: 10px; padding: 0.4rem 1rem; border: 1px solid rgba(34,211,238,0.2);">
+                                <div style="font-size: 1.15rem; font-weight: bold; color: #22d3ee;">S = k · P &nbsp;｜&nbsp; <span style="color:#34d399;">V<sub>g</sub> = <sup>n</sup>/<sub>P</sub>RT = 定值</span></div>
+                            </div>
+                            <!-- Piston + Graphs side by side -->
+                            <div style="display: flex; gap: 0.8rem; flex: 1; min-height: 0;">
+                                <div id="piston-container" style="flex: 1.3; position: relative; border-radius: 10px; overflow: hidden; border: 1px solid rgba(255,255,255,0.08); background: #060f1e;">
+                                    <canvas id="piston-canvas" style="position:absolute;top:0;left:0;width:100%;height:100%;"></canvas>
+                                </div>
+                                <div style="flex: 1; display: flex; flex-direction: column; gap: 0.5rem;">
+                                    <div style="flex: 1; background: rgba(0,0,0,0.35); border-radius: 8px; border: 1px solid rgba(248,113,113,0.2); position: relative;">
+                                        <canvas id="graph-n-canvas" style="position:absolute;top:0;left:0;width:100%;height:100%;"></canvas>
+                                    </div>
+                                    <div style="flex: 1; background: rgba(0,0,0,0.35); border-radius: 8px; border: 1px solid rgba(52,211,153,0.2); position: relative;">
+                                        <canvas id="graph-v-canvas" style="position:absolute;top:0;left:0;width:100%;height:100%;"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Slider -->
+                            <div style="background: rgba(255,255,255,0.04); border-radius: 10px; padding: 0.5rem 0.8rem; border: 1px solid rgba(255,255,255,0.08);">
+                                <div style="display: flex; align-items: center; gap: 0.8rem;">
+                                    <span style="font-size: 0.9rem; color: rgba(255,255,255,0.7); white-space: nowrap;">外壓 P:</span>
+                                    <input type="range" id="piston-pressure-slider" min="1" max="4" step="0.05" value="1" style="flex: 1; accent-color: #22d3ee; cursor: pointer;">
+                                    <span id="pressure-value" style="color:#fbbf24; font-weight: bold; font-size: 1rem; min-width: 45px; text-align: right;">1.0P</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 9: Curves -->
+                <div class="slide">
+                    <h1>溶解度曲線與再結晶</h1>
+                    <div class="flex-row">
+                        <div class="flex-col" style="flex: 1.5;">
+                            <h2 class="text-yellow">溶解度曲線圖示</h2>
+                            <div style="display: flex; gap: 10px; justify-content: center; margin: 0.5rem 0;">
+                                <img src="3.png" alt="固體溶解度曲線" style="max-width: 48%; border-radius: 10px; border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 4px 15px rgba(0,0,0,0.5);">
+                                <img src="4.png" alt="氣體溶解度曲線" style="max-width: 48%; border-radius: 10px; border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 4px 15px rgba(0,0,0,0.5);">
+                            </div>
+                            <ul style="margin-left: 1.5rem; font-size: 1rem;">
+                                <li><strong class="text-red">KNO$_3$</strong>：隨溫度大幅增加。</li>
+                                <li><strong class="text-green">NaCl</strong>：幾乎不受溫度影響。</li>
+                                <li><strong class="text-blue">Na$_2$SO$_4$</strong>：32.4°C 前吸熱，之後放熱。</li>
+                            </ul>
+                        </div>
+                        <div class="flex-col" style="flex: 1;">
+                            <h2 class="text-yellow">再結晶 (Recrystallization)</h2>
+                            <p>利用溶解度隨溫度變化差異大的特性，來純化物質的方法。</p>
+                            <div class="rule-card" style="padding: 1rem; border: 1px dashed var(--accent-purple); border-radius: 10px; flex: 1;">
+                                <p>步驟：</p>
+                                <ol style="margin-left: 1.5rem; font-size: 1rem;">
+                                    <li>高溫配製飽和溶液</li>
+                                    <li>趁熱過濾去除雜質</li>
+                                    <li>冷卻使其結晶析出</li>
+                                    <li>過濾取得純淨晶體</li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 10: Example 4 -->
+                <div class="slide">
+                    <h1>析出條件判斷練習</h1>
+                    <div class="flex-col" style="flex: 1; margin-top: 1rem;">
+                        <h2 class="text-yellow">例題 4</h2>
+                        <p>20℃ 甲、乙兩杯分別盛有 200 克及 300 克飽和硝酸鉀溶液，兩杯要析出等質量晶體的條件是：</p>
+                        <p>(A) 同時降溫至 10℃<br>
+                           (B) 甲杯降溫至 10℃，乙杯降溫至 6℃<br>
+                           (C) 甲杯蒸去 20 克水，乙杯蒸去 30 克水<br>
+                           (D) 甲杯蒸發後剩 100 克溶液，乙杯蒸發後剩 200 克溶液<br>
+                           (E) 甲、乙兩杯各蒸去 20 克的水</p>
+                        
+                        <div id="ans-4" class="highlight-card" style="display: none; margin-top: 1rem; background: rgba(248, 113, 113, 0.15); border-color: var(--accent-red);">
+                            <h3 class="text-red">【解答】(E)</h3>
+                            <p>1. 在飽和溶液中，析出晶體的質量與<span class="text-blue">移除的溶劑量</span>或<span class="text-red">溫度差引起的溶解度差</span>有關。</p>
+                            <p>2. 定溫下，析出質量 $W_c = S_T \times \frac{\text{蒸發水質量}}{100}$。</p>
+                            <p>3. 由於甲、乙兩杯皆為 20℃ 的<span class="text-green">飽和溶液</span>，其溶解度 $S$ 相同。若要析出等質量的晶體，必須<span class="text-red">蒸發等量的水</span>。</p>
+                        </div>
+                    </div>
+                    <div style="text-align: center; margin-top: auto; padding-top: 1rem;">
+                        <button class="btn" onclick="toggleAns('ans-4')">顯示 / 隱藏解答</button>
+                    </div>
+                </div>
+
+                <!-- Slide 11: Example 5 -->
+                <div class="slide">
+                    <h1>含水鹽析出練習</h1>
+                    <div class="flex-col" style="flex: 1; margin-top: 1rem;">
+                        <h2 class="text-yellow">例題 5</h2>
+                        <p>已知 100 克水可溶解無水 $CuSO_4$ 在 80℃ 時為 56 克，在 25℃ 時為 22 克；在 80℃ 時 100 克水中溶入 $CuSO_4$ 使成飽和溶液後，冷卻至 25℃ 時，應析出 $CuSO_4 \cdot 5H_2O$ 結晶之克數為？ ($Cu=64, S=32$)</p>
+                        <p>(A) 61克 (B) 54克 (C) 48克 (D) 41克</p>
+                        
+                        <div id="ans-5" class="highlight-card" style="display: none; margin-top: 1rem; background: rgba(248, 113, 113, 0.15); border-color: var(--accent-red);">
+                            <h3 class="text-red">【解答】(A)</h3>
+                            <p>設析出 $CuSO_4 \cdot 5H_2O$ 為 $x$ 克：</p>
+                            <ul style="margin-left: 2rem; font-size: 1.1rem;">
+                                <li>其中含 $CuSO_4$ 質量 = $x \times \frac{160}{250} = 0.64x$</li>
+                                <li>其中含結晶水質量 = $x \times \frac{90}{250} = 0.36x$</li>
+                            </ul>
+                            <p>冷卻至 25℃ 後，剩餘溶質與溶劑仍為飽和：</p>
+                            <p>$\frac{56 - 0.64x}{100 - 0.36x} = \frac{22}{100}$</p>
+                            <p>$\implies 5600 - 64x = 2200 - 7.92x$</p>
+                            <p>$\implies 3400 = 56.08x \implies x \approx 60.6 \text{ g}$</p>
+                        </div>
+                    </div>
+                    <div style="text-align: center; margin-top: auto; padding-top: 1rem;">
+                        <button class="btn" onclick="toggleAns('ans-5')">顯示 / 隱藏解答</button>
+                    </div>
+                </div>
+            </div>
+
+            <canvas id="drawing-layer"></canvas>
+        </div>
+
+        <div id="slide-info">1 / 11</div>
+
+        <!-- Controls Toolbar -->
+        <div id="toolbar">
+            <div id="drag-handle" title="拖曳移動工具列">≡</div>
+            <button class="btn-tool" id="btn-prev" title="上一頁">
+                <svg viewBox="0 0 24 24"><path d="M7.41,15.41L12,10.83L16.59,15.41L18,14L12,8L6,14L7.41,15.41Z"/></svg>
+            </button>
+            <button class="btn-tool" id="btn-next" title="下一頁">
+                <svg viewBox="0 0 24 24"><path d="M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z"/></svg>
+            </button>
+            <div style="height: 1px; width: 30px; background: rgba(255,255,255,0.2); margin: 5px 0;"></div>
+            
+            <button class="btn-tool" id="btn-draw" title="畫筆模式">
+                <svg viewBox="0 0 24 24"><path d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z"/></svg>
+            </button>
+            
+            <div class="color-picker" id="color-picker">
+                <div class="color-swatch selected" style="background: #f8fafc;" data-color="#f8fafc"></div>
+                <div class="color-swatch" style="background: #f87171;" data-color="#f87171"></div>
+                <div class="color-swatch" style="background: #38bdf8;" data-color="#38bdf8"></div>
+                <div class="color-swatch" style="background: #fbbf24;" data-color="#fbbf24"></div>
+                <div class="color-swatch" style="background: #34d399;" data-color="#34d399"></div>
+            </div>
+
+            <div id="eraser-tools" style="display: none; width: 100%; flex-direction: column; gap: 8px; align-items: center;">
+                <button class="btn-tool" id="btn-eraser" title="橡皮擦">
+                    <svg viewBox="0 0 24 24"><path d="M16.24,3.56L21.19,8.51C21.97,9.29 21.97,10.55 21.19,11.33L12.01,20.5H22V22.5H10.12L2.81,15.19C2.03,14.41 2.03,13.15 2.81,12.37L12,3.19C12.78,2.41 14.05,2.41 14.83,3.19L16.24,3.56M4.22,13.78L10.83,20.39L14.83,16.39L8.22,9.78L4.22,13.78Z"/></svg>
+                </button>
+                <button class="btn-tool" id="btn-clear" title="清空畫板">
+                    <svg viewBox="0 0 24 24"><path d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z"/></svg>
+                </button>
+            </div>
+            <div style="height: 1px; width: 30px; background: rgba(255,255,255,0.2); margin: 5px 0;"></div>
+            <button class="btn-tool" id="btn-exit" title="回到主選單">🏠</button>
+        </div>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        let isDrawingMode = false;
+        let drawMode = 'pen';
+        let penColor = '#f8fafc';
+        let penSize = 3;
+        let slideDrawings = {}; 
+        let lastX = 0, lastY = 0;
+
+        function toggleAns(id) {
+            const el = document.getElementById(id);
+            if (el) el.style.display = (el.style.display === 'none' || el.style.display === '') ? 'block' : 'none';
+        }
+
+        const slides = document.querySelectorAll('.slide');
+        const slideInfo = document.getElementById('slide-info');
+        const canvas = document.getElementById('drawing-layer');
+        const ctx = canvas.getContext('2d');
+        let isDrawing = false;
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            restoreDrawing();
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        function getCoords(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            return [clientX - rect.left, clientY - rect.top];
+        }
+
+        function startDrawing(e) {
+            if (!isDrawingMode) return;
+            isDrawing = true;
+            [lastX, lastY] = getCoords(e);
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            const [x, y] = getCoords(e);
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(x, y);
+            ctx.strokeStyle = drawMode === 'eraser' ? '#0f172a' : penColor;
+            ctx.lineWidth = drawMode === 'eraser' ? 30 : penSize;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.stroke();
+            [lastX, lastY] = [x, y];
+        }
+
+        function stopDrawing() {
+            if (isDrawing) {
+                isDrawing = false;
+                slideDrawings[currentSlide] = canvas.toDataURL();
+            }
+        }
+
+        function restoreDrawing() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if (slideDrawings[currentSlide]) {
+                const img = new Image();
+                img.onload = () => ctx.drawImage(img, 0, 0);
+                img.src = slideDrawings[currentSlide];
+            }
+        }
+
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDrawing(e); }, {passive: false});
+        canvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e); }, {passive: false});
+        canvas.addEventListener('touchend', stopDrawing);
+
+        function updateSlides() {
+            slides.forEach((s, i) => s.classList.toggle('active', i === currentSlide));
+            slideInfo.textContent = `${currentSlide + 1} / ${slides.length}`;
+            restoreDrawing();
+            if (slides[currentSlide].id === 'slide-game') initGame();
+            if (slides[currentSlide].id === 'slide-henry') initHenrySlide();
+        }
+
+        document.getElementById('btn-next').addEventListener('click', () => { if (currentSlide < slides.length - 1) { currentSlide++; updateSlides(); } });
+        document.getElementById('btn-prev').addEventListener('click', () => { if (currentSlide > 0) { currentSlide--; updateSlides(); } });
+
+        document.getElementById('btn-draw').addEventListener('click', (e) => {
+            isDrawingMode = !isDrawingMode;
+            if (isDrawingMode) drawMode = 'pen';
+            e.currentTarget.classList.toggle('active-tool', isDrawingMode);
+            canvas.classList.toggle('drawing-active', isDrawingMode);
+            document.getElementById('color-picker').style.display = isDrawingMode ? 'grid' : 'none';
+            document.getElementById('eraser-tools').style.display = isDrawingMode ? 'flex' : 'none';
+        });
+
+        document.getElementById('btn-eraser').addEventListener('click', (e) => {
+            drawMode = (drawMode === 'eraser' ? 'pen' : 'eraser');
+            e.currentTarget.classList.toggle('active-tool', drawMode === 'eraser');
+        });
+
+        document.querySelectorAll('.color-swatch').forEach(sw => {
+            sw.addEventListener('click', () => {
+                document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
+                sw.classList.add('selected');
+                penColor = sw.dataset.color;
+                drawMode = 'pen';
+                document.getElementById('btn-eraser').classList.remove('active-tool');
+            });
+        });
+
+        document.getElementById('btn-clear').addEventListener('click', () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            slideDrawings[currentSlide] = null;
+        });
+
+        document.getElementById('btn-start').addEventListener('click', () => {
+            document.getElementById('start-overlay').style.display = 'none';
+            if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen();
+            updateSlides();
+        });
+
+        document.getElementById('btn-exit').addEventListener('click', () => {
+            window.location.href = '../../index.html';
+        });
+
+        // Game Logic
+        const gameData = [
+            { left: '$Ag^+$ + $Cl^-$', right: '白色沉澱', match: 0 },
+            { left: '$Pb^{2+}$ + $CrO_4^{2-}$', right: '黃色沉澱', match: 1 },
+            { left: '$Ba^{2+}$ + $SO_4^{2-}$', right: '不溶於酸之白沉', match: 2 },
+            { left: '$Ag^+$ + $CrO_4^{2-}$', right: '磚紅色沉澱', match: 3 },
+            { left: '$Cu^{2+}$ + $OH^-$', right: '藍色沉澱', match: 4 },
+            { left: '$1A$ 族離子', right: '必溶 (無沉澱)', match: 5 }
+        ];
+
+        let connections = [];
+        let isDraggingGame = false;
+        let startDot = null;
+        let currentLine = null;
+
+        function initGame() {
+            const leftCol = document.getElementById('left-column'), rightCol = document.getElementById('right-column');
+            leftCol.innerHTML = ''; rightCol.innerHTML = ''; connections = [];
+            document.getElementById('game-feedback').style.display = 'none';
+            document.getElementById('game-svg').innerHTML = '';
+            
+            const selected = [...gameData].sort(() => Math.random() - 0.5).slice(0, 5);
+            const shuffledRight = [...selected].sort(() => Math.random() - 0.5);
+            
+            selected.forEach((item, i) => {
+                const div = document.createElement('div');
+                div.className = 'game-item';
+                div.innerHTML = `<span>${item.left}</span><div class="dot left-dot" data-id="${item.match}"></div>`;
+                leftCol.appendChild(div);
+            });
+            
+            shuffledRight.forEach((item, i) => {
+                const div = document.createElement('div');
+                div.className = 'game-item';
+                div.innerHTML = `<div class="dot right-dot" data-id="${item.match}"></div><span>${item.right}</span>`;
+                rightCol.appendChild(div);
+            });
+            
+            MathJax.typesetPromise(); 
+            
+            document.querySelectorAll('.dot').forEach(dot => {
+                dot.addEventListener('mousedown', gameDragStart);
+                dot.addEventListener('touchstart', gameDragStart, {passive: false});
+            });
+        }
+
+        function gameDragStart(e) {
+            const dot = e.currentTarget;
+            if (dot.classList.contains('active')) return;
+            if (e.type === 'touchstart') e.preventDefault();
+            
+            isDraggingGame = true;
+            startDot = dot;
+            const svg = document.getElementById('game-svg');
+            const rect = svg.getBoundingClientRect();
+            const dotRect = dot.getBoundingClientRect();
+            
+            currentLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            const x = dotRect.left + dotRect.width/2 - rect.left;
+            const y = dotRect.top + dotRect.height/2 - rect.top;
+            currentLine.setAttribute('x1', x);
+            currentLine.setAttribute('y1', y);
+            currentLine.setAttribute('x2', x);
+            currentLine.setAttribute('y2', y);
+            currentLine.setAttribute('stroke', 'var(--accent-blue)');
+            currentLine.setAttribute('stroke-width', '4');
+            currentLine.setAttribute('stroke-linecap', 'round');
+            svg.appendChild(currentLine);
+        }
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isDraggingGame || !currentLine) return;
+            const svg = document.getElementById('game-svg');
+            const rect = svg.getBoundingClientRect();
+            currentLine.setAttribute('x2', e.clientX - rect.left);
+            currentLine.setAttribute('y2', e.clientY - rect.top);
+        });
+
+        window.addEventListener('mouseup', (e) => {
+            if (!isDraggingGame) return;
+            isDraggingGame = false;
+            
+            let targetDot = null;
+            document.querySelectorAll('.dot').forEach(dot => {
+                const r = dot.getBoundingClientRect();
+                if (e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom) {
+                    targetDot = dot;
+                }
+            });
+
+            if (targetDot && targetDot !== startDot && startDot.classList.contains('left-dot') !== targetDot.classList.contains('left-dot') && !targetDot.classList.contains('active')) {
+                if (startDot.dataset.id === targetDot.dataset.id) {
+                    startDot.classList.add('active');
+                    targetDot.classList.add('active');
+                    currentLine.setAttribute('stroke', 'var(--accent-green)');
+                    const svg = document.getElementById('game-svg');
+                    const rect = svg.getBoundingClientRect();
+                    const r2 = targetDot.getBoundingClientRect();
+                    currentLine.setAttribute('x2', r2.left + r2.width/2 - rect.left);
+                    currentLine.setAttribute('y2', r2.top + r2.height/2 - rect.top);
+                    connections.push(currentLine);
+                    currentLine = null;
+                    if (document.querySelectorAll('.dot.active').length === 10) {
+                        document.getElementById('game-feedback').style.display = 'block';
+                    }
+                } else {
+                    currentLine.setAttribute('stroke', 'var(--accent-red)');
+                    const l = currentLine;
+                    setTimeout(() => l.remove(), 500);
+                    currentLine = null;
+                }
+            } else {
+                if (currentLine) currentLine.remove();
+                currentLine = null;
+            }
+        });
+
+        // Touch support for game
+        window.addEventListener('touchmove', (e) => {
+            if (!isDraggingGame || !currentLine) return;
+            const svg = document.getElementById('game-svg');
+            const rect = svg.getBoundingClientRect();
+            currentLine.setAttribute('x2', e.touches[0].clientX - rect.left);
+            currentLine.setAttribute('y2', e.touches[0].clientY - rect.top);
+        }, {passive: false});
+
+        window.addEventListener('touchend', (e) => {
+            if (!isDraggingGame) return;
+            isDraggingGame = false;
+            const touch = e.changedTouches[0];
+            let targetDot = null;
+            document.querySelectorAll('.dot').forEach(dot => {
+                const r = dot.getBoundingClientRect();
+                if (touch.clientX >= r.left && touch.clientX <= r.right && touch.clientY >= r.top && touch.clientY <= r.bottom) {
+                    targetDot = dot;
+                }
+            });
+            // Same logic as mouseup...
+            if (targetDot && targetDot !== startDot && startDot.classList.contains('left-dot') !== targetDot.classList.contains('left-dot') && !targetDot.classList.contains('active')) {
+                if (startDot.dataset.id === targetDot.dataset.id) {
+                    startDot.classList.add('active'); targetDot.classList.add('active');
+                    currentLine.setAttribute('stroke', 'var(--accent-green)');
+                    const svg = document.getElementById('game-svg');
+                    const rect = svg.getBoundingClientRect();
+                    const r2 = targetDot.getBoundingClientRect();
+                    currentLine.setAttribute('x2', r2.left + r2.width/2 - rect.left);
+                    currentLine.setAttribute('y2', r2.top + r2.height/2 - rect.top);
+                    connections.push(currentLine);
+                    currentLine = null;
+                    if (document.querySelectorAll('.dot.active').length === 10) document.getElementById('game-feedback').style.display = 'block';
+                } else {
+                    currentLine.setAttribute('stroke', 'var(--accent-red)');
+                    const l = currentLine; setTimeout(() => l.remove(), 500);
+                    currentLine = null;
+                }
+            } else { if (currentLine) currentLine.remove(); currentLine = null; }
+        });
+
+        function resetGame() { initGame(); }
+
+        // Henry's Law Interactive Logic
+        let henryAnimId = null;
+        let pistonAnimId = null;
+        let _henryParticles = [];
+        let _henryCtx = null, _henryCanvas = null;
+        let _henryStartTime = 0;
+        const HENRY_TARGET = 5;
+
+        function initHenrySlide() {
+            if (henryAnimId) cancelAnimationFrame(henryAnimId);
+            initHenryEquilibrium();
+            initPistonSimulation();
+        }
+
+        // ============================================================
+        // LEFT: Equilibrium Animation
+        // ============================================================
+        function initHenryEquilibrium() {
+            const container = document.getElementById('henry-anim-container');
+            _henryCanvas = document.getElementById('henry-anim-canvas');
+            _henryCtx = _henryCanvas.getContext('2d');
+            _henryCanvas.width = container.offsetWidth;
+            _henryCanvas.height = container.offsetHeight;
+
+            _henryStartTime = Date.now();
+            _henryParticles = [];
+
+            // Spawn 18 gas particles in the top chamber
+            const W = _henryCanvas.width, H = _henryCanvas.height;
+            const waterY = H * 0.58;
+            for (let i = 0; i < 18; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const spd = 0.8 + Math.random() * 1.6;
+                _henryParticles.push({
+                    x: 20 + Math.random() * (W - 40),
+                    y: 15 + Math.random() * (waterY - 30),
+                    vx: Math.cos(angle) * spd,
+                    vy: Math.sin(angle) * spd,
+                    r: 5.5,
+                    dissolved: false,
+                    trail: []
+                });
+            }
+
+            henryLoop();
+
+            document.getElementById('btn-reset-henry').onclick = () => {
+                cancelAnimationFrame(henryAnimId);
+                initHenryEquilibrium();
+            };
+        }
+
+        function henryLoop() {
+            const c = _henryCtx, cv = _henryCanvas;
+            const W = cv.width, H = cv.height;
+            const waterY = H * 0.58;
+            const elapsed = (Date.now() - _henryStartTime) / 1000;
+
+            // Background
+            c.clearRect(0, 0, W, H);
+
+            // Water body gradient
+            const wGrad = c.createLinearGradient(0, waterY, 0, H);
+            wGrad.addColorStop(0, 'rgba(56,189,248,0.35)');
+            wGrad.addColorStop(1, 'rgba(14,60,120,0.7)');
+            c.fillStyle = wGrad;
+            c.fillRect(0, waterY, W, H - waterY);
+
+            // Water surface shimmer
+            c.save();
+            c.beginPath();
+            c.moveTo(0, waterY);
+            for (let x = 0; x <= W; x += 8) {
+                c.lineTo(x, waterY + Math.sin((x / W * 4 + elapsed * 2) * Math.PI) * 2.5);
+            }
+            c.lineTo(W, H); c.lineTo(0, H); c.closePath();
+            c.fillStyle = 'rgba(56,189,248,0.15)';
+            c.fill();
+            c.restore();
+
+            // Water surface line
+            c.beginPath();
+            c.moveTo(0, waterY);
+            c.lineTo(W, waterY);
+            c.strokeStyle = 'rgba(56,189,248,0.7)';
+            c.lineWidth = 1.5;
+            c.stroke();
+
+            // Labels
+            c.fillStyle = 'rgba(34,211,238,0.5)';
+            c.font = 'bold 12px sans-serif';
+            c.fillText('氣相  H₂(g)', 12, 22);
+            c.fillStyle = 'rgba(56,189,248,0.5)';
+            c.fillText('液相  H₂(aq)', 12, waterY + 18);
+
+            // Dissolved count
+            const dissolvedCount = _henryParticles.filter(p => p.dissolved).length;
+
+            // Update + draw particles
+            _henryParticles.forEach(p => {
+                // Physics
+                p.x += p.vx; p.y += p.vy;
+
+                // Wall collisions
+                if (p.x < p.r) { p.x = p.r; p.vx = Math.abs(p.vx); }
+                if (p.x > W - p.r) { p.x = W - p.r; p.vx = -Math.abs(p.vx); }
+                if (p.y < p.r) { p.y = p.r; p.vy = Math.abs(p.vy); }
+                if (p.y > H - p.r) { p.y = H - p.r; p.vy = -Math.abs(p.vy); }
+
+                // Surface interaction
+                if (!p.dissolved && p.y + p.r >= waterY) {
+                    const canDissolve = elapsed < 7 ? (Math.random() < 0.15) :
+                                       (dissolvedCount < HENRY_TARGET ? Math.random() < 0.9 : false);
+                    if (canDissolve) {
+                        p.dissolved = true;
+                        p.vx *= 0.45; p.vy = Math.abs(p.vy) * 0.45;
+                        p.y = waterY + p.r + 1;
+                    } else {
+                        p.vy = -Math.abs(p.vy);
+                        p.y = waterY - p.r - 1;
+                    }
+                } else if (p.dissolved && p.y - p.r <= waterY) {
+                    const canEscape = elapsed < 7 ? (Math.random() < 0.08) :
+                                     (dissolvedCount > HENRY_TARGET ? Math.random() < 0.9 : false);
+                    if (canEscape) {
+                        p.dissolved = false;
+                        const spd = 1.2 + Math.random() * 1.4;
+                        p.vx = (Math.random() - 0.5) * spd * 2;
+                        p.vy = -Math.abs(p.vy) / 0.45;
+                        p.y = waterY - p.r - 1;
+                    } else {
+                        p.vy = Math.abs(p.vy);
+                        p.y = waterY + p.r + 1;
+                    }
+                }
+
+                // Trail
+                p.trail.push({ x: p.x, y: p.y });
+                if (p.trail.length > 12) p.trail.shift();
+
+                // Draw trail
+                if (p.trail.length > 1) {
+                    c.beginPath();
+                    c.moveTo(p.trail[0].x, p.trail[0].y);
+                    p.trail.forEach(t => c.lineTo(t.x, t.y));
+                    c.strokeStyle = p.dissolved ? 'rgba(59,130,246,0.2)' : 'rgba(34,211,238,0.15)';
+                    c.lineWidth = 2.5;
+                    c.lineCap = 'round';
+                    c.stroke();
+                }
+
+                // Draw particle glow
+                const grd = c.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r * 2.2);
+                if (p.dissolved) {
+                    grd.addColorStop(0, 'rgba(96,165,250,0.9)');
+                    grd.addColorStop(0.5, 'rgba(59,130,246,0.5)');
+                    grd.addColorStop(1, 'rgba(59,130,246,0)');
+                } else {
+                    grd.addColorStop(0, 'rgba(220,255,255,1)');
+                    grd.addColorStop(0.4, 'rgba(34,211,238,0.8)');
+                    grd.addColorStop(1, 'rgba(34,211,238,0)');
+                }
+                c.beginPath();
+                c.arc(p.x, p.y, p.r * 2.2, 0, Math.PI * 2);
+                c.fillStyle = grd;
+                c.fill();
+
+                c.beginPath();
+                c.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                c.fillStyle = p.dissolved ? '#60a5fa' : '#e0fffe';
+                c.fill();
+            });
+
+            // Status
+            const statusEl = document.getElementById('henry-status');
+            if (elapsed < 7) {
+                statusEl.textContent = `⏳ 平衡建立中... ${Math.ceil(7 - elapsed)}s`;
+                statusEl.style.color = '#fbbf24';
+                statusEl.style.borderColor = 'rgba(251,191,36,0.3)';
+            } else {
+                statusEl.textContent = `✅ 動態平衡`;
+                statusEl.style.color = '#34d399';
+                statusEl.style.borderColor = 'rgba(52,211,153,0.3)';
+            }
+
+            henryAnimId = requestAnimationFrame(henryLoop);
+        }
+
+        // ============================================================
+        // RIGHT: Piston Simulation
+        // ============================================================
+        let _pistonP = 1.0;
+        let _gasPositions = [], _dissolvedPositions = [];
+        let _pistonAnimId = null;
+
+        function initPistonSimulation() {
+            const slider = document.getElementById('piston-pressure-slider');
+            const pressureVal = document.getElementById('pressure-value');
+            const pc = document.getElementById('piston-canvas');
+            const pCtx = pc.getContext('2d');
+            const pContainer = document.getElementById('piston-container');
+
+            const nCv = document.getElementById('graph-n-canvas');
+            const nCtx = nCv.getContext('2d');
+            const vCv = document.getElementById('graph-v-canvas');
+            const vCtx = vCv.getContext('2d');
+
+            function sizeCanvases() {
+                pc.width = pContainer.offsetWidth; pc.height = pContainer.offsetHeight;
+                nCv.width = nCv.parentElement.offsetWidth; nCv.height = nCv.parentElement.offsetHeight;
+                vCv.width = vCv.parentElement.offsetWidth; vCv.height = vCv.parentElement.offsetHeight;
+            }
+            sizeCanvases();
+
+            // Draw graphs once on slider change or init
+            function updateGraphs() {
+                drawGraphN(nCtx, nCv.width, nCv.height, _pistonP);
+                drawGraphV(vCtx, vCv.width, vCv.height, _pistonP);
+            }
+            updateGraphs();
+
+            slider.oninput = () => {
+                _pistonP = parseFloat(slider.value);
+                pressureVal.textContent = _pistonP.toFixed(1) + 'P';
+                updateGraphs();
+            };
+
+            // Animation loop for piston particles
+            if (_pistonAnimId) cancelAnimationFrame(_pistonAnimId);
+            function pistonLoop() {
+                const N_TOTAL = 40; // Increased particle count
+                const n_aq = Math.round(8 * _pistonP);
+                const n_gas = N_TOTAL - n_aq;
+                
+                drawPiston(pCtx, pc.width, pc.height, _pistonP, n_gas, n_aq);
+                _pistonAnimId = requestAnimationFrame(pistonLoop);
+            }
+            pistonLoop();
+        }
+
+        function drawPiston(c, W, H, P, n_gas, n_aq) {
+            c.clearRect(0, 0, W, H);
+            const mx = 18, topBar = 14, pistonH = 14;
+            const waterFrac = 0.19;
+            const waterTop = H - H * waterFrac - mx;
+            const maxGasSpace = waterTop - topBar - mx - pistonH - 2;
+            // V_frac = 1/P (compressed volume)
+            const V_frac = 1.0 / P;
+            const gasSpaceH = Math.max(maxGasSpace * V_frac, 12);
+            const pistonY = waterTop - gasSpaceH - pistonH; // top of piston
+
+            // Cylinder body
+            const cyl = c.createLinearGradient(mx, 0, W - mx, 0);
+            cyl.addColorStop(0, '#1e2d40'); cyl.addColorStop(0.1, '#334155');
+            cyl.addColorStop(0.9, '#334155'); cyl.addColorStop(1, '#1e2d40');
+            c.fillStyle = cyl;
+            c.beginPath(); c.roundRect(mx, topBar, W - mx * 2, H - topBar - mx, 6); c.fill();
+
+            // Water (liquid phase)
+            const wGrad = c.createLinearGradient(0, waterTop, 0, H - mx);
+            wGrad.addColorStop(0, 'rgba(30,100,180,0.6)');
+            wGrad.addColorStop(1, 'rgba(10,40,100,0.9)');
+            c.fillStyle = wGrad;
+            c.fillRect(mx + 3, waterTop, W - mx * 2 - 6, H - mx - waterTop);
+
+            // Water surface
+            c.beginPath(); c.moveTo(mx + 3, waterTop); c.lineTo(W - mx - 3, waterTop);
+            c.strokeStyle = 'rgba(100,200,255,0.6)'; c.lineWidth = 1.5; c.stroke();
+
+            // Gas space (between piston and water)
+            c.fillStyle = 'rgba(4,12,28,0.55)';
+            c.fillRect(mx + 3, pistonY + pistonH, W - mx * 2 - 6, gasSpaceH);
+
+            // --- GAS particles update & draw ---
+            const gasX1 = mx + 10, gasX2 = W - mx - 10;
+            const gasY1 = pistonY + pistonH + 6, gasY2 = waterTop - 6;
+            
+            while (_gasPositions.length < n_gas) {
+                _gasPositions.push({
+                    x: gasX1 + Math.random() * (gasX2 - gasX1),
+                    y: gasY1 + Math.random() * (gasY2 - gasY1),
+                    vx: (Math.random() - 0.5) * 1.5,
+                    vy: (Math.random() - 0.5) * 1.5
+                });
+            }
+            if (_gasPositions.length > n_gas) _gasPositions.length = n_gas;
+
+            _gasPositions.forEach(pt => {
+                pt.x += pt.vx; pt.y += pt.vy;
+                if (pt.x < gasX1) { pt.x = gasX1; pt.vx *= -1; }
+                if (pt.x > gasX2) { pt.x = gasX2; pt.vx *= -1; }
+                if (pt.y < gasY1) { pt.y = gasY1; pt.vy *= -1; }
+                if (pt.y > gasY2) { pt.y = gasY2; pt.vy *= -1; }
+
+                const g = c.createRadialGradient(pt.x, pt.y, 0, pt.x, pt.y, 7);
+                g.addColorStop(0, 'rgba(200,255,255,1)');
+                g.addColorStop(0.45, 'rgba(34,211,238,0.75)');
+                g.addColorStop(1, 'rgba(34,211,238,0)');
+                c.beginPath(); c.arc(pt.x, pt.y, 7, 0, Math.PI * 2);
+                c.fillStyle = g; c.fill();
+                c.beginPath(); c.arc(pt.x, pt.y, 3.5, 0, Math.PI * 2);
+                c.fillStyle = '#cffafe'; c.fill();
+            });
+
+            // --- DISSOLVED particles update & draw ---
+            const dX1 = mx + 10, dX2 = W - mx - 10;
+            const dY1 = waterTop + 8, dY2 = H - mx - 8;
+            
+            while (_dissolvedPositions.length < n_aq) {
+                _dissolvedPositions.push({
+                    x: dX1 + Math.random() * (dX2 - dX1),
+                    y: dY1 + Math.random() * (dY2 - dY1),
+                    vx: (Math.random() - 0.5) * 0.8,
+                    vy: (Math.random() - 0.5) * 0.8
+                });
+            }
+            if (_dissolvedPositions.length > n_aq) _dissolvedPositions.length = n_aq;
+
+            _dissolvedPositions.forEach(pt => {
+                pt.x += pt.vx; pt.y += pt.vy;
+                if (pt.x < dX1) { pt.x = dX1; pt.vx *= -1; }
+                if (pt.x > dX2) { pt.x = dX2; pt.vx *= -1; }
+                if (pt.y < dY1) { pt.y = dY1; pt.vy *= -1; }
+                if (pt.y > dY2) { pt.y = dY2; pt.vy *= -1; }
+
+                const g = c.createRadialGradient(pt.x, pt.y, 0, pt.x, pt.y, 7);
+                g.addColorStop(0, 'rgba(200,255,255,1)');
+                g.addColorStop(0.45, 'rgba(56,189,248,0.75)');
+                g.addColorStop(1, 'rgba(56,189,248,0)');
+                c.beginPath(); c.arc(pt.x, pt.y, 7, 0, Math.PI * 2);
+                c.fillStyle = g; c.fill();
+                c.beginPath(); c.arc(pt.x, pt.y, 3.5, 0, Math.PI * 2);
+                c.fillStyle = '#bae6fd'; c.fill();
+            });
+
+            // Piston rod
+            const rodG = c.createLinearGradient(W/2-6, 0, W/2+6, 0);
+            rodG.addColorStop(0,'#475569'); rodG.addColorStop(0.5,'#cbd5e1'); rodG.addColorStop(1,'#475569');
+            c.fillStyle = rodG; c.fillRect(W/2-6, topBar + 8, 12, pistonY - topBar - 8);
+
+            // Piston body
+            const pG = c.createLinearGradient(0, pistonY, 0, pistonY + pistonH);
+            pG.addColorStop(0,'#e2e8f0'); pG.addColorStop(0.5,'#94a3b8'); pG.addColorStop(1,'#475569');
+            c.fillStyle = pG;
+            c.beginPath(); c.roundRect(mx + 4, pistonY, W - mx * 2 - 8, pistonH, 4); c.fill();
+            c.strokeStyle = '#94a3b8'; c.lineWidth = 1; c.stroke();
+
+            // Top cap
+            const capG = c.createLinearGradient(0, topBar, 0, topBar + 10);
+            capG.addColorStop(0,'#64748b'); capG.addColorStop(1,'#334155');
+            c.fillStyle = capG;
+            c.beginPath(); c.roundRect(mx, topBar, W-mx*2, 10, [4,4,0,0]); c.fill();
+
+            // Pressure arrow & label above piston
+            const pLabel = P <= 1.4 ? 'P' : P <= 2.4 ? '2P' : P <= 3.4 ? '3P' : '4P';
+            c.fillStyle = '#fbbf24'; c.font = 'bold 12px sans-serif'; c.textAlign = 'center';
+            c.fillText(`↓ ${pLabel}`, W/2, pistonY - 3);
+
+            // Phase labels
+            c.fillStyle = 'rgba(150,230,255,0.45)'; c.font = '10px sans-serif';
+            c.fillText('氣相', W/2, pistonY + pistonH + gasSpaceH/2 + 5);
+            c.fillStyle = 'rgba(100,180,255,0.4)';
+            c.fillText('液相', W/2, dY1 + (dY2 - dY1)/2);
+            c.textAlign = 'left';
+        }
+
+        function drawGraphN(c, W, H, P) {
+            c.clearRect(0, 0, W, H);
+            const ml = 36, mr = 8, mt = 16, mb = 22;
+            const gW = W - ml - mr, gH = H - mt - mb;
+            const N = 40;
+
+            // Grid lines
+            c.strokeStyle = 'rgba(255,255,255,0.05)'; c.lineWidth = 1;
+            [0.25, 0.5, 0.75].forEach(f => {
+                c.beginPath(); c.moveTo(ml, mt + gH*(1-f)); c.lineTo(W-mr, mt + gH*(1-f)); c.stroke();
+            });
+
+            // Axes
+            c.strokeStyle = 'rgba(255,255,255,0.3)'; c.lineWidth = 1.5;
+            c.beginPath(); c.moveTo(ml, mt); c.lineTo(ml, mt+gH); c.lineTo(W-mr, mt+gH); c.stroke();
+
+            // Axis tick labels
+            c.fillStyle = 'rgba(255,255,255,0.35)'; c.font = '9px sans-serif';
+            c.textAlign = 'center';
+            ['1P','2P','3P','4P'].forEach((lbl, i) => {
+                c.fillText(lbl, ml + (i/3)*gW, mt + gH + 14);
+            });
+            c.textAlign = 'right';
+            [10,20,30,40].forEach((v, i) => {
+                const y = mt + gH - (v/N)*gH;
+                c.fillText(v, ml-3, y+3);
+                c.strokeStyle='rgba(255,255,255,0.06)'; c.lineWidth=1;
+                c.beginPath(); c.moveTo(ml, y); c.lineTo(W-mr, y); c.stroke();
+            });
+
+            // Title
+            c.fillStyle = '#7dd3fc'; c.font = 'bold 10px sans-serif'; c.textAlign = 'left';
+            c.fillText('液相粒子數 n_aq', ml+2, mt-3);
+
+            // Line: n_aq = 8*P for P=1..4
+            c.strokeStyle = '#38bdf8'; c.lineWidth = 2.5;
+            c.beginPath();
+            c.moveTo(ml, mt + gH - (8/N)*gH);
+            c.lineTo(ml + gW, mt + gH - (32/N)*gH);
+            c.stroke();
+
+            // Current point
+            const n_cur = 8 * P;
+            const cx = ml + (P-1)/3*gW;
+            const cy = mt + gH - (n_cur/N)*gH;
+            c.beginPath(); c.arc(cx, cy, 5, 0, Math.PI*2); c.fillStyle='#fff'; c.fill();
+            c.beginPath(); c.arc(cx, cy, 3, 0, Math.PI*2); c.fillStyle='#38bdf8'; c.fill();
+            c.setLineDash([3,3]); c.strokeStyle='rgba(56,189,248,0.35)'; c.lineWidth=1;
+            c.beginPath(); c.moveTo(cx,cy); c.lineTo(cx,mt+gH); c.stroke();
+            c.beginPath(); c.moveTo(cx,cy); c.lineTo(ml,cy); c.stroke();
+            c.setLineDash([]); c.textAlign='left';
+        }
+
+        function drawGraphV(c, W, H, P) {
+            c.clearRect(0, 0, W, H);
+            const ml = 36, mr = 8, mt = 16, mb = 22;
+            const gW = W - ml - mr, gH = H - mt - mb;
+            const N = 40;
+            // Vg = n_aq / P_gas, P_gas ∝ n_gas/V_gas
+            // With our model: Vg ∝ n_aq * V_frac / n_gas = (N/(1+3V))*(V)/((3NV/(1+3V))) = 1/3 = const
+            const midY = mt + gH * 0.4;
+
+            // Axes
+            c.strokeStyle = 'rgba(255,255,255,0.3)'; c.lineWidth = 1.5;
+            c.beginPath(); c.moveTo(ml, mt); c.lineTo(ml, mt+gH); c.lineTo(W-mr, mt+gH); c.stroke();
+
+            // Tick labels
+            c.fillStyle = 'rgba(255,255,255,0.35)'; c.font = '9px sans-serif'; c.textAlign = 'center';
+            ['1P','2P','3P','4P'].forEach((lbl, i) => {
+                c.fillText(lbl, ml + (i/3)*gW, mt+gH+14);
+            });
+            c.textAlign = 'right';
+            c.fillText('Vg', ml-3, midY+3);
+
+            // Title
+            c.fillStyle = '#34d399'; c.font = 'bold 10px sans-serif'; c.textAlign = 'left';
+            c.fillText('溶解體積 Vg (定值)', ml+2, mt-3);
+
+            // Constant horizontal line
+            c.strokeStyle = '#34d399'; c.lineWidth = 2.5;
+            c.beginPath(); c.moveTo(ml, midY); c.lineTo(ml+gW, midY); c.stroke();
+
+            // Current point
+            const cx = ml + (P-1)/3*gW;
+            c.beginPath(); c.arc(cx, midY, 5, 0, Math.PI*2); c.fillStyle='#fff'; c.fill();
+            c.beginPath(); c.arc(cx, midY, 3, 0, Math.PI*2); c.fillStyle='#34d399'; c.fill();
+            c.setLineDash([3,3]); c.strokeStyle='rgba(52,211,153,0.35)'; c.lineWidth=1;
+            c.beginPath(); c.moveTo(cx,midY); c.lineTo(cx,mt+gH); c.stroke();
+            c.setLineDash([]); c.textAlign='left';
+        }
+
+        // Toolbar drag logic
+        const toolbar = document.getElementById('toolbar'), dragHandle = document.getElementById('drag-handle');
+        let isDraggingToolbar = false, dragOffY = 0;
+        dragHandle.addEventListener('mousedown', (e) => { isDraggingToolbar = true; dragOffY = e.clientY - toolbar.offsetTop; });
+        window.addEventListener('mousemove', (e) => { if (isDraggingToolbar) { toolbar.style.top = (e.clientY - dragOffY) + 'px'; toolbar.style.bottom = 'auto'; toolbar.style.transform = 'none'; } });
+        window.addEventListener('mouseup', () => isDraggingToolbar = false);
+        
+        dragHandle.addEventListener('touchstart', (e) => { isDraggingToolbar = true; dragOffY = e.touches[0].clientY - toolbar.offsetTop; });
+        window.addEventListener('touchmove', (e) => { if (isDraggingToolbar) { toolbar.style.top = (e.touches[0].clientY - dragOffY) + 'px'; toolbar.style.bottom = 'auto'; toolbar.style.transform = 'none'; } });
+        window.addEventListener('touchend', () => isDraggingToolbar = false);
+    </script>
+</body>
+</html>
